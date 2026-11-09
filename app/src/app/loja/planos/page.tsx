@@ -4,6 +4,7 @@ import { schema } from "@/db";
 import { exigirLoja } from "@/lib/loja";
 import { Topo } from "@/components/ui";
 import { formatarReais } from "@/lib/validacao";
+import { porSemanaTexto } from "@/lib/simulador";
 import { salvarPlano } from "./actions";
 import FormNovoPlano from "./FormNovoPlano";
 
@@ -37,7 +38,7 @@ export default async function Planos() {
                   <div>
                     <b className="font-titulo text-lg">{p.galoesMes} galões/mês</b>
                     <p className="text-sm text-tinta-suave">
-                      ≈ {Math.max(1, Math.round(p.galoesMes / 4.3))} por semana · {formatarReais(Math.round(p.precoCentavos / p.galoesMes))} o galão
+                      {porSemanaTexto(p.galoesMes)} por semana · {formatarReais(Math.round(p.precoCentavos / p.galoesMes))} o galão
                     </p>
                   </div>
                   {desconto > 0 ? (

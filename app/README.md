@@ -34,7 +34,7 @@ No desenvolvimento, o **código de login aparece na tela** (modo de teste) e no 
 
 1. ✅ Base: login por código, cadastro com pino no mapa, cadastro de loja, admin aprova lojas
 2. ✅ Catálogo (galão + bebidas, álcool só para loja habilitada), planos e ajustes de horário
-3. Simulador e plano sugerido
+3. ✅ Simulador, lojas que atendem o endereço (raio de entrega ou retirada até 15 km) e plano sugerido
 4. Pedido avulso e assinatura, com horário imediato, exato, janela ou período
 5. Agenda da loja, status em lote, entregador, cascos
 6. Pagamento (Pix, cartão, recorrência)

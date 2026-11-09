@@ -37,7 +37,14 @@ export default async function Inicio() {
         <div className="cartao-elevado pilha">
           <b className="font-titulo text-lg">Você ainda não tem um plano</b>
           <p className="text-sm text-tinta-suave">Calcule o consumo da família e escolha uma distribuidora do seu bairro.</p>
-          <span className="selo selo-cinza self-start">Planos e pedidos: próxima etapa</span>
+          <Link href={u.perfilFamilia ? "/lojas" : "/simulador"} className="botao-peq self-start">
+            Escolher meu plano
+          </Link>
+          {u.perfilFamilia && (
+            <Link href="/simulador" className="link-texto">
+              Recalcular consumo da família
+            </Link>
+          )}
         </div>
         <div className="cartao pilha">
           <div className="flex items-center justify-between gap-2">
