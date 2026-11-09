@@ -113,3 +113,8 @@ export function porSemanaTexto(galoesMes: number): string {
   max = Math.max(1, max);
   return min === max ? String(min) : `${min} a ${max}`;
 }
+
+/** Frequência legível de um plano: "3 por mês" (planos pequenos) ou "4 a 5 por semana". */
+export function frequenciaTexto(galoesMes: number): string {
+  return galoesMes < 4 ? `${galoesMes} por mês` : `${porSemanaTexto(galoesMes)} por semana`;
+}

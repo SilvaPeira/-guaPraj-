@@ -4,7 +4,7 @@ import { and, asc, eq } from "drizzle-orm";
 import { schema } from "@/db";
 import { exigirCliente } from "@/lib/cliente";
 import { descontoPercentual, planoSugerido } from "@/lib/lojas-proximas";
-import { porSemanaTexto, simular } from "@/lib/simulador";
+import { frequenciaTexto, simular } from "@/lib/simulador";
 import { distanciaKm, formatarKm } from "@/lib/geo";
 import { CATEGORIAS, ORDEM_GRUPOS, podeVender } from "@/lib/catalogo";
 import { formatarReais } from "@/lib/validacao";
@@ -76,7 +76,7 @@ export default async function Loja({ params }: PageProps<"/lojas/[id]">) {
               <div>
                 <b className="text-base">{p.galoesMes} galões/mês</b>
                 <p className="text-sm text-tinta-suave">
-                  {porSemanaTexto(p.galoesMes)} por semana{desc > 0 ? ` · economia de ${desc}%` : ""}
+                  {frequenciaTexto(p.galoesMes)}{desc > 0 ? ` · economia de ${desc}%` : ""}
                 </p>
               </div>
               <div className="flex flex-col items-end gap-1">

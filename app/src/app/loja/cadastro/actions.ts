@@ -98,7 +98,7 @@ export async function cadastrarLoja(_: EstadoForm, form: FormData): Promise<Esta
         seloFiscalDeclarado: true,
       })
       .returning();
-    const [galao] = await tx
+    await tx
       .insert(schema.produtos)
       .values({
         lojaId: loja.id,
@@ -111,15 +111,6 @@ export async function cadastrarLoja(_: EstadoForm, form: FormData): Promise<Esta
       })
       .returning();
     await tx.insert(schema.produtos).values({ lojaId: loja.id, nome: "Casco (vasilhame 20 L)", categoria: "casco", precoCentavos: d.precoCasco, ordem: 99 });
-    // Planos padrão (8, 12, 16, 20, 24, 32) com 10% de desconto — a loja ajusta depois.
-    await tx.insert(schema.planos).values(
-      [8, 12, 16, 20, 24, 32].map((g) => ({
-        lojaId: loja.id,
-        produtoId: galao.id,
-        galoesMes: g,
-        precoCentavos: Math.round((g * d.precoGalao * 0.9) / 100) * 100,
-      })),
-    );
     await tx.update(schema.usuarios).set({ papel: "loja", aceitouTermosEm: u.aceitouTermosEm ?? new Date(), nome: u.nome ?? d.nome }).where(eq(schema.usuarios.id, u.id));
   });
 

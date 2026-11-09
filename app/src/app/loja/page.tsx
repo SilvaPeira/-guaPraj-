@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { asc, eq } from "drizzle-orm";
 import { schema } from "@/db";
 import { exigirLoja } from "@/lib/loja";
@@ -52,11 +53,17 @@ export default async function PainelLoja() {
         )}
 
         <div className="cartao pilha">
-          <b>Seus planos</b>
+          <div className="flex items-center justify-between">
+            <b>Seus planos</b>
+            <Link href="/loja/planos" className="link-texto">
+              {planos.length ? "Editar" : "Criar planos"}
+            </Link>
+          </div>
+          {planos.length === 0 && <p className="text-sm text-tinta-suave">Sem planos, os clientes só conseguem comprar avulso.</p>}
           <ul className="divide-y divide-borda">
             {planos.map((p) => (
               <li key={p.id} className="flex justify-between py-2 text-sm">
-                <span>{p.galoesMes} galões/mês</span>
+                <span>{p.galoesMes} {p.galoesMes === 1 ? "galão" : "galões"}/mês{p.ativo ? "" : " (pausado)"}</span>
                 <b>{formatarReais(p.precoCentavos)}</b>
               </li>
             ))}

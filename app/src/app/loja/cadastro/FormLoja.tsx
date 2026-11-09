@@ -79,7 +79,7 @@ export default function FormLoja() {
           </label>
         </div>
         <p className="text-sm text-tinta-suave">
-          Criamos os planos de 8 a 32 galões/mês com 10% de desconto. Você ajusta os preços e cadastra bebidas no painel.
+          Depois, no painel, você cria seus planos mensais (a quantidade e o preço que quiser) e cadastra bebidas.
         </p>
       </section>
 
