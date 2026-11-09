@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+/* Paleta do protótipo ÁguaPrajá (floresta, verde, açaí, terra, rio).
+   Tema claro fixo: público usa celular simples sob sol forte, contraste alto. */
+@theme {
+  --color-floresta: #0e3b2c;
+  --color-verde: #1b6b47;
+  --color-verde-hover: #155a3b;
+  --color-verde-claro: #e3f1e8;
+  --color-verde-desligado: #9db5a7;
+  --color-acai: #4b1e52;
+  --color-acai-claro: #f3ecf4;
+  --color-terra: #b54e17;
+  --color-terra-esc: #8f3d10;
+  --color-terra-claro: #fbede4;
+  --color-rio: #1d6a8a;
+  --color-rio-esc: #134b63;
+  --color-rio-claro: #e4f1f7;
+  --color-rio-luz: #bfe3f1;
+  --color-gota: #7fc8e3;
+  --color-hero-texto: #cfe3d8;
+  --color-fundo: #f4f7f3;
+  --color-tinta: #17261f;
+  --color-tinta-suave: #4e5f56;
+  --color-borda: #dce6df;
+  --color-borda2: #c9d8ce;
+  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-titulo: var(--font-sora), var(--font-inter), sans-serif;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  background: var(--color-fundo);
+  color: var(--color-tinta);
+  font-family: var(--font-sans);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-titulo);
+  letter-spacing: -0.2px;
+}
+
+@layer components {
+  .cartao {
+    @apply rounded-[20px] border border-borda bg-white p-4;
+  }
+  .titulo-cartao {
+    @apply text-xl font-bold text-tinta;
+  }
+  .botao-principal {
+    @apply flex min-h-[52px] w-full items-center justify-center rounded-2xl bg-verde px-5 py-3 text-center text-base font-bold text-white transition hover:bg-verde-hover active:scale-[0.98] disabled:bg-verde-desligado;
+  }
+  .botao-redondo {
+    @apply flex h-11 w-11 items-center justify-center rounded-full border border-borda2 bg-white text-xl font-bold text-verde transition disabled:opacity-40;
+  }
+  .botao-mais {
+    @apply border-verde bg-verde text-white;
+  }
+  .entrada {
+    @apply min-h-12 w-full rounded-xl border border-borda2 bg-white px-3.5 text-base text-tinta outline-none focus:outline-3 focus:outline-offset-2 focus:outline-gota;
+  }
+  .opcao {
+    @apply flex min-h-11 cursor-pointer items-center rounded-full border border-borda2 bg-white px-3.5 text-sm font-semibold text-tinta transition has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-gota;
+  }
+  .opcao-ativa {
+    @apply border-verde bg-verde text-white;
+  }
+  .escolha {
+    @apply flex cursor-pointer gap-3 rounded-2xl border border-borda2 bg-white p-3 has-[:checked]:border-2 has-[:checked]:border-verde has-[:checked]:bg-verde-claro;
+  }
+}
