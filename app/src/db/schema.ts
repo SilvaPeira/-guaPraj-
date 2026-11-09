@@ -118,6 +118,8 @@ export type RegrasHorario = {
   janelaMinimaMin: number;
   capacidadePorJanela: number;
   taxaExtraCentavos: number; // imediato / horário exato
+  /** Máximo de galões não usados que passam para o mês seguinte. */
+  limiteAcumulo?: number;
 };
 
 export const lojas = pgTable("lojas", {

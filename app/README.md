@@ -33,7 +33,7 @@ No desenvolvimento, o **código de login aparece na tela** (modo de teste) e no 
 ## Etapas do plano
 
 1. ✅ Base: login por código, cadastro com pino no mapa, cadastro de loja, admin aprova lojas
-2. Catálogo (galão + bebidas) e planos da loja
+2. ✅ Catálogo (galão + bebidas, álcool só para loja habilitada), planos e ajustes de horário
 3. Simulador e plano sugerido
 4. Pedido avulso e assinatura, com horário imediato, exato, janela ou período
 5. Agenda da loja, status em lote, entregador, cascos
