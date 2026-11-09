@@ -4,6 +4,7 @@
 
 | Pasta | O que é |
 |---|---|
+| `app/` | O app do MVP: cliente, distribuidora, entregador e admin (Next.js). Veja `app/README.md`. |
 | `simulador/` | Página de validação: simulador de consumo e cadastro de interesse (Next.js). Veja `simulador/README.md`. |
 | `validacao/` | Roteiro de entrevistas com distribuidoras e famílias. |
 
