@@ -12,5 +12,13 @@ export const CATEGORIAS = {
 
 export type Categoria = keyof typeof CATEGORIAS;
 
+/** Pode ser vendido agora? (ligado e, se controla estoque, com quantidade) */
+export function podeVender(p: { disponivel: boolean; estoque: number | null }): boolean {
+  return p.disponivel && (p.estoque === null || p.estoque > 0);
+}
+
+/** Abaixo disso a loja recebe o alerta de estoque baixo. */
+export const ESTOQUE_BAIXO = 5;
+
 /** Ordem em que os grupos aparecem para o cliente. */
 export const ORDEM_GRUPOS = ["Água", "Bebidas", "Gelo e polpas", "Bebidas alcoólicas", "Acessórios"];

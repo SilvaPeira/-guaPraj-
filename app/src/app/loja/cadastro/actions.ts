@@ -100,7 +100,15 @@ export async function cadastrarLoja(_: EstadoForm, form: FormData): Promise<Esta
       .returning();
     const [galao] = await tx
       .insert(schema.produtos)
-      .values({ lojaId: loja.id, nome: "Galão de água 20 L", categoria: "agua_galao", retornavel: true, precoCentavos: d.precoGalao, ordem: 0 })
+      .values({
+        lojaId: loja.id,
+        nome: "Galão de água 20 L",
+        marca: d.marcasAgua || null,
+        categoria: "agua_galao",
+        retornavel: true,
+        precoCentavos: d.precoGalao,
+        ordem: 0,
+      })
       .returning();
     await tx.insert(schema.produtos).values({ lojaId: loja.id, nome: "Casco (vasilhame 20 L)", categoria: "casco", precoCentavos: d.precoCasco, ordem: 99 });
     // Planos padrão (8, 12, 16, 20, 24, 32) com 10% de desconto — a loja ajusta depois.

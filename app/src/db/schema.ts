@@ -161,7 +161,10 @@ export const produtos = pgTable("produtos", {
   id: id(),
   lojaId: uuid("loja_id").notNull().references(() => lojas.id, { onDelete: "cascade" }),
   nome: text("nome").notNull(),
+  marca: text("marca"),
   categoria: categoriaProduto("categoria").notNull(),
+  /** Quantidade disponível. null = loja não controla estoque deste item. */
+  estoque: integer("estoque"),
   /** Retornável = tem casco (galão 20 L). */
   retornavel: boolean("retornavel").notNull().default(false),
   alcoolico: boolean("alcoolico").notNull().default(false),
