@@ -1,0 +1,1 @@
+ALTER TABLE "assinaturas" ADD COLUMN "cascos_a_comprar" integer DEFAULT 0 NOT NULL;

@@ -184,13 +184,17 @@ export const planos = pgTable("planos", {
   criadoEm: criadoEm(),
 });
 
-/** Uma entrega fixa da semana dentro do plano. */
-export type EntregaSemanal = {
-  dia: number; // 0=dom … 6=sáb
-  qtd: number;
+/** Agenda fixa da assinatura: frequência + dia(s) + horário + galões por entrega. */
+export type AgendaPlano = {
+  frequencia: "semanal" | "quinzenal" | "mensal";
+  /** Dias da semana (0=dom … 6=sáb). Semanal aceita vários; quinzenal/mensal, um. */
+  dias: number[];
+  qtdPorEntrega: number;
   tipoHorario: "exato" | "janela" | "periodo";
-  inicio: string; // "10:00"
-  fim: string; // "10:30" (igual ao início se exato)
+  inicio: string; // "09:00"
+  fim: string; // "09:00" se exato; "12:00" no período da manhã
+  /** Primeira entrega (âncora da quinzena). "AAAA-MM-DD" */
+  primeiraData: string;
 };
 
 export const assinaturas = pgTable("assinaturas", {
@@ -200,14 +204,26 @@ export const assinaturas = pgTable("assinaturas", {
   planoId: uuid("plano_id").notNull().references(() => planos.id),
   enderecoId: uuid("endereco_id").references(() => enderecos.id),
   modo: modoEntrega("modo").notNull(),
-  agenda: jsonb("agenda").$type<EntregaSemanal[]>().notNull(),
+  agenda: jsonb("agenda").$type<AgendaPlano>().notNull(),
   status: statusAssinatura("status").notNull().default("ativa"),
   saldoAcumulado: integer("saldo_acumulado").notNull().default(0),
   cicloInicio: date("ciclo_inicio").notNull(),
   formaPagamento: formaPagamento("forma_pagamento").notNull(),
   pulos: jsonb("pulos").$type<string[]>().notNull().default([]), // datas "AAAA-MM-DD"
+  /** Texto exato que o cliente confirmou ("estou ciente…") e quando. */
+  aceiteTexto: text("aceite_texto"),
+  aceiteEm: timestamp("aceite_em", { withTimezone: true }),
+  /** Troca de plano agendada para o próximo ciclo. */
+  planoProximoId: uuid("plano_proximo_id").references(() => planos.id),
+  canceladaEm: timestamp("cancelada_em", { withTimezone: true }),
+  /** Último dia coberto pelo pagamento (cancelamento vale até aqui). */
+  validaAte: date("valida_ate"),
+  /** Cascos que o cliente comprou e ainda vão numa próxima entrega do plano. */
+  cascosAComprar: integer("cascos_a_comprar").notNull().default(0),
   criadoEm: criadoEm(),
 });
+
+export const origemPedido = pgEnum("origem_pedido", ["avulso", "plano", "extra"]);
 
 export const pedidos = pgTable(
   "pedidos",
@@ -217,6 +233,7 @@ export const pedidos = pgTable(
     clienteId: uuid("cliente_id").notNull().references(() => usuarios.id),
     lojaId: uuid("loja_id").notNull().references(() => lojas.id),
     assinaturaId: uuid("assinatura_id").references(() => assinaturas.id),
+    origem: origemPedido("origem").notNull().default("avulso"),
     enderecoId: uuid("endereco_id").references(() => enderecos.id),
     modo: modoEntrega("modo").notNull(),
     tipoHorario: tipoHorario("tipo_horario").notNull(),
@@ -240,7 +257,12 @@ export const pedidos = pgTable(
     comentario: text("comentario"),
     criadoEm: criadoEm(),
   },
-  (t) => [index("pedidos_loja_data_idx").on(t.lojaId, t.data), index("pedidos_cliente_idx").on(t.clienteId)],
+  (t) => [
+    index("pedidos_loja_data_idx").on(t.lojaId, t.data),
+    index("pedidos_cliente_idx").on(t.clienteId),
+    // No máximo uma entrega do plano por assinatura por dia (geração idempotente).
+    uniqueIndex("pedidos_plano_dia_idx").on(t.assinaturaId, t.data).where(sql`${t.origem} = 'plano'`),
+  ],
 );
 
 export const itensPedido = pgTable("itens_pedido", {

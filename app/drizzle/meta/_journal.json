@@ -15,6 +15,20 @@
       "when": 1794245417305,
       "tag": "0001_marca_estoque",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794247592773,
+      "tag": "0002_assinatura_agenda",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794248559913,
+      "tag": "0003_cascos_a_comprar",
+      "breakpoints": true
     }
   ]
 }

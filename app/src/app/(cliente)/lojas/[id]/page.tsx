@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
 import { schema } from "@/db";
@@ -72,7 +73,7 @@ export default async function Loja({ params }: PageProps<"/lojas/[id]">) {
           const desc = descontoPercentual(p, galao?.precoCentavos ?? null);
           const ehSugerido = sugerido?.id === p.id;
           return (
-            <div key={p.id} className={`flex items-center justify-between gap-2 rounded-[18px] bg-white p-3.5 ${ehSugerido ? "border-2 border-acai bg-acai-claro" : "border border-borda2"}`}>
+            <Link key={p.id} href={`/assinar/${p.id}`} className={`flex items-center justify-between gap-2 rounded-[18px] bg-white p-3.5 transition hover:border-verde ${ehSugerido ? "border-2 border-acai bg-acai-claro" : "border border-borda2"}`}>
               <div>
                 <b className="text-base">{p.galoesMes} galões/mês</b>
                 <p className="text-sm text-tinta-suave">
@@ -83,10 +84,13 @@ export default async function Loja({ params }: PageProps<"/lojas/[id]">) {
                 <b>{formatarReais(p.precoCentavos)}</b>
                 {ehSugerido && <span className="selo bg-acai text-white">Sugerido</span>}
               </div>
-            </div>
+            </Link>
           );
         })}
-        <p className="aviso-info text-sm">Escolher dias, horário e pagar: chega na próxima etapa (pedidos e assinatura).</p>
+        <p className="text-sm text-tinta-suave">Toque num plano para escolher o dia e o horário das entregas.</p>
+        <Link href={`/pedir/${loja.id}`} className="botao-sec">
+          Fazer um pedido avulso
+        </Link>
 
         {grupos.length > 0 && <h2 className="titulo-secao mt-2">Também vai na entrega</h2>}
         {grupos.map(({ grupo, itens }) => (
