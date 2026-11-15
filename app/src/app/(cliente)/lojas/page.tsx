@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { exigirCliente } from "@/lib/cliente";
+import { marcaAtual } from "@/lib/marca";
 import { descontoPercentual, lojasQueAtendem, planoSugerido } from "@/lib/lojas-proximas";
 import { simular } from "@/lib/simulador";
 import { formatarKm } from "@/lib/geo";
@@ -12,6 +13,8 @@ export const metadata: Metadata = { title: "Distribuidoras" };
 
 export default async function Lojas({ searchParams }: PageProps<"/lojas">) {
   const { usuario, endereco } = await exigirCliente();
+  const marca = await marcaAtual();
+  if (marca) redirect(`/lojas/${marca.lojaId}`);
   if (!usuario.perfilFamilia) redirect("/simulador");
   const sp = await searchParams;
   const filtro = sp.filtro === "entrega" || sp.filtro === "retirada" ? sp.filtro : "todas";

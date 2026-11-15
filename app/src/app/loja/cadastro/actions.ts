@@ -6,6 +6,7 @@ import { z } from "zod";
 import { getDb, schema } from "@/db";
 import type { RegrasHorario } from "@/db/schema";
 import { exigirUsuario } from "@/lib/sessao";
+import { slugLivre } from "@/lib/marca";
 import { normalizarTelefone } from "@/lib/telefone";
 import { esquemaEndereco, primeiroErro, reaisParaCentavos } from "@/lib/validacao";
 
@@ -75,6 +76,7 @@ export async function cadastrarLoja(_: EstadoForm, form: FormData): Promise<Esta
     taxaExtraCentavos: 200,
   };
 
+  const slug = await slugLivre(d.nome); // fora da transação (PGlite usa uma conexão só)
   await db.transaction(async (tx) => {
     const [loja] = await tx
       .insert(schema.lojas)
@@ -96,6 +98,7 @@ export async function cadastrarLoja(_: EstadoForm, form: FormData): Promise<Esta
         regrasHorario: regras,
         vendeAlcool: d.vendeAlcool,
         seloFiscalDeclarado: true,
+        slug,
       })
       .returning();
     await tx

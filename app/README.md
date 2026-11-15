@@ -39,3 +39,12 @@ No desenvolvimento, o **código de login aparece na tela** (modo de teste) e no 
 5. Agenda da loja, status em lote, entregador, cascos
 6. Pagamento (Pix, cartão, recorrência)
 7. Avisos por WhatsApp, avaliação, financeiro e controle de 18+ na entrega
+
+## Site e app da loja (marca própria)
+
+Cada distribuidora tem o seu site em `/l/<endereço>` (ex.: `/l/jm-beer`), com logo, cores e frase dela, que pode ser **instalado no celular como app** (PWA, sem Play Store/App Store). Instalado, aparece com o **nome e o ícone da loja**; o ÁguaPrajá só aparece discreto no rodapé ("feito com ÁguaPrajá").
+
+- A loja configura tudo em **Painel → Meu app** (logo, cores, endereço, frase) e compartilha o link.
+- Entrar pelo site da loja liga o tema dela no app inteiro (cookie `aguapraja_loja`) e esconde a lista de outras lojas.
+- Ícones do app são gerados a partir da logo (`/l/<endereço>/icone/192`, `512`, `180`).
+- Com o domínio próprio, dá para usar subdomínio por loja (ex.: `jmbeer.seudominio.com.br`).

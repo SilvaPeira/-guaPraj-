@@ -3,9 +3,14 @@ import { redirect } from "next/navigation";
 import { Hero, Logo } from "@/components/ui";
 import { usuarioAtual } from "@/lib/sessao";
 import { destinoDoUsuario } from "@/lib/destino";
+import { marcaAtual } from "@/lib/marca";
 
 export default async function Home() {
   const u = await usuarioAtual();
+  if (!u) {
+    const m = await marcaAtual();
+    if (m) redirect(`/l/${m.slug}`);
+  }
   if (u) redirect(await destinoDoUsuario(u));
 
   return (

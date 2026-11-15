@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
 import { schema } from "@/db";
 import { exigirCliente } from "@/lib/cliente";
+import { marcaAtual } from "@/lib/marca";
 import { descontoPercentual, planoSugerido } from "@/lib/lojas-proximas";
 import { frequenciaTexto, simular } from "@/lib/simulador";
 import { distanciaKm, formatarKm } from "@/lib/geo";
@@ -44,7 +45,7 @@ export default async function Loja({ params }: PageProps<"/lojas/[id]">) {
 
   return (
     <>
-      <Topo titulo={loja.nome} subtitulo={`${loja.bairro} · ${formatarKm(km)}`} voltar="/lojas" />
+      <Topo titulo={loja.nome} subtitulo={`${loja.bairro} · ${formatarKm(km)}`} voltar={(await marcaAtual()) ? "/inicio" : "/lojas"} />
       <main className="conteudo">
         <section className="cartao pilha">
           <div className="flex flex-wrap gap-1.5">

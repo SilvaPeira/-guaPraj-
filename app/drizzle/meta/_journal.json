@@ -29,6 +29,13 @@
       "when": 1794248559913,
       "tag": "0003_cascos_a_comprar",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794738550988,
+      "tag": "0004_marca_loja",
+      "breakpoints": true
     }
   ]
 }

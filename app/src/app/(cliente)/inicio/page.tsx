@@ -9,6 +9,8 @@ import { agoraLocal, dataBonita } from "@/lib/tempo";
 import { COR_STATUS, ORIGEM, ROTULO_STATUS } from "@/lib/status";
 import { formatarReais } from "@/lib/validacao";
 import { Hero, Logo } from "@/components/ui";
+import { LogoLoja } from "@/components/marca";
+import { marcaAtual } from "@/lib/marca";
 import { sair } from "@/app/entrar/actions";
 
 export const metadata: Metadata = { title: "Início" };
@@ -16,6 +18,7 @@ export const metadata: Metadata = { title: "Início" };
 export default async function Inicio() {
   const { usuario: u, endereco: end, db } = await exigirCliente();
   const hoje = agoraLocal().data;
+  const marca = await marcaAtual();
 
   const [assinatura] = await db
     .select({ a: schema.assinaturas, plano: schema.planos, loja: schema.lojas })
@@ -42,7 +45,7 @@ export default async function Inicio() {
     <>
       <Hero>
         <div className="flex items-center justify-between">
-          <Logo />
+          {marca ? <LogoLoja marca={marca} /> : <Logo />}
           <form action={sair}>
             <button className="min-h-11 text-sm font-semibold text-hero-texto underline">Sair</button>
           </form>

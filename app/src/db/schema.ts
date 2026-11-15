@@ -143,6 +143,14 @@ export const lojas = pgTable("lojas", {
   seloFiscalDeclarado: boolean("selo_fiscal_declarado").notNull().default(false),
   status: statusLoja("status").notNull().default("pendente"),
   observacaoAdmin: text("observacao_admin"),
+  // ── Marca própria (site/app instalável da loja) ──
+  /** Endereço do site da loja: /l/<slug> */
+  slug: text("slug").unique(),
+  /** Logo em PNG (data URL, até ~400 KB), já redimensionada no navegador. */
+  logo: text("logo"),
+  corPrimaria: text("cor_primaria").notNull().default("#1b6b47"),
+  corEscura: text("cor_escura").notNull().default("#0e3b2c"),
+  descricao: text("descricao"),
   criadoEm: criadoEm(),
 });
 
