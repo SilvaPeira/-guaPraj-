@@ -108,6 +108,19 @@ export const enderecos = pgTable("enderecos", {
 });
 
 /** Regras de horário de entrega definidas pela loja (seção 3 — opções de horário). */
+/** Personalização visual do site/app da loja. Tudo opcional: o que faltar usa o padrão. */
+export type Personalizacao = {
+  corDestaque?: string; // cards de plano, resultado do simulador
+  corFundo?: string; // fundo das telas (sempre clara)
+  corIcone?: string; // fundo do ícone do app no celular
+  fonte?: "sora" | "poppins" | "montserrat" | "nunito" | "oswald" | "playfair";
+  cantos?: "arredondado" | "suave" | "reto";
+  titulo?: string; // frase grande do topo do site
+  nomeCurto?: string; // nome embaixo do ícone (até 12 letras)
+  instagram?: string; // @usuario
+  mostrarWhatsapp?: boolean;
+};
+
 export type RegrasHorario = {
   abre: string; // "07:00"
   fecha: string; // "19:00"
@@ -151,6 +164,10 @@ export const lojas = pgTable("lojas", {
   corPrimaria: text("cor_primaria").notNull().default("#1b6b47"),
   corEscura: text("cor_escura").notNull().default("#0e3b2c"),
   descricao: text("descricao"),
+  /** Imagem de capa do topo do site (data URL JPEG, até ~600 KB). */
+  capa: text("capa"),
+  /** Demais escolhas visuais da loja (cores extras, fonte, cantos, textos, contatos). */
+  personalizacao: jsonb("personalizacao").$type<Personalizacao>().notNull().default({}),
   criadoEm: criadoEm(),
 });
 

@@ -3,8 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
 import { getDb, schema } from "@/db";
-import { marcaPorSlug } from "@/lib/marca";
-import { garantirContrasteComBranco, variaveisTema } from "@/lib/cores";
+import { marcaPorSlug, temaDaMarca } from "@/lib/marca";
+import { garantirContrasteComBranco } from "@/lib/cores";
+import { linkWhatsApp } from "@/lib/telefone";
 import { usuarioAtual } from "@/lib/sessao";
 import { CATEGORIAS, ORDEM_GRUPOS, podeVender } from "@/lib/catalogo";
 import { frequenciaTexto } from "@/lib/simulador";
@@ -55,19 +56,27 @@ export default async function SiteDaLoja({ params }: Props) {
     itens: aVenda.filter((p) => CATEGORIAS[p.categoria].grupo === g && p.categoria !== "agua_galao" && p.categoria !== "casco"),
   })).filter((g) => g.itens.length);
   const r = loja.regrasHorario;
+  const p = m.personalizacao ?? {};
   const abrir = (para?: string) => `/l/${m.slug}/abrir${para ? `?para=${para}` : ""}`;
 
   return (
-    <div style={variaveisTema(m.corPrimaria, m.corEscura) as React.CSSProperties} className="min-h-screen">
+    <div style={temaDaMarca(m) as React.CSSProperties} className="min-h-screen bg-fundo">
       {m.status !== "aprovada" && (
         <p className="bg-terra-claro px-4 py-2 text-center text-sm font-semibold text-terra-esc">
           Prévia: o site fica visível para os clientes quando a loja for aprovada.
         </p>
       )}
-      <header className="bg-floresta pb-16 pt-5 text-white">
+      <header
+        className="bg-floresta bg-cover bg-center pb-16 pt-5 text-white"
+        style={
+          m.temCapa
+            ? { backgroundImage: `linear-gradient(to bottom, color-mix(in srgb, var(--color-floresta) 55%, transparent), var(--color-floresta)), url(/l/${m.slug}/capa)` }
+            : undefined
+        }
+      >
         <div className="mx-auto max-w-xl px-4">
           <LogoLoja marca={m} tamanho={52} />
-          <h1 className="mt-6 text-[28px] font-bold leading-tight">Água na sua porta, no dia certo.</h1>
+          <h1 className="mt-6 text-[28px] font-bold leading-tight">{p.titulo || "Água na sua porta, no dia certo."}</h1>
           <p className="mt-2 text-base leading-relaxed text-hero-texto">
             {m.descricao ?? `Assine um plano de água da ${m.nome} ou peça na hora. Bebidas e gelo vão na mesma entrega.`}
           </p>
@@ -106,7 +115,22 @@ export default async function SiteDaLoja({ params }: Props) {
           )}
         </section>
 
-        <BotaoInstalar nome={m.nome} />
+        <BotaoInstalar nome={p.nomeCurto || m.nome} />
+
+        {(p.instagram || p.mostrarWhatsapp !== false) && (
+          <div className="grid grid-cols-2 gap-2">
+            {p.mostrarWhatsapp !== false && (
+              <a className="botao-sec" href={linkWhatsApp(loja.telefone, `Olá, ${m.nome}!`)} target="_blank" rel="noopener noreferrer">
+                WhatsApp
+              </a>
+            )}
+            {p.instagram && (
+              <a className="botao-sec" href={`https://instagram.com/${p.instagram.replace(/^@/, "")}`} target="_blank" rel="noopener noreferrer">
+                Instagram
+              </a>
+            )}
+          </div>
+        )}
 
         {planos.length > 0 && (
           <section className="pilha">

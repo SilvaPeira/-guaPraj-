@@ -2,6 +2,8 @@ import "server-only";
 import { cookies } from "next/headers";
 import { and, eq, ne, sql } from "drizzle-orm";
 import { getDb, schema } from "@/db";
+import type { Personalizacao } from "@/db/schema";
+import { temaDaLoja } from "./cores";
 
 /** Cookie que diz "este visitante está no site/app da loja X". */
 export const COOKIE_MARCA = "aguapraja_loja";
@@ -14,6 +16,8 @@ export type Marca = {
   corPrimaria: string;
   corEscura: string;
   temLogo: boolean;
+  temCapa: boolean;
+  personalizacao: Personalizacao;
   status: "pendente" | "aprovada" | "suspensa";
 };
 
@@ -25,6 +29,8 @@ const colunas = {
   corPrimaria: schema.lojas.corPrimaria,
   corEscura: schema.lojas.corEscura,
   temLogo: sql<boolean>`(${schema.lojas.logo} is not null)`,
+  temCapa: sql<boolean>`(${schema.lojas.capa} is not null)`,
+  personalizacao: schema.lojas.personalizacao,
   status: schema.lojas.status,
 };
 
@@ -34,7 +40,7 @@ export async function marcaPorSlug(slug: string): Promise<Marca | null> {
   const db = await getDb();
   const [r] = await db.select(colunas).from(schema.lojas).where(eq(schema.lojas.slug, slug)).limit(1);
   if (!r || !r.slug) return null;
-  return { ...r, slug: r.slug, temLogo: !!r.temLogo };
+  return { ...r, slug: r.slug, temLogo: !!r.temLogo, temCapa: !!r.temCapa };
 }
 
 /** Marca ativa para este visitante (cookie), se a loja estiver aprovada. */
@@ -75,4 +81,10 @@ export async function slugLivre(nome: string, ignorarLojaId?: string): Promise<s
     if (!existe) return s;
   }
   return `${base.slice(0, 30)}-${Date.now().toString(36)}`;
+}
+
+/** Variáveis CSS completas do tema de uma marca. */
+export function temaDaMarca(m: Pick<Marca, "corPrimaria" | "corEscura" | "personalizacao">): Record<string, string> {
+  const p = m.personalizacao ?? {};
+  return temaDaLoja({ corPrimaria: m.corPrimaria, corEscura: m.corEscura, corDestaque: p.corDestaque, corFundo: p.corFundo, fonte: p.fonte, cantos: p.cantos });
 }

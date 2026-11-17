@@ -72,6 +72,7 @@ Atualizado em: 17/11/2026
 - ✅ Frequência semanal / quinzenal / mensal com **ciência obrigatória** do dia e horário
 - ✅ Marca e estoque no catálogo
 - ✅ Site e app instalável com a **marca de cada distribuidora** (selo ÁguaPrajá discreto)
+- ✅ Personalização completa: logo, capa, 5 cores (botões, topo, destaques, fundo, ícone), fonte, cantos, textos, nome do ícone, Instagram/WhatsApp — com prévia ao vivo
 
 ## Testes automáticos
 

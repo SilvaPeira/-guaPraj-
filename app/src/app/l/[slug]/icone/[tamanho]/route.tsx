@@ -14,14 +14,15 @@ export async function GET(_: Request, ctx: RouteContext<"/l/[slug]/icone/[tamanh
 
   const db = await getDb();
   const [l] = await db
-    .select({ nome: schema.lojas.nome, logo: schema.lojas.logo, cor: schema.lojas.corEscura })
+    .select({ nome: schema.lojas.nome, logo: schema.lojas.logo, cor: schema.lojas.corEscura, p: schema.lojas.personalizacao })
     .from(schema.lojas)
     .where(eq(schema.lojas.slug, slug))
     .limit(1);
   if (!l) return new Response("Loja não encontrada", { status: 404 });
 
-  const fundo = garantirContrasteComBranco(l.cor);
-  // Com logo: logo sobre fundo branco. Sem logo: iniciais sobre a cor da loja.
+  // Fundo do ícone: o que a loja escolheu; sem escolha, branco (com logo) ou a cor do topo (sem logo).
+  const escolhido = l.p?.corIcone && /^#[0-9a-fA-F]{6}$/.test(l.p.corIcone) ? l.p.corIcone : null;
+  const fundo = escolhido ?? (l.logo ? "#ffffff" : garantirContrasteComBranco(l.cor));
   const iniciais = l.nome
     .replace(/distribuidora|dep[oó]sito|de |da |do /gi, "")
     .trim()
@@ -40,7 +41,7 @@ export async function GET(_: Request, ctx: RouteContext<"/l/[slug]/icone/[tamanh
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: l.logo ? "#ffffff" : fundo,
+          background: fundo,
           borderRadius: mascara ? 0 : tamanho * 0.18,
         }}
       >

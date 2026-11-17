@@ -63,3 +63,64 @@ export const PALETAS: { nome: string; primaria: string; escura: string }[] = [
   { nome: "Azul noite", primaria: "#2952a3", escura: "#16244a" },
   { nome: "Grafite", primaria: "#3f4a54", escura: "#1d2329" },
 ];
+
+// ───────────── Tema completo da loja ─────────────
+
+export const FONTES = {
+  sora: { nome: "Sora (padrão)", variavel: "--font-sora" },
+  poppins: { nome: "Poppins", variavel: "--font-poppins" },
+  montserrat: { nome: "Montserrat", variavel: "--font-montserrat" },
+  nunito: { nome: "Nunito (arredondada)", variavel: "--font-nunito" },
+  oswald: { nome: "Oswald (estreita, forte)", variavel: "--font-oswald" },
+  playfair: { nome: "Playfair (elegante)", variavel: "--font-playfair" },
+} as const;
+export type Fonte = keyof typeof FONTES;
+
+export const CANTOS = {
+  arredondado: { nome: "Arredondado", cartao: "20px", botao: "16px", campo: "12px", chip: "9999px" },
+  suave: { nome: "Suave", cartao: "12px", botao: "10px", campo: "8px", chip: "10px" },
+  reto: { nome: "Reto", cartao: "4px", botao: "4px", campo: "4px", chip: "4px" },
+} as const;
+export type Cantos = keyof typeof CANTOS;
+
+export type OpcoesTema = {
+  corPrimaria: string;
+  corEscura: string;
+  corDestaque?: string;
+  corFundo?: string;
+  fonte?: Fonte;
+  cantos?: Cantos;
+};
+
+/** Garante fundo claro (o texto do app é escuro). */
+export function garantirFundoClaro(cor: string): string {
+  let c = HEX.test(cor) ? cor : "#f4f7f3";
+  for (let i = 0; i < 12 && contraste(c, "#17261f") < 10; i++) c = misturar(c, "#ffffff", 0.25);
+  return c;
+}
+
+/** Todas as variáveis CSS do tema da loja. */
+export function temaDaLoja(o: OpcoesTema): Record<string, string> {
+  const base = variaveisTema(o.corPrimaria, o.corEscura);
+  const destaque = garantirContrasteComBranco(HEX.test(o.corDestaque ?? "") ? o.corDestaque! : "#4b1e52");
+  const fundo = garantirFundoClaro(o.corFundo ?? "#f4f7f3");
+  const cantos = CANTOS[o.cantos ?? "arredondado"] ?? CANTOS.arredondado;
+  const fonte = FONTES[o.fonte ?? "sora"] ?? FONTES.sora;
+  return {
+    ...base,
+    "--color-acai": destaque,
+    "--color-acai-claro": misturar(destaque, "#ffffff", 0.9),
+    "--color-rio": destaque,
+    "--color-rio-esc": garantirContrasteComBranco(misturar(destaque, "#000000", 0.2)),
+    "--color-rio-claro": misturar(destaque, "#ffffff", 0.88),
+    "--color-rio-luz": misturar(destaque, "#ffffff", 0.72),
+    "--color-fundo": fundo,
+    "--font-titulo": `var(${fonte.variavel}), var(--font-inter), sans-serif`,
+    "--raio-cartao": cantos.cartao,
+    "--raio-botao": cantos.botao,
+    "--raio-campo": cantos.campo,
+    "--raio-chip": cantos.chip,
+  };
+}
+
+export const FUNDOS = ["#f4f7f3", "#ffffff", "#f5f3ee", "#eef4f8", "#f6f1f7", "#fbf5ec", "#f2f2f2"];

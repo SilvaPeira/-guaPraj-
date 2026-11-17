@@ -70,6 +70,8 @@ export default async function MeuApp() {
           corPrimaria={loja.corPrimaria}
           corEscura={loja.corEscura}
           logoUrl={loja.logo && loja.slug ? `/l/${loja.slug}/logo?v=${loja.logo.length}` : null}
+          capaUrl={loja.capa && loja.slug ? `/l/${loja.slug}/capa?v=${loja.capa.length}` : null}
+          personalizacao={loja.personalizacao ?? {}}
           baseUrl={base}
         />
       </main>
