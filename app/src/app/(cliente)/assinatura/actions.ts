@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { exigirCliente } from "@/lib/cliente";
-import { agendarTrocaPlano, alterarAgenda, alternarPulo, cancelarAssinatura, criarAssinatura, type DadosAgenda } from "@/lib/assinaturas";
+import { agendarTrocaPlano, alterarAgenda, alternarPulo, cancelarAssinatura, criarAssinatura, pausarAssinatura, reativarAssinatura, type DadosAgenda } from "@/lib/assinaturas";
 import { cancelarPedidoCliente, ErroPedido } from "@/lib/pedidos";
 import type { EstadoAgenda } from "@/components/FormAgenda";
 
@@ -101,5 +101,18 @@ export async function cancelarPedido(form: FormData) {
     if (!(e instanceof ErroPedido)) throw e;
   }
   revalidatePath("/pedidos");
+  revalidatePath("/inicio");
+}
+
+export async function pausarOuReativar(form: FormData) {
+  const { usuario } = await exigirCliente();
+  const id = String(form.get("assinaturaId"));
+  try {
+    if (form.get("acao") === "reativar") await reativarAssinatura(usuario.id, id);
+    else await pausarAssinatura(usuario.id, id);
+  } catch (e) {
+    if (!(e instanceof ErroPedido)) throw e;
+  }
+  revalidatePath("/assinatura");
   revalidatePath("/inicio");
 }

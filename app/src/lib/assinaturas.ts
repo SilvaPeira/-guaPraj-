@@ -4,7 +4,7 @@ import { getDb, schema } from "@/db";
 import type { AgendaPlano } from "@/db/schema";
 import { proximasEntregas, validarHorario } from "./agenda";
 import { distanciaKm, RAIO_RETIRADA_KM } from "./geo";
-import { ErroPedido, fimDoCiclo, gerarEntregas, removerEntregasFuturas, temVaga, textoAceite } from "./pedidos";
+import { ErroPedido, fimDoCiclo, gerarEntregas, reativarCiclo, removerEntregasFuturas, temVaga, textoAceite } from "./pedidos";
 import { agoraLocal, somarDias } from "./tempo";
 
 export type DadosAgenda = Omit<AgendaPlano, "primeiraData">;
@@ -174,4 +174,29 @@ export async function agendarTrocaPlano(clienteId: string, id: string, planoId: 
     if (p.id === a.planoId) planoId = null;
   }
   await db.update(schema.assinaturas).set({ planoProximoId: planoId }).where(eq(schema.assinaturas.id, a.id));
+}
+
+/**
+ * Pausa o plano (viagem, por exemplo): sem novas entregas nem cobranças.
+ * O que sobrar do mês já pago vira saldo quando o plano voltar.
+ */
+export async function pausarAssinatura(clienteId: string, id: string) {
+  const { a, db } = await minhaAssinatura(clienteId, id);
+  if (a.status !== "ativa") throw new ErroPedido("Só dá para pausar um plano ativo.");
+  const amanha = somarDias(agoraLocal().data, 1);
+  await db.transaction(async (tx) => {
+    await removerEntregasFuturas(tx, a.id, amanha);
+    await tx.update(schema.assinaturas).set({ status: "pausada" }).where(eq(schema.assinaturas.id, a.id));
+  });
+}
+
+/** Reativa o plano pausado. Se o mês pago acabou, o novo mês começa na próxima entrega. */
+export async function reativarAssinatura(clienteId: string, id: string) {
+  const { a, db } = await minhaAssinatura(clienteId, id);
+  if (a.status !== "pausada") throw new ErroPedido("Este plano não está pausado.");
+  await db.transaction(async (tx) => {
+    const [ativa] = await tx.update(schema.assinaturas).set({ status: "ativa" }).where(eq(schema.assinaturas.id, a.id)).returning();
+    await reativarCiclo(tx, ativa);
+    await gerarEntregas(tx, a.id);
+  });
 }

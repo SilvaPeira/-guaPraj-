@@ -22,8 +22,9 @@ async function criar(): Promise<Db> {
     return drizzlePostgres(client, { schema }) as unknown as Db;
   }
   const { PGlite } = await import("@electric-sql/pglite");
-  const dir = path.join(process.cwd(), ".data", "pglite");
-  mkdirSync(path.dirname(dir), { recursive: true });
+  // PGLITE_DIR=memory:// é usado pelos testes automáticos (banco descartável).
+  const dir = process.env.PGLITE_DIR ?? path.join(process.cwd(), ".data", "pglite");
+  if (!dir.startsWith("memory://")) mkdirSync(path.dirname(dir), { recursive: true });
   const client = new PGlite(dir);
   const db = drizzlePglite(client, { schema });
   await migratePglite(db, { migrationsFolder: path.join(process.cwd(), "drizzle") });

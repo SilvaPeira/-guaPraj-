@@ -8,6 +8,12 @@ export const DIAS_PLURAL = ["aos domingos", "às segundas", "às terças", "às 
 
 /** Data e hora "agora" no Pará. */
 export function agoraLocal(): { data: string; hora: string; minutos: number } {
+  // Só para testes automáticos: "AAAA-MM-DD HH:MM" fixa o relógio.
+  const fixo = process.env.NODE_ENV !== "production" ? process.env.AGUAPRAJA_AGORA_TESTE : undefined;
+  if (fixo) {
+    const [data, hora] = fixo.split(" ");
+    return { data, hora, minutos: paraMinutos(hora) };
+  }
   const partes = new Intl.DateTimeFormat("en-CA", {
     timeZone: FUSO,
     year: "numeric",

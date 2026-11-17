@@ -11,7 +11,7 @@ import { agoraLocal, dataBonita, somarDias } from "@/lib/tempo";
 import { formatarReais } from "@/lib/validacao";
 import { Topo, Vazio } from "@/components/ui";
 import FormAgenda from "@/components/FormAgenda";
-import { pular, salvarAgenda } from "./actions";
+import { pausarOuReativar, pular, salvarAgenda } from "./actions";
 import { FormCancelar, FormTrocarPlano } from "./Formularios";
 
 export const metadata: Metadata = { title: "Minha assinatura" };
@@ -31,14 +31,14 @@ const br = (d: string) => `${d.slice(8, 10)}/${d.slice(5, 7)}`;
 export default async function Assinatura({ searchParams }: PageProps<"/assinatura">) {
   const sp = await searchParams;
   const { usuario, endereco, db } = await exigirCliente();
-  const [a] = await db
+  const [atual] = await db
     .select()
     .from(schema.assinaturas)
     .where(eq(schema.assinaturas.clienteId, usuario.id))
     .orderBy(desc(schema.assinaturas.criadoEm))
     .limit(1);
 
-  if (!a) {
+  if (!atual) {
     return (
       <>
         <Topo titulo="Minha assinatura" voltar="/inicio" />
@@ -54,7 +54,8 @@ export default async function Assinatura({ searchParams }: PageProps<"/assinatur
     );
   }
 
-  await gerarEntregas(db, a.id); // mantém as próximas semanas sempre geradas
+  await gerarEntregas(db, atual.id); // renova o mês (saldo) e mantém as próximas semanas geradas
+  const [a] = await db.select().from(schema.assinaturas).where(eq(schema.assinaturas.id, atual.id)).limit(1);
   const hoje = agoraLocal().data;
   const amanha = somarDias(hoje, 1);
   const [[plano], [loja], planosLoja, proximas] = await Promise.all([
@@ -72,6 +73,8 @@ export default async function Assinatura({ searchParams }: PageProps<"/assinatur
   const proximoPlano = a.planoProximoId ? planosLoja.find((p) => p.id === a.planoProximoId) : null;
   const pulosFuturos = a.pulos.filter((d) => d >= amanha).sort();
   const cancelada = a.status === "cancelada";
+  const pausada = a.status === "pausada";
+  const franquia = plano.galoesMes + a.saldoAcumulado;
   const km = distanciaKm(endereco, loja);
   const podeEntregar = loja.fazEntrega && km <= loja.raioKm;
   const podeRetirar = loja.fazRetirada && km <= RAIO_RETIRADA_KM;
@@ -91,13 +94,24 @@ export default async function Assinatura({ searchParams }: PageProps<"/assinatur
             </b>
             <span className="text-sm text-[#e6d3ea]">{formatarReais(plano.precoCentavos)}/mês</span>
           </div>
-          <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white/20" role="progressbar" aria-valuenow={ciclo.entregues} aria-valuemax={plano.galoesMes} aria-label="Galões recebidos no mês">
-            <div className="h-full rounded-full bg-[#f2a65a]" style={{ width: `${Math.min(100, Math.round((ciclo.entregues / plano.galoesMes) * 100))}%` }} />
+          <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white/20" role="progressbar" aria-valuenow={ciclo.entregues} aria-valuemax={franquia} aria-label="Galões recebidos no mês">
+            <div className="h-full rounded-full bg-[#f2a65a]" style={{ width: `${Math.min(100, Math.round((ciclo.entregues / franquia) * 100))}%` }} />
           </div>
           <p className="mt-2 text-sm">
-            {ciclo.entregues} de {plano.galoesMes} recebidos neste mês (até {br(ciclo.fim)}) · {ciclo.programados} programados
+            {ciclo.entregues} de {franquia} recebidos neste mês (até {br(ciclo.fim)}) · {ciclo.programados} programados
           </p>
-          <p className="mt-1 text-sm text-[#e6d3ea]">{cancelada ? `Cancelado · entregas até ${br(a.validaAte ?? ciclo.fim)}` : descreverAgenda(a.agenda)}</p>
+          {a.saldoAcumulado > 0 && (
+            <p className="mt-1 text-sm">
+              Inclui <b>{a.saldoAcumulado} {a.saldoAcumulado === 1 ? "galão" : "galões"} de saldo</b> do mês anterior. Use numa compra adicional, sem custo.
+            </p>
+          )}
+          <p className="mt-1 text-sm text-[#e6d3ea]">
+            {cancelada
+              ? `Cancelado · entregas até ${br(a.validaAte ?? ciclo.fim)}`
+              : pausada
+                ? "Pausado: sem entregas e sem cobranças até você reativar."
+                : descreverAgenda(a.agenda)}
+          </p>
           {proximoPlano && <p className="mt-1 text-sm text-[#e6d3ea]">A partir de {proxCiclo}: plano {proximoPlano.galoesMes} galões ({formatarReais(proximoPlano.precoCentavos)}).</p>}
         </section>
 
@@ -141,11 +155,36 @@ export default async function Assinatura({ searchParams }: PageProps<"/assinatur
           ))}
         </ul>
 
+        {pausada && (
+          <form action={pausarOuReativar} className="pilha">
+            <input type="hidden" name="assinaturaId" value={a.id} />
+            <button name="acao" value="reativar" className="botao">
+              Reativar meu plano
+            </button>
+            <p className="text-center text-xs text-tinta-suave">As entregas voltam no próximo dia da sua agenda.</p>
+          </form>
+        )}
+
         {!cancelada && (
           <>
             <Link href={`/pedir/${loja.id}?assinatura=${a.id}`} className="botao">
-              Compra adicional (galão extra ou bebidas)
+              {a.saldoAcumulado > 0 ? `Compra adicional (${a.saldoAcumulado} de saldo grátis)` : "Compra adicional (galão extra ou bebidas)"}
             </Link>
+            {!pausada && (
+              <details className="cartao">
+                <summary className="cursor-pointer list-none font-bold">Pausar o plano (viagem, férias)</summary>
+                <form action={pausarOuReativar} className="mt-3 pilha">
+                  <input type="hidden" name="assinaturaId" value={a.id} />
+                  <p className="text-sm text-tinta-suave">
+                    As próximas entregas são suspensas e não há nova cobrança enquanto estiver pausado. O que sobrar do mês já pago vira saldo
+                    (até {loja.regrasHorario.limiteAcumulo ?? 4} galões) quando você voltar.
+                  </p>
+                  <button name="acao" value="pausar" className="botao-sec">
+                    Pausar agora
+                  </button>
+                </form>
+              </details>
+            )}
 
             <details className="cartao">
               <summary className="cursor-pointer list-none font-bold">Alterar dia e horário</summary>

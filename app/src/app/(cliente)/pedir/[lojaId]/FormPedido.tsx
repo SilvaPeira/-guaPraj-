@@ -19,6 +19,8 @@ type Props = {
   regras: RegrasCliente;
   datas: OpcaoData[];
   galoesInicial: number;
+  /** Galões de saldo do plano (sem custo) — só na compra adicional. */
+  saldoGaloes?: number;
 };
 
 const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -36,8 +38,9 @@ export default function FormPedido(p: Props) {
   const grupos = [...new Set(p.produtos.map((x) => x.grupo))];
   const temAlcool = p.produtos.some((x) => x.alcoolico && (qtd[x.id] ?? 0) > 0);
   const nCascos = casco === "comprar" ? Math.min(cascosComprar, galoes) : 0;
+  const gratis = Math.min(galoes, p.saldoGaloes ?? 0);
   const subtotal =
-    galoes * p.precoGalaoCentavos + p.produtos.reduce((s, x) => s + (qtd[x.id] ?? 0) * x.precoCentavos, 0) + nCascos * (p.precoCascoCentavos ?? 0);
+    (galoes - gratis) * p.precoGalaoCentavos + p.produtos.reduce((s, x) => s + (qtd[x.id] ?? 0) * x.precoCentavos, 0) + nCascos * (p.precoCascoCentavos ?? 0);
   const taxaEntrega = modo === "entrega" ? p.taxaEntregaCentavos : 0;
   const taxaHorario = modo === "entrega" && (horario?.tipo === "imediato" || horario?.tipo === "exato") ? p.regras.taxaExtraCentavos : 0;
   const total = subtotal + taxaEntrega + taxaHorario;
@@ -55,6 +58,11 @@ export default function FormPedido(p: Props) {
             <p className="text-sm text-tinta-suave">
               {brl(p.precoGalaoCentavos)} cada{p.assinaturaId ? " · preço do seu plano" : ""}
             </p>
+            {(p.saldoGaloes ?? 0) > 0 && (
+              <p className="text-sm font-semibold text-verde">
+                {gratis} de {p.saldoGaloes} do seu saldo, sem custo
+              </p>
+            )}
           </div>
           <Passo valor={galoes} onChange={setGaloes} nome="galoes" rotulo="galões" max={30} />
         </div>

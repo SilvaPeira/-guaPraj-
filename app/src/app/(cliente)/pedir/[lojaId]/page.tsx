@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { schema } from "@/db";
 import { exigirCliente } from "@/lib/cliente";
 import { CATEGORIAS, podeVender } from "@/lib/catalogo";
@@ -22,16 +22,18 @@ export default async function Pedir({ params, searchParams }: PageProps<"/pedir/
   // Compra adicional de assinante: galão pelo preço do plano.
   let assinaturaId: string | null = null;
   let precoGalaoPlano: number | null = null;
+  let saldo = 0;
   if (typeof sp.assinatura === "string") {
     const [a] = await db
-      .select({ id: schema.assinaturas.id, preco: schema.planos.precoCentavos, galoes: schema.planos.galoesMes })
+      .select({ id: schema.assinaturas.id, preco: schema.planos.precoCentavos, galoes: schema.planos.galoesMes, saldo: schema.assinaturas.saldoAcumulado })
       .from(schema.assinaturas)
       .innerJoin(schema.planos, eq(schema.planos.id, schema.assinaturas.planoId))
-      .where(and(eq(schema.assinaturas.id, sp.assinatura), eq(schema.assinaturas.clienteId, usuario.id), eq(schema.assinaturas.lojaId, loja.id), eq(schema.assinaturas.status, "ativa")))
+      .where(and(eq(schema.assinaturas.id, sp.assinatura), eq(schema.assinaturas.clienteId, usuario.id), eq(schema.assinaturas.lojaId, loja.id), inArray(schema.assinaturas.status, ["ativa", "pausada"])))
       .limit(1);
     if (a) {
       assinaturaId = a.id;
       precoGalaoPlano = Math.round(a.preco / a.galoes);
+      saldo = a.saldo;
     }
   }
 
@@ -70,6 +72,7 @@ export default async function Pedir({ params, searchParams }: PageProps<"/pedir/
             regras={regrasParaCliente(loja.regrasHorario)}
             datas={datas}
             galoesInicial={galao ? (assinaturaId ? 1 : 2) : 0}
+            saldoGaloes={saldo}
           />
         )}
       </main>

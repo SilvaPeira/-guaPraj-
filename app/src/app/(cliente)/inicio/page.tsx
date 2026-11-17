@@ -20,6 +20,14 @@ export default async function Inicio() {
   const hoje = agoraLocal().data;
   const marca = await marcaAtual();
 
+  // Renova o mês (saldo, troca de plano) antes de ler a assinatura.
+  const [ultima] = await db
+    .select({ id: schema.assinaturas.id, status: schema.assinaturas.status })
+    .from(schema.assinaturas)
+    .where(eq(schema.assinaturas.clienteId, u.id))
+    .orderBy(desc(schema.assinaturas.criadoEm))
+    .limit(1);
+  if (ultima && ultima.status !== "cancelada") await gerarEntregas(db, ultima.id);
   const [assinatura] = await db
     .select({ a: schema.assinaturas, plano: schema.planos, loja: schema.lojas })
     .from(schema.assinaturas)
@@ -28,7 +36,6 @@ export default async function Inicio() {
     .where(and(eq(schema.assinaturas.clienteId, u.id), inArray(schema.assinaturas.status, ["ativa", "pausada", "cancelada"])))
     .orderBy(desc(schema.assinaturas.criadoEm))
     .limit(1);
-  if (assinatura && assinatura.a.status !== "cancelada") await gerarEntregas(db, assinatura.a.id);
   const ciclo = assinatura ? await galoesNoCiclo(db, assinatura.a) : null;
 
   const proximos = await db
@@ -91,7 +98,9 @@ export default async function Inicio() {
               <div className="h-full rounded-full bg-[#f2a65a]" style={{ width: `${Math.min(100, Math.round((ciclo.entregues / ativa.plano.galoesMes) * 100))}%` }} />
             </div>
             <p className="mt-2 text-sm">
-              {ciclo.entregues} de {ativa.plano.galoesMes} recebidos este mês
+              {ativa.a.status === "pausada" ? "Plano pausado · " : ""}
+              {ciclo.entregues} de {ativa.plano.galoesMes + ativa.a.saldoAcumulado} recebidos este mês
+              {ativa.a.saldoAcumulado > 0 ? ` (inclui ${ativa.a.saldoAcumulado} de saldo)` : ""}
             </p>
             <p className="text-sm text-[#e6d3ea]">
               {ativa.loja.nome} · {descreverAgenda(ativa.a.agenda)}

@@ -2,7 +2,7 @@ import "server-only";
 import { randomInt } from "node:crypto";
 import { and, eq, gte, inArray, lt, lte, ne, notInArray, sql } from "drizzle-orm";
 import { getDb, schema } from "@/db";
-import { capacidadeDaJanela, entregaNaData, sobrepoe, validarHorario, type TipoHorario } from "./agenda";
+import { capacidadeDaJanela, entregaNaData, proximasEntregas, sobrepoe, validarHorario, type TipoHorario } from "./agenda";
 export { textoAceite } from "./agenda";
 import { podeVender } from "./catalogo";
 import { distanciaKm } from "./geo";
@@ -77,22 +77,25 @@ export async function criarPedido(n: NovoPedido): Promise<{ id: string; numero: 
     const produtos = await tx.select().from(schema.produtos).where(eq(schema.produtos.lojaId, loja.id));
     const galao = produtos.find((p) => p.categoria === "agua_galao");
     const casco = produtos.find((p) => p.categoria === "casco");
-    const linhas: { produto: (typeof produtos)[number]; qtd: number; preco: number }[] = [];
+    const linhas: { produto: (typeof produtos)[number]; qtd: number; preco: number; nome?: string }[] = [];
 
     let precoGalao = galao?.precoCentavos ?? 0;
+    let doSaldo = 0;
     if (n.assinaturaId) {
       const [a] = await tx
-        .select({ planoPreco: schema.planos.precoCentavos, planoGaloes: schema.planos.galoesMes })
+        .select({ planoPreco: schema.planos.precoCentavos, planoGaloes: schema.planos.galoesMes, saldo: schema.assinaturas.saldoAcumulado })
         .from(schema.assinaturas)
         .innerJoin(schema.planos, eq(schema.planos.id, schema.assinaturas.planoId))
         .where(and(eq(schema.assinaturas.id, n.assinaturaId), eq(schema.assinaturas.clienteId, n.clienteId), eq(schema.assinaturas.lojaId, loja.id)))
         .limit(1);
       if (!a) throw new ErroPedido("Assinatura não encontrada.");
       precoGalao = Math.round(a.planoPreco / a.planoGaloes);
+      doSaldo = Math.min(a.saldo, n.galoes);
     }
     if (n.galoes > 0) {
       if (!galao || !podeVender(galao)) throw new ErroPedido("A loja está sem galão no momento.");
-      linhas.push({ produto: galao, qtd: n.galoes, preco: precoGalao });
+      if (doSaldo > 0) linhas.push({ produto: galao, qtd: doSaldo, preco: 0, nome: "Galão do seu saldo" });
+      if (n.galoes - doSaldo > 0) linhas.push({ produto: galao, qtd: n.galoes - doSaldo, preco: precoGalao });
     }
     for (const it of n.itens) {
       if (it.qtd <= 0) continue;
@@ -153,7 +156,7 @@ export async function criarPedido(n: NovoPedido): Promise<{ id: string; numero: 
       linhas.map((l) => ({
         pedidoId: pedido.id,
         produtoId: l.produto.id,
-        nome: l.produto.marca ? `${l.produto.nome} · ${l.produto.marca}` : l.produto.nome,
+        nome: l.nome ?? (l.produto.marca ? `${l.produto.nome} · ${l.produto.marca}` : l.produto.nome),
         qtd: l.qtd,
         precoUnitCentavos: l.preco,
         alcoolico: l.produto.alcoolico,
@@ -161,6 +164,12 @@ export async function criarPedido(n: NovoPedido): Promise<{ id: string; numero: 
       })),
     );
     await tx.insert(schema.eventosPedido).values({ pedidoId: pedido.id, status: "recebido", porUsuarioId: n.clienteId });
+    if (doSaldo > 0) {
+      await tx
+        .update(schema.assinaturas)
+        .set({ saldoAcumulado: sql`${schema.assinaturas.saldoAcumulado} - ${doSaldo}` })
+        .where(eq(schema.assinaturas.id, n.assinaturaId!));
+    }
     if (temAlcool) await tx.update(schema.usuarios).set({ declarou18: true }).where(eq(schema.usuarios.id, n.clienteId));
     return pedido;
   });
@@ -178,6 +187,17 @@ export async function cancelarPedidoCliente(clienteId: string, pedidoId: string,
     if (!p) throw new ErroPedido("Pedido não encontrado.");
     if (p.status !== "recebido") throw new ErroPedido("A loja já confirmou este pedido. Fale com ela pelo WhatsApp.");
     await devolverEstoque(tx, p.id);
+    if (p.origem === "extra" && p.assinaturaId) {
+      const doSaldo = (await tx.select().from(schema.itensPedido).where(eq(schema.itensPedido.pedidoId, p.id)))
+        .filter((i) => i.retornavel && i.precoUnitCentavos === 0)
+        .reduce((t, i) => t + i.qtd, 0);
+      if (doSaldo) {
+        await tx
+          .update(schema.assinaturas)
+          .set({ saldoAcumulado: sql`${schema.assinaturas.saldoAcumulado} + ${doSaldo}` })
+          .where(eq(schema.assinaturas.id, p.assinaturaId));
+      }
+    }
     await tx.update(schema.pedidos).set({ status: "cancelado", motivo }).where(eq(schema.pedidos.id, p.id));
     await tx.insert(schema.eventosPedido).values({ pedidoId: p.id, status: "cancelado", porUsuarioId: clienteId, nota: motivo });
   });
@@ -222,25 +242,68 @@ export function inicioDoCicloDe(cicloInicio: string, data: string): string {
  * Renova o ciclo quando o mês acaba (e aplica a troca de plano agendada).
  * Chamada antes de gerar entregas — por isso a renovação é “preguiçosa”.
  */
-async function renovarCiclo(db: Db | Tx, a: Assinatura): Promise<Assinatura> {
+/** Galões do plano usados num período: entregas que não foram canceladas nem ficaram "não entregue". */
+async function galoesUsados(db: Db | Tx, assinaturaId: string, de: string, ate: string): Promise<number> {
+  if (ate < de) return 0;
+  const linhas = await db
+    .select({ qtd: schema.itensPedido.qtd })
+    .from(schema.pedidos)
+    .innerJoin(schema.itensPedido, eq(schema.itensPedido.pedidoId, schema.pedidos.id))
+    .where(
+      and(
+        eq(schema.pedidos.assinaturaId, assinaturaId),
+        eq(schema.pedidos.origem, "plano"),
+        gte(schema.pedidos.data, de),
+        lte(schema.pedidos.data, ate),
+        notInArray(schema.pedidos.status, ["cancelado", "nao_entregue"]),
+        eq(schema.itensPedido.retornavel, true),
+      ),
+    );
+  return linhas.reduce((t, l) => t + l.qtd, 0);
+}
+
+/**
+ * Fecha os ciclos vencidos: o que sobrou do plano + saldo vira saldo do mês seguinte
+ * (até o limite da loja) e a troca de plano agendada passa a valer.
+ * Chamada antes de gerar entregas — por isso a renovação é "preguiçosa".
+ * novoInicio: ao reativar um plano pausado, o mês recomeça na próxima entrega.
+ */
+async function renovarCiclo(db: Db | Tx, a: Assinatura, novoInicio?: string): Promise<Assinatura> {
   const hoje = agoraLocal().data;
-  let { cicloInicio, planoId, planoProximoId } = a;
+  let { cicloInicio, planoId, planoProximoId, saldoAcumulado } = a;
   let mudou = false;
+  const [loja] = await db.select({ regras: schema.lojas.regrasHorario }).from(schema.lojas).where(eq(schema.lojas.id, a.lojaId)).limit(1);
+  const limite = loja?.regras.limiteAcumulo ?? 4;
   while (hoje > fimDoCiclo(cicloInicio)) {
-    cicloInicio = somarDias(fimDoCiclo(cicloInicio), 1);
+    const fim = fimDoCiclo(cicloInicio);
+    const [plano] = await db.select({ g: schema.planos.galoesMes }).from(schema.planos).where(eq(schema.planos.id, planoId)).limit(1);
+    const usados = await galoesUsados(db, a.id, cicloInicio, fim);
+    saldoAcumulado = Math.min(limite, Math.max(0, (plano?.g ?? 0) + saldoAcumulado - usados));
+    cicloInicio = somarDias(fim, 1);
     if (planoProximoId) {
       planoId = planoProximoId;
       planoProximoId = null;
     }
     mudou = true;
   }
+  if (novoInicio && novoInicio > cicloInicio) {
+    cicloInicio = novoInicio;
+    mudou = true;
+  }
   if (!mudou) return a;
   const [novo] = await db
     .update(schema.assinaturas)
-    .set({ cicloInicio, planoId, planoProximoId })
+    .set({ cicloInicio, planoId, planoProximoId, saldoAcumulado })
     .where(eq(schema.assinaturas.id, a.id))
     .returning();
   return novo;
+}
+
+/** Reativa um plano pausado: se o mês pago já acabou, o novo mês começa na próxima entrega. */
+export async function reativarCiclo(db: Db | Tx, a: Assinatura): Promise<Assinatura> {
+  const hoje = agoraLocal().data;
+  const [prox] = proximasEntregas(a.agenda, somarDias(hoje, 1), 1);
+  return renovarCiclo(db, a, hoje > fimDoCiclo(a.cicloInicio) ? prox : undefined);
 }
 
 /**
@@ -291,10 +354,16 @@ export async function gerarEntregas(db: Db | Tx, assinaturaId: string, ate?: str
       )
       .limit(1);
     const cobraMensalidade = anteriores.length === 0;
-    const precoPlano = d > fimCicloAtual && proximo ? proximo.precoCentavos : plano.precoCentavos;
+    const planoDoCiclo = d > fimCicloAtual && proximo ? proximo : plano;
+    const precoPlano = planoDoCiclo.precoCentavos;
+    // Galões além do plano (+ saldo, no ciclo atual) são cobrados pelo preço do plano.
+    const franquia = planoDoCiclo.galoesMes + (iniCiclo === a.cicloInicio ? a.saldoAcumulado : 0);
+    const jaProgramados = await galoesUsados(db, a.id, iniCiclo, somarDias(d, -1));
+    const alem = Math.max(0, jaProgramados + a.agenda.qtdPorEntrega - franquia) - Math.max(0, jaProgramados - franquia);
+    const precoUnitPlano = Math.round(planoDoCiclo.precoCentavos / planoDoCiclo.galoesMes);
     const cascos = a.cascosAComprar > 0 && casco ? Math.min(a.cascosAComprar, a.agenda.qtdPorEntrega) : 0;
     const valorCascos = cascos * (casco?.precoCentavos ?? 0);
-    const subtotal = (cobraMensalidade ? precoPlano : 0) + valorCascos;
+    const subtotal = (cobraMensalidade ? precoPlano : 0) + valorCascos + alem * precoUnitPlano;
 
     const inseridos = await db
       .insert(schema.pedidos)
@@ -333,7 +402,10 @@ export async function gerarEntregas(db: Db | Tx, assinaturaId: string, ate?: str
       },
     ];
     if (cobraMensalidade) {
-      itens.push({ pedidoId, produtoId: null, nome: `Mensalidade do plano (${plano.galoesMes} galões)`, qtd: 1, precoUnitCentavos: precoPlano });
+      itens.push({ pedidoId, produtoId: null, nome: `Mensalidade do plano (${planoDoCiclo.galoesMes} galões)`, qtd: 1, precoUnitCentavos: precoPlano });
+    }
+    if (alem > 0) {
+      itens.push({ pedidoId, produtoId: null, nome: "Galão além do plano (preço do plano)", qtd: alem, precoUnitCentavos: precoUnitPlano });
     }
     if (cascos && casco) {
       itens.push({ pedidoId, produtoId: casco.id, nome: casco.nome, qtd: cascos, precoUnitCentavos: casco.precoCentavos });
