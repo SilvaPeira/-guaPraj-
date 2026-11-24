@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, getTableColumns, inArray } from "drizzle-orm";
 import { getDb, schema } from "@/db";
 import { distanciaKm, RAIO_RETIRADA_KM } from "./geo";
 import { podeVender } from "./catalogo";
@@ -7,7 +7,7 @@ import { podeVender } from "./catalogo";
 export type Plano = typeof schema.planos.$inferSelect;
 
 export type LojaProxima = {
-  loja: typeof schema.lojas.$inferSelect;
+  loja: Omit<typeof schema.lojas.$inferSelect, "logo" | "capa">;
   distanciaKm: number;
   /** Entrega neste endereço? (dentro do raio da loja) */
   entregaAqui: boolean;
@@ -30,7 +30,11 @@ export function descontoPercentual(plano: Plano, precoAvulso: number | null): nu
 /** Lojas aprovadas que atendem o ponto: entregam (dentro do raio) ou são próximas para retirada. */
 export async function lojasQueAtendem(ponto: { lat: number; lng: number }): Promise<LojaProxima[]> {
   const db = await getDb();
-  const lojas = await db.select().from(schema.lojas).where(eq(schema.lojas.status, "aprovada"));
+  // Sem logo e capa (imagens grandes): a lista só precisa dos dados de atendimento.
+  const { logo: _logo, capa: _capa, ...colunas } = getTableColumns(schema.lojas);
+  void _logo;
+  void _capa;
+  const lojas = await db.select(colunas).from(schema.lojas).where(eq(schema.lojas.status, "aprovada"));
   const candidatas = lojas
     .map((loja) => {
       const d = distanciaKm(ponto, loja);

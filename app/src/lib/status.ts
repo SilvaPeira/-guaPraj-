@@ -27,3 +27,20 @@ export const COR_STATUS: Record<StatusPedido, string> = {
 export const STATUS_FINAIS: StatusPedido[] = ["entregue", "retirado", "nao_entregue", "cancelado"];
 
 export const ORIGEM = { avulso: "Avulso", plano: "Plano", extra: "Compra adicional" } as const;
+
+/** Quais status podem vir depois de cada um (vale para a tela e para o servidor). */
+const PERMITIDO: Record<StatusPedido, StatusPedido[]> = {
+  recebido: ["confirmado", "cancelado"],
+  confirmado: ["separacao", "saiu", "pronto_retirada", "nao_entregue", "cancelado"],
+  separacao: ["saiu", "pronto_retirada", "nao_entregue", "cancelado"],
+  saiu: ["entregue", "nao_entregue"],
+  pronto_retirada: ["retirado", "nao_entregue"],
+  entregue: [],
+  retirado: [],
+  nao_entregue: ["confirmado"],
+  cancelado: [],
+};
+
+export function proximosStatus(s: StatusPedido, modo: "entrega" | "retirada"): StatusPedido[] {
+  return PERMITIDO[s].filter((n) => (modo === "entrega" ? n !== "pronto_retirada" && n !== "retirado" : n !== "saiu" && n !== "entregue"));
+}
