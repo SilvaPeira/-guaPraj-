@@ -122,3 +122,33 @@ h3 {
     @apply rounded-xl bg-verde-claro p-3 text-base font-semibold text-verde;
   }
 }
+
+/* Registro bloqueado (modo leitura): campos parecem texto, sem cara de "quebrado". */
+fieldset:disabled .entrada,
+.entrada:disabled {
+  background: var(--color-fundo);
+  border-color: transparent;
+  color: var(--color-tinta);
+  cursor: default;
+  -webkit-text-fill-color: var(--color-tinta);
+  opacity: 1;
+}
+fieldset:disabled .escolha,
+fieldset:disabled .chip,
+fieldset:disabled input[type="color"],
+fieldset:disabled button {
+  cursor: default;
+}
+fieldset:disabled .escolha:not(:has(:checked)),
+fieldset:disabled .chip:not(:has(:checked)) {
+  opacity: 0.55;
+}
+fieldset {
+  min-width: 0;
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+fieldset:disabled button:not([aria-pressed="true"]) {
+  opacity: 0.55;
+}

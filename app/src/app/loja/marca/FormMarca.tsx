@@ -4,6 +4,7 @@ import { useActionState, useRef, useState } from "react";
 import type { Personalizacao } from "@/db/schema";
 import { CANTOS, FONTES, FUNDOS, PALETAS, temaDaLoja, type Cantos, type Fonte } from "@/lib/cores";
 import { salvarMarca, type EstadoMarca } from "./actions";
+import { BotoesEdicao, useEdicao } from "@/components/Edicao";
 
 type Props = {
   nome: string;
@@ -104,9 +105,17 @@ function EnviarImagem({
   );
 }
 
+/** "Cancelar" recria o formulário a partir do que está salvo (desfaz cores, imagens e textos). */
 export default function FormMarca(p: Props) {
+  const [versao, setVersao] = useState(0);
+  return <FormMarcaInterno key={versao} {...p} aoCancelar={() => setVersao((v) => v + 1)} />;
+}
+
+function FormMarcaInterno(p: Props & { aoCancelar: () => void }) {
   const ini = p.personalizacao;
   const [estado, enviar, enviando] = useActionState<EstadoMarca, FormData>(salvarMarca, {});
+  const edicao = useEdicao(estado);
+  const ed = { ...edicao, cancelar: p.aoCancelar };
   const [slug, setSlug] = useState(p.slugInicial);
   const [primaria, setPrimaria] = useState(p.corPrimaria);
   const [escura, setEscura] = useState(p.corEscura);
@@ -205,6 +214,8 @@ export default function FormMarca(p: Props) {
         </div>
       </section>
 
+      {!ed.editando && <BotoesEdicao ed={ed} textoEditar="Editar a cara do meu app" />}
+      <fieldset disabled={!ed.editando} className="pilha">
       {/* ── Imagens ── */}
       <section className="cartao pilha">
         <h2 className="titulo-secao">Logo e capa</h2>
@@ -347,11 +358,10 @@ export default function FormMarca(p: Props) {
         </label>
       </section>
 
+      </fieldset>
       {estado.erro && <p role="alert" className="aviso-erro">{estado.erro}</p>}
       {estado.ok && <p role="status" className="aviso-ok">{estado.ok}</p>}
-      <button className="botao" disabled={enviando}>
-        {enviando ? "Salvando…" : "Salvar a cara do meu app"}
-      </button>
+      {ed.editando && <BotoesEdicao ed={ed} salvando={enviando} textoSalvar="Salvar a cara do meu app" />}
     </form>
   );
 }

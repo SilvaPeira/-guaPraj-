@@ -6,6 +6,7 @@ import { Topo } from "@/components/ui";
 import { CATEGORIAS, ESTOQUE_BAIXO, ORDEM_GRUPOS, podeVender } from "@/lib/catalogo";
 import FormNovoProduto from "./FormNovoProduto";
 import { atualizarProduto } from "./actions";
+import ProdutoEditavel from "./ProdutoEditavel";
 
 export const metadata: Metadata = { title: "Catálogo" };
 
@@ -50,7 +51,6 @@ export default async function Produtos() {
 
 function ItemProduto({ p }: { p: Produto }) {
   const vende = podeVender(p);
-  const reais = (p.precoCentavos / 100).toFixed(2).replace(".", ",");
   return (
     <li className={`flex flex-col gap-2 py-3 ${vende ? "" : "opacity-70"}`}>
       <div className="flex items-start justify-between gap-2">
@@ -89,30 +89,8 @@ function ItemProduto({ p }: { p: Produto }) {
         </form>
       )}
 
-      <details className="group">
-        <summary className="link-texto cursor-pointer list-none">Editar marca, preço e estoque</summary>
-        <form action={atualizarProduto} className="mt-2 grid grid-cols-2 gap-2">
-          <input type="hidden" name="id" value={p.id} />
-          <input type="hidden" name="acao" value="salvar" />
-          <label className="campo col-span-2">
-            Marca
-            <input className="entrada min-h-11" name="marca" maxLength={60} defaultValue={p.marca ?? ""} />
-          </label>
-          <label className="campo">
-            Preço (R$)
-            <input className="entrada min-h-11" name="preco" inputMode="decimal" defaultValue={reais} />
-          </label>
-          <label className="campo">
-            Estoque
-            <input className="entrada min-h-11" name="estoque" inputMode="numeric" defaultValue={p.estoque ?? ""} placeholder="não controla" />
-          </label>
-          <button className="botao-peq col-span-2">Salvar</button>
-        </form>
-      </details>
-      <p className="text-sm">
-        <b>{(p.precoCentavos / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</b>
-        {p.estoque === null && <span className="text-tinta-suave"> · estoque não controlado</span>}
-      </p>
+      <ProdutoEditavel id={p.id} marca={p.marca} precoCentavos={p.precoCentavos} estoque={p.estoque} />
+      {p.estoque === null && <p className="text-xs text-tinta-suave">Estoque não controlado</p>}
     </li>
   );
 }

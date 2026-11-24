@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import type { RegrasHorario } from "@/db/schema";
 import { salvarAjustes, type EstadoForm } from "./actions";
+import { BotoesEdicao, useEdicao } from "@/components/Edicao";
 
 const DIAS = [
   [1, "Seg"],
@@ -39,9 +40,12 @@ function Marcar({ nome, rotulo, ligado, children }: { nome: string; rotulo: stri
 
 export default function FormAjustes(p: Props) {
   const [estado, enviar, enviando] = useActionState<EstadoForm, FormData>(salvarAjustes, {});
+  const ed = useEdicao(estado);
   const r = p.regras;
   return (
-    <form action={enviar} className="pilha">
+    <form key={ed.chave} action={enviar} className="pilha">
+      {!ed.editando && <BotoesEdicao ed={ed} textoEditar="Editar ajustes" />}
+      <fieldset disabled={!ed.editando} className="pilha">
       <section className="cartao pilha">
         <h2 className="titulo-secao">Atendimento</h2>
         <Marcar nome="fazEntrega" rotulo="Faço entrega" ligado={p.fazEntrega} />
@@ -126,11 +130,10 @@ export default function FormAjustes(p: Props) {
         </Marcar>
       </section>
 
+      </fieldset>
       {estado.erro && <p role="alert" className="aviso-erro">{estado.erro}</p>}
       {estado.ok && <p role="status" className="aviso-ok">{estado.ok}</p>}
-      <button className="botao" disabled={enviando}>
-        {enviando ? "Salvando…" : "Salvar ajustes"}
-      </button>
+      {ed.editando && <BotoesEdicao ed={ed} salvando={enviando} textoSalvar="Salvar ajustes" />}
     </form>
   );
 }

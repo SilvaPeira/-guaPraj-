@@ -5,7 +5,8 @@ import { exigirLoja } from "@/lib/loja";
 import { Topo } from "@/components/ui";
 import { formatarReais } from "@/lib/validacao";
 import { frequenciaTexto } from "@/lib/simulador";
-import { criarSugeridos, salvarPlano } from "./actions";
+import { criarSugeridos } from "./actions";
+import PlanoEditavel from "./PlanoEditavel";
 import FormNovoPlano from "./FormNovoPlano";
 
 export const metadata: Metadata = { title: "Planos" };
@@ -68,35 +69,7 @@ export default async function Planos() {
                     <span className="selo selo-terra">sem desconto</span>
                   )}
                 </div>
-                <form action={salvarPlano} className="grid grid-cols-[1fr_1fr_auto] items-end gap-2">
-                  <input type="hidden" name="id" value={p.id} />
-                  <label className="campo">
-                    Galões/mês
-                    <input className="entrada min-h-11" name="galoes" inputMode="numeric" defaultValue={p.galoesMes} disabled={n > 0} title={n > 0 ? "Tem assinantes: crie outro plano para mudar a quantidade" : undefined} />
-                  </label>
-                  <label className="campo">
-                    Preço (R$)
-                    <input className="entrada min-h-11" name="preco" inputMode="decimal" defaultValue={(p.precoCentavos / 100).toFixed(2).replace(".", ",")} />
-                  </label>
-                  <button className="botao-peq-sec">Salvar</button>
-                </form>
-                <div className="flex flex-wrap gap-2">
-                  <form action={salvarPlano}>
-                    <input type="hidden" name="id" value={p.id} />
-                    <button name="acao" value="alternar" className={p.ativo ? "botao-peq-sec" : "botao-peq"}>
-                      {p.ativo ? "Pausar vendas" : "Voltar a vender"}
-                    </button>
-                  </form>
-                  {n === 0 && (
-                    <form action={salvarPlano}>
-                      <input type="hidden" name="id" value={p.id} />
-                      <button name="acao" value="excluir" className="botao-peq-perigo">
-                        Excluir
-                      </button>
-                    </form>
-                  )}
-                </div>
-                {n > 0 && <p className="text-xs text-tinta-suave">Plano com assinantes: a quantidade fica travada e ele não pode ser excluído. Mudança de preço vale a partir do próximo ciclo.</p>}
+                <PlanoEditavel id={p.id} galoesMes={p.galoesMes} precoCentavos={p.precoCentavos} ativo={p.ativo} assinantes={n} />
               </li>
             );
           })}
