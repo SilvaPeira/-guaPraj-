@@ -37,8 +37,17 @@ No desenvolvimento, o **código de login aparece na tela** (modo de teste) e no 
 3. ✅ Simulador, lojas que atendem o endereço (raio de entrega ou retirada até 15 km) e plano sugerido
 4. ✅ Pedido avulso, compra adicional e assinatura com agenda fixa (semanal, quinzenal ou mensal), ciência do dia/horário, pular, alterar, trocar de plano e cancelar
 5. ✅ Agenda da loja por dia, status (também em lote), "não entregue" + reagendar, entregador, cascos com clientes, 18+ conferido na entrega
-6. Pagamento (Pix, cartão, recorrência)
+6. ✅ Pagamento pelo app com **Mercado Pago** (Pix e cartão; dinheiro direto na conta da loja; taxa da plataforma por split opcional; confirmação automática; devolução automática ao cancelar) · 🟡 falta cadastrar as credenciais da aplicação Mercado Pago em produção · ⬜ cobrança recorrente automática (hoje a mensalidade do plano vira um pedido que o cliente paga pelo botão "Pagar agora")
 7. ✅ Avaliação de 1 a 5, financeiro da loja, contador de pedidos a confirmar · 🟡 avisos por WhatsApp prontos, falta ligar o provedor
+
+## Pagamento pelo app (Mercado Pago)
+
+- A loja conecta a **própria conta** em **Financeiro → Receber pelo app** (OAuth do Mercado Pago; tokens guardados cifrados).
+- O cliente escolhe **Pagar agora (Pix ou cartão)** ou **Na entrega**. Pedidos sem pagamento podem ser pagos depois pelo botão no pedido.
+- O Mercado Pago avisa em `/api/mercadopago/webhook`; o app **sempre consulta o pagamento na API** antes de marcar "Pago".
+- Pedido pago e cancelado (pelo cliente ou pela loja) → estorno automático.
+- Sem credenciais em desenvolvimento, roda em **modo de teste** (`/pagamento-simulado/<pedido>`). Testes: `npm run test:pagamento`.
+- Variáveis: `MP_CLIENT_ID`, `MP_CLIENT_SECRET`, `MP_WEBHOOK_SECRET`, `TAXA_PLATAFORMA_PERCENTUAL` (ver `.env.example`).
 
 ## Site e app da loja (marca própria)
 

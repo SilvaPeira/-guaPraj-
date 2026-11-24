@@ -47,7 +47,7 @@ export const statusPedido = pgEnum("status_pedido", [
   "nao_entregue",
   "cancelado",
 ]);
-export const formaPagamento = pgEnum("forma_pagamento", ["pix", "cartao", "na_entrega", "plano"]);
+export const formaPagamento = pgEnum("forma_pagamento", ["pix", "cartao", "na_entrega", "plano", "online"]);
 export const statusPagamento = pgEnum("status_pagamento", ["pendente", "pago", "falhou", "estornado"]);
 export const statusAssinatura = pgEnum("status_assinatura", ["ativa", "pausada", "cancelada"]);
 
@@ -280,6 +280,10 @@ export const pedidos = pgTable(
     motivo: text("motivo"),
     nota: smallint("nota"),
     comentario: text("comentario"),
+    /** Pagamento online (Mercado Pago): id do pagamento aprovado e meio usado. */
+    pagamentoId: text("pagamento_id"),
+    pagamentoMeio: text("pagamento_meio"),
+    pagoEm: timestamp("pago_em", { withTimezone: true }),
     criadoEm: criadoEm(),
   },
   (t) => [
@@ -320,4 +324,17 @@ export const movimentosCasco = pgTable("movimentos_casco", {
   delta: integer("delta").notNull(),
   nota: text("nota"),
   criadoEm: criadoEm(),
+});
+
+/** Conta Mercado Pago da loja (conectada por OAuth). Tokens guardados cifrados. */
+export const contasMercadoPago = pgTable("contas_mercado_pago", {
+  lojaId: uuid("loja_id")
+    .primaryKey()
+    .references(() => lojas.id, { onDelete: "cascade" }),
+  mpUserId: text("mp_user_id").notNull(),
+  accessToken: text("access_token").notNull(),
+  refreshToken: text("refresh_token"),
+  publicKey: text("public_key"),
+  expiraEm: timestamp("expira_em", { withTimezone: true }),
+  conectadoEm: criadoEm(),
 });

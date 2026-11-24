@@ -21,6 +21,8 @@ type Props = {
   galoesInicial: number;
   /** Galões de saldo do plano (sem custo) — só na compra adicional. */
   saldoGaloes?: number;
+  /** A loja recebe Pix/cartão pelo app (Mercado Pago conectado). */
+  pagaOnline: boolean;
 };
 
 const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -34,6 +36,7 @@ export default function FormPedido(p: Props) {
   const [cascosComprar, setCascosComprar] = useState(1);
   const [horario, setHorario] = useState<ValorHorario | null>(null);
   const [maior18, setMaior18] = useState(false);
+  const [pagamento, setPagamento] = useState<"online" | "na_entrega">(p.pagaOnline ? "online" : "na_entrega");
 
   const grupos = [...new Set(p.produtos.map((x) => x.grupo))];
   const temAlcool = p.produtos.some((x) => x.alcoolico && (qtd[x.id] ?? 0) > 0);
@@ -145,7 +148,27 @@ export default function FormPedido(p: Props) {
 
       <section className="cartao pilha">
         <h2 className="titulo-secao">Pagamento</h2>
-        <p className="aviso-info text-sm">Por enquanto o pagamento é na entrega (Pix para a loja ou dinheiro). Pagar pelo app chega em breve.</p>
+        {p.pagaOnline && total > 0 ? (
+          <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Como pagar">
+            {(
+              [
+                ["online", "Pagar agora", "Pix ou cartão"],
+                ["na_entrega", modo === "entrega" ? "Na entrega" : "Na retirada", "Pix ou dinheiro"],
+              ] as const
+            ).map(([v, titulo, sub]) => (
+              <label key={v} className="escolha flex-col items-start p-2.5 text-sm">
+                <input type="radio" name="pagamento" value={v} checked={pagamento === v} onChange={() => setPagamento(v)} className="sr-only" />
+                <b className="block">{titulo}</b>
+                <span className="text-xs text-tinta-suave">{sub}</span>
+              </label>
+            ))}
+          </div>
+        ) : (
+          <>
+            <input type="hidden" name="pagamento" value="na_entrega" />
+            {total > 0 && <p className="aviso-info text-sm">Pagamento {modo === "entrega" ? "na entrega" : "na retirada"} (Pix para a loja ou dinheiro).</p>}
+          </>
+        )}
         <div className="flex justify-between text-sm">
           <span className="text-tinta-suave">Produtos</span>
           <b>{brl(subtotal)}</b>
@@ -170,7 +193,7 @@ export default function FormPedido(p: Props) {
 
       {estado.erro && <p role="alert" className="aviso-erro">{estado.erro}</p>}
       <button className="botao" disabled={enviando || vazio || (temAlcool && !maior18)}>
-        {enviando ? "Enviando…" : `Confirmar pedido · ${brl(total)}`}
+        {enviando ? "Enviando…" : pagamento === "online" && total > 0 ? `Ir para o pagamento · ${brl(total)}` : `Confirmar pedido · ${brl(total)}`}
       </button>
     </form>
   );

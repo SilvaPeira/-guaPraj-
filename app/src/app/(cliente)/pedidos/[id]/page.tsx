@@ -11,6 +11,8 @@ import { formatarTelefone, linkWhatsApp } from "@/lib/telefone";
 import { Topo } from "@/components/ui";
 import AvaliarPedido from "@/components/AvaliarPedido";
 import { cancelarPedido } from "../../assinatura/actions";
+import { pagarAgora } from "./actions";
+import { aceitaOnline, podePagarOnline } from "@/lib/mercadopago";
 
 export const metadata: Metadata = { title: "Pedido" };
 
@@ -35,6 +37,21 @@ export default async function Pedido({ params, searchParams }: PageProps<"/pedid
     db.select().from(schema.eventosPedido).where(eq(schema.eventosPedido.pedidoId, p.id)).orderBy(asc(schema.eventosPedido.criadoEm)),
   ]);
   const hoje = agoraLocal().data;
+  const podePagar = podePagarOnline(p) && (await aceitaOnline(loja.id));
+  const rotuloPagamento =
+    p.statusPagamento === "pago"
+      ? p.pagamentoMeio
+        ? `Pago pelo app (${p.pagamentoMeio === "pix" ? "Pix" : "cartão"})`
+        : "Pago"
+      : p.statusPagamento === "estornado"
+        ? "Devolvido"
+        : p.status === "cancelado" || p.status === "nao_entregue"
+          ? "Total"
+          : p.formaPagamento === "online"
+            ? "A pagar"
+            : p.modo === "entrega"
+            ? "A pagar na entrega"
+            : "A pagar na retirada";
   const passos = p.modo === "entrega" ? PASSOS_ENTREGA : PASSOS_RETIRADA;
   const atual = (passos as readonly string[]).indexOf(p.status);
   const horaEvento = (s: string) => {
@@ -47,6 +64,12 @@ export default async function Pedido({ params, searchParams }: PageProps<"/pedid
       <Topo titulo={`Pedido #${p.numero}`} subtitulo={`${ORIGEM[p.origem]} · ${loja.nome}`} voltar="/pedidos" />
       <main className="conteudo">
         {sp.novo && <p className="aviso-ok">Pedido enviado! A loja já recebeu e vai confirmar.</p>}
+        {sp.pagamento === "retorno" && p.statusPagamento === "pago" && <p className="aviso-ok">Pagamento confirmado. Obrigado!</p>}
+        {sp.pagamento === "retorno" && p.statusPagamento === "falhou" && <p className="aviso-erro">O pagamento não foi aprovado. Tente de novo ou pague na entrega.</p>}
+        {sp.pagamento === "retorno" && p.statusPagamento === "pendente" && (
+          <p className="aviso-info">Estamos confirmando o seu pagamento com o Mercado Pago. Pix costuma cair em segundos — atualize a página daqui a pouco.</p>
+        )}
+        {sp.pagamento === "falhou" && <p className="aviso-erro">Não conseguimos abrir o pagamento agora. Tente de novo abaixo ou pague na entrega.</p>}
 
         <section className="cartao-elevado pilha">
           <div className="flex items-start justify-between gap-2">
@@ -115,10 +138,19 @@ export default async function Pedido({ params, searchParams }: PageProps<"/pedid
             </div>
           )}
           <div className="flex items-baseline justify-between border-t border-borda pt-2">
-            <b>{p.totalCentavos === 0 ? "Total" : p.statusPagamento === "pago" ? "Pago" : "A pagar na entrega"}</b>
+            <b>{p.totalCentavos === 0 ? "Total" : rotuloPagamento}</b>
             <b className="font-titulo text-xl">{p.totalCentavos > 0 ? formatarReais(p.totalCentavos) : "incluído no plano"}</b>
           </div>
         </section>
+
+        {podePagar && (
+          <form action={pagarAgora} className="pilha">
+            <input type="hidden" name="pedidoId" value={p.id} />
+            <button className="botao">Pagar agora com Pix ou cartão · {formatarReais(p.totalCentavos)}</button>
+            {p.statusPagamento === "falhou" && sp.pagamento !== "retorno" && <p className="text-center text-sm text-terra-esc">O último pagamento não foi aprovado. Tente de novo.</p>}
+          </form>
+        )}
+        {p.statusPagamento === "estornado" && <p className="aviso-info text-sm">O valor pago foi devolvido para você pelo Mercado Pago.</p>}
 
         {(p.status === "entregue" || p.status === "retirado") &&
           (p.nota ? (

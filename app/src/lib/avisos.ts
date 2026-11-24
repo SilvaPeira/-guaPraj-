@@ -115,3 +115,19 @@ export async function avisarLojaNovoPedido(pedidoId: string): Promise<void> {
     console.error("[avisos] falha ao avisar loja", pedidoId, e);
   }
 }
+
+/** Pagamento online aprovado: avisa a loja (e confirma para o cliente). */
+export async function avisarLojaPagamento(pedidoId: string): Promise<void> {
+  try {
+    const d = await dadosDoPedido(pedidoId);
+    if (!d) return;
+    const db = await getDb();
+    const [l] = await db.select({ telefone: schema.lojas.telefone }).from(schema.lojas).where(eq(schema.lojas.id, d.p.lojaId)).limit(1);
+    const valor = (d.p.totalCentavos / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    const meio = d.p.pagamentoMeio === "pix" ? "Pix" : "cartão";
+    await enviarWhatsApp(l.telefone, `💳 Pedido #${d.p.numero} pago pelo app (${meio}, ${valor}). Não precisa cobrar na entrega.`);
+    await enviarWhatsApp(d.cliente.telefone, `💳 ${d.loja.nome}: recebemos o pagamento do pedido #${d.p.numero} (${valor}). Obrigado!`);
+  } catch (e) {
+    console.error("[avisos] falha ao avisar pagamento", pedidoId, e);
+  }
+}

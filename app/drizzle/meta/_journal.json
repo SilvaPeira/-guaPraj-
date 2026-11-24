@@ -43,6 +43,13 @@
       "when": 1794959222857,
       "tag": "0005_personalizacao",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795538252519,
+      "tag": "0006_pagamento_online",
+      "breakpoints": true
     }
   ]
 }

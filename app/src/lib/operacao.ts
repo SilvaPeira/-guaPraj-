@@ -6,6 +6,7 @@ import { devolverEstoque, ErroPedido, gerarEntregas } from "./pedidos";
 import { exigirUsuario } from "./sessao";
 import { agoraLocal, somarDias } from "./tempo";
 import { proximosStatus, type StatusPedido } from "./status";
+import { estornarCancelados } from "./mercadopago";
 export { proximosStatus };
 
 type Db = Awaited<ReturnType<typeof getDb>>;
@@ -96,7 +97,7 @@ export type Conclusao = {
 export async function mudarStatus(lojaId: string, porUsuarioId: string, pedidoIds: string[], novo: StatusPedido, c: Conclusao = {}): Promise<string[]> {
   const db = await getDb();
   if (!pedidoIds.length) return [];
-  return db.transaction(async (tx) => {
+  const mudaram = await db.transaction(async (tx) => {
     const pedidos = await tx
       .select()
       .from(schema.pedidos)
@@ -140,6 +141,8 @@ export async function mudarStatus(lojaId: string, porUsuarioId: string, pedidoId
     }
     return mudaram;
   });
+  if (novo === "cancelado") await estornarCancelados(mudaram);
+  return mudaram;
 }
 
 /**

@@ -7,6 +7,7 @@ import { CATEGORIAS, podeVender } from "@/lib/catalogo";
 import { distanciaKm, RAIO_RETIRADA_KM } from "@/lib/geo";
 import { datasDisponiveis, regrasParaCliente } from "@/lib/opcoes-pedido";
 import { Topo, Vazio } from "@/components/ui";
+import { aceitaOnline } from "@/lib/mercadopago";
 import FormPedido from "./FormPedido";
 
 export const metadata: Metadata = { title: "Fazer pedido" };
@@ -48,6 +49,7 @@ export default async function Pedir({ params, searchParams }: PageProps<"/pedir/
   const podeEntregar = loja.fazEntrega && km <= loja.raioKm;
   const podeRetirar = loja.fazRetirada && km <= RAIO_RETIRADA_KM;
   const datas = datasDisponiveis(loja.regrasHorario);
+  const pagaOnline = await aceitaOnline(loja.id);
 
   return (
     <>
@@ -73,6 +75,7 @@ export default async function Pedir({ params, searchParams }: PageProps<"/pedir/
             datas={datas}
             galoesInicial={galao ? (assinaturaId ? 1 : 2) : 0}
             saldoGaloes={saldo}
+            pagaOnline={pagaOnline}
           />
         )}
       </main>

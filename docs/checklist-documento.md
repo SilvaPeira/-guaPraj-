@@ -19,7 +19,7 @@ Atualizado em: 24/11/2026 (etapa 7)
 | Ajustes do plano | Pedido extra | ✅ (usa o saldo primeiro, depois preço do plano) |
 | Ajustes do plano | Pausar | ✅ |
 | Ajustes do plano | Cancelar | ✅ |
-| Pagamento | Pix e cartão; Pix Automático/cartão recorrente | ⬜ Etapa 6 — hoje tudo é **pago na entrega** |
+| Pagamento | Pix e cartão; Pix Automático/cartão recorrente | ✅ Pix e cartão pelo Mercado Pago (ou na entrega) · ⬜ recorrência automática (mensalidade é paga pelo botão do pedido) |
 | Avisos | WhatsApp/SMS na véspera e quando sai para entrega | 🟡 Mensagens prontas (confirmado, saiu, entregue, não entregue, reagendado, cancelado, novo pedido p/ loja, lembrete da véspera com cron) · ⬜ ligar provedor de WhatsApp |
 | Loja – cadastro | Área de entrega, taxa, entrega/retirada, planos e preços, opções de horário | ✅ (área por **raio em km**; por bairros ⬜) |
 | Loja – operação | Agenda do dia por horário e bairro; "abrir no mapa"; atualizar status; cascos | ✅ Agenda por dia, Google Maps/Waze, status, cascos com clientes, entregadores |
@@ -56,7 +56,7 @@ Atualizado em: 24/11/2026 (etapa 7)
 | Item | Situação |
 |---|---|
 | Mensalidade da loja (Grátis / R$ 99 / R$ 199) | ⬜ |
-| Gateway com subconta por loja + split (Asaas e alternativas) | ⬜ Etapa 6 |
+| Gateway com subconta por loja + split | ✅ Mercado Pago marketplace (conta da loja + `TAXA_PLATAFORMA_PERCENTUAL`) · 🟡 falta credencial de produção |
 
 ## Seções 8 e 10 — Confiança e riscos
 

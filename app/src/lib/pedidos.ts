@@ -3,6 +3,7 @@ import { randomInt } from "node:crypto";
 import { and, eq, gte, inArray, lt, lte, ne, notInArray, sql } from "drizzle-orm";
 import { getDb, schema } from "@/db";
 import { capacidadeDaJanela, entregaNaData, proximasEntregas, sobrepoe, validarHorario, type TipoHorario } from "./agenda";
+import { estornarCancelados } from "./mercadopago";
 export { textoAceite } from "./agenda";
 import { podeVender } from "./catalogo";
 import { distanciaKm } from "./geo";
@@ -44,7 +45,7 @@ export type NovoPedido = {
   galoes: number;
   cascosComprados: number;
   itens: { produtoId: string; qtd: number }[];
-  formaPagamento: "pix" | "cartao" | "na_entrega";
+  formaPagamento: "online" | "na_entrega";
   declarou18: boolean;
   /** Compra adicional de assinante: galão sai pelo preço do plano. */
   assinaturaId?: string | null;
@@ -201,6 +202,7 @@ export async function cancelarPedidoCliente(clienteId: string, pedidoId: string,
     await tx.update(schema.pedidos).set({ status: "cancelado", motivo }).where(eq(schema.pedidos.id, p.id));
     await tx.insert(schema.eventosPedido).values({ pedidoId: p.id, status: "cancelado", porUsuarioId: clienteId, nota: motivo });
   });
+  await estornarCancelados([pedidoId]);
 }
 
 export async function devolverEstoque(tx: Tx, pedidoId: string) {

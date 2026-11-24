@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { exigirCliente } from "@/lib/cliente";
 import { criarPedido, ErroPedido } from "@/lib/pedidos";
 import { avisarLojaNovoPedido } from "@/lib/avisos";
+import { criarCobranca, ErroPagamento } from "@/lib/mercadopago";
+import { urlBase } from "@/lib/url";
 
 export type EstadoPedido = { erro?: string };
 
@@ -42,7 +44,7 @@ export async function fazerPedido(_: EstadoPedido, form: FormData): Promise<Esta
       galoes,
       cascosComprados,
       itens,
-      formaPagamento: "na_entrega",
+      formaPagamento: form.get("pagamento") === "online" ? "online" : "na_entrega",
       declarou18: form.get("maior18") === "on",
       assinaturaId: String(form.get("assinaturaId") ?? "") || null,
     });
@@ -51,6 +53,18 @@ export async function fazerPedido(_: EstadoPedido, form: FormData): Promise<Esta
   } catch (e) {
     if (e instanceof ErroPedido) return { erro: e.message };
     throw e;
+  }
+  if (form.get("pagamento") === "online") {
+    let link: string | null = null;
+    try {
+      link = await criarCobranca(id, usuario.id, await urlBase());
+    } catch (e) {
+      if (!(e instanceof ErroPagamento)) throw e;
+      console.error("[pedido] não gerou cobrança", id, e.message);
+    }
+    // Sem link (falha momentânea), o pedido segue e o cliente paga pelo botão no pedido.
+    if (link) redirect(link);
+    redirect(`/pedidos/${id}?novo=1&pagamento=falhou`);
   }
   redirect(`/pedidos/${id}?novo=1`);
 }

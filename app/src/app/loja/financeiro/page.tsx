@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { exigirLoja } from "@/lib/loja";
 import { marcarComoPago, mesVizinho, resumoDoMes } from "@/lib/financeiro";
 import { avaliacoesRecentes, mediasDasLojas, textoNota } from "@/lib/avaliacoes";
+import { aceitaOnline } from "@/lib/mercadopago";
 import { agoraLocal } from "@/lib/tempo";
 import { formatarReais } from "@/lib/validacao";
 import { formatarTelefone, linkWhatsApp } from "@/lib/telefone";
@@ -30,7 +31,7 @@ export default async function Financeiro({ searchParams }: PageProps<"/loja/fina
   const sp = await searchParams;
   const atual = agoraLocal().data.slice(0, 7);
   const mes = typeof sp.mes === "string" && /^\d{4}-\d{2}$/.test(sp.mes) ? sp.mes : atual;
-  const [r, nota, avaliacoes] = await Promise.all([resumoDoMes(loja.id, mes), mediasDasLojas([loja.id]), avaliacoesRecentes(loja.id, 8)]);
+  const [r, nota, avaliacoes, online] = await Promise.all([resumoDoMes(loja.id, mes), mediasDasLojas([loja.id]), avaliacoesRecentes(loja.id, 8), aceitaOnline(loja.id)]);
 
   return (
     <>
@@ -78,6 +79,14 @@ export default async function Financeiro({ searchParams }: PageProps<"/loja/fina
           <Kpi valor={textoNota(nota.get(loja.id)) ?? "—"} rotulo="avaliação dos clientes" />
         </div>
 
+        <Link href="/loja/pagamentos" className="cartao flex items-center justify-between gap-2">
+          <span>
+            <b className="block">Receber pelo app</b>
+            <span className="text-sm text-tinta-suave">{online ? "Mercado Pago conectado: Pix e cartão no pedido" : "Conecte o Mercado Pago para receber Pix e cartão"}</span>
+          </span>
+          <span className={`selo ${online ? "selo-verde" : "selo-terra"}`}>{online ? "Ativo" : "Ativar"}</span>
+        </Link>
+
         <h2 className="titulo-secao mt-2">Para receber</h2>
         {r.pendentes.length === 0 ? (
           <Vazio>Nada pendente: todo pedido entregue está pago. 👍</Vazio>
@@ -121,7 +130,7 @@ export default async function Financeiro({ searchParams }: PageProps<"/loja/fina
           </ul>
         )}
         <p className="text-xs text-tinta-suave">
-          Valores pagos na entrega são marcados pelo entregador ou aqui em “Recebi”. Quando o pagamento pelo app chegar, isso passa a ser automático.
+          Pagamentos pelo app (Pix/cartão) entram sozinhos. Valores pagos na entrega são marcados pelo entregador ou aqui em “Recebi”.
         </p>
       </main>
     </>
