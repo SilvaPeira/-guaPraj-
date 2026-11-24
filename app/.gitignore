@@ -44,3 +44,6 @@ next-env.d.ts
 # banco local de desenvolvimento (PGlite)
 .data/
 .vercel
+
+.vercel
+.env*

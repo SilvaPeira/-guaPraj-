@@ -9,7 +9,14 @@ if (!url) {
   console.error("DATABASE_URL não definida.");
   process.exit(1);
 }
-const client = postgres(url, { max: 1, prepare: false });
-await migrate(drizzle(client), { migrationsFolder: "./drizzle" });
-await client.end();
-console.log("Migrações aplicadas.");
+async function main() {
+  const client = postgres(url!, { max: 1, prepare: false });
+  await migrate(drizzle(client), { migrationsFolder: "./drizzle" });
+  await client.end();
+  console.log("Migrações aplicadas.");
+}
+
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});
