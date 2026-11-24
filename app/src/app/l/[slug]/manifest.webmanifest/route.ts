@@ -11,7 +11,7 @@ export async function GET(_: Request, ctx: RouteContext<"/l/[slug]/manifest.webm
     id: `/l/${m.slug}`,
     name: m.nome,
     short_name: nomeCurto,
-    description: m.descricao ?? `Peça água, gás e bebidas da ${m.nome}.`,
+    description: m.descricao ?? `Peça água e bebidas da ${m.nome}.`,
     lang: "pt-BR",
     start_url: `/l/${m.slug}/abrir?origem=app`,
     scope: "/",

@@ -87,7 +87,7 @@ export default async function Assinatura({ searchParams }: PageProps<"/assinatur
         {sp.nova && <p className="aviso-ok">Plano assinado! A distribuidora já recebeu suas entregas na agenda.</p>}
         {sp.alterada && <p className="aviso-ok">Dia e horário alterados. As próximas entregas já seguem a nova agenda.</p>}
 
-        <section className="rounded-[20px] bg-acai p-4 text-white">
+        <section className="rounded-[var(--raio-cartao,20px)] bg-acai p-4 text-white">
           <div className="flex items-center justify-between">
             <b className="font-titulo text-lg">
               Plano {plano.galoesMes} {plano.galoesMes === 1 ? "galão" : "galões"}

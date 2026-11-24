@@ -57,7 +57,7 @@ export default async function Assinar({ params }: PageProps<"/assinar/[planoId]"
           <Vazio>Esta loja não atende o seu endereço.</Vazio>
         ) : (
           <>
-            <div className="flex items-center justify-between rounded-[18px] border-2 border-acai bg-acai-claro p-4">
+            <div className="flex items-center justify-between rounded-[var(--raio-cartao,18px)] border-2 border-acai bg-acai-claro p-4">
               <div>
                 <b className="font-titulo text-lg">{formatarReais(plano.precoCentavos)}/mês</b>
                 <p className="text-sm text-tinta-suave">

@@ -74,7 +74,7 @@ export default async function Loja({ params }: PageProps<"/lojas/[id]">) {
           const desc = descontoPercentual(p, galao?.precoCentavos ?? null);
           const ehSugerido = sugerido?.id === p.id;
           return (
-            <Link key={p.id} href={`/assinar/${p.id}`} className={`flex items-center justify-between gap-2 rounded-[18px] bg-white p-3.5 transition hover:border-verde ${ehSugerido ? "border-2 border-acai bg-acai-claro" : "border border-borda2"}`}>
+            <Link key={p.id} href={`/assinar/${p.id}`} className={`flex items-center justify-between gap-2 rounded-[var(--raio-cartao,18px)] bg-white p-3.5 transition hover:border-verde ${ehSugerido ? "border-2 border-acai bg-acai-claro" : "border border-borda2"}`}>
               <div>
                 <b className="text-base">{p.galoesMes} galões/mês</b>
                 <p className="text-sm text-tinta-suave">

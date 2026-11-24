@@ -54,7 +54,7 @@ export default function Simulador({ inicial }: { inicial: PerfilFamilia | null }
       </label>
 
       {r ? (
-        <section className="rounded-[22px] bg-rio-esc p-[18px] text-white" aria-live="polite">
+        <section className="rounded-[var(--raio-cartao,22px)] bg-rio-esc p-[18px] text-white" aria-live="polite">
           <p className="text-xs font-semibold uppercase tracking-[.6px] text-rio-luz">Sua família precisa de</p>
           <p className="mt-2 flex items-baseline gap-2">
             <span className="font-titulo text-[52px] font-extrabold leading-none">

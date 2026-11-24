@@ -87,7 +87,7 @@ export default async function Inicio() {
         )}
 
         {ativa && ciclo && (
-          <Link href="/assinatura" className="block rounded-[20px] bg-acai p-4 text-white">
+          <Link href="/assinatura" className="block rounded-[var(--raio-cartao,20px)] bg-acai p-4 text-white">
             <div className="flex items-center justify-between">
               <b className="font-titulo text-lg">
                 Plano {ativa.plano.galoesMes} {ativa.plano.galoesMes === 1 ? "galão" : "galões"}
@@ -162,7 +162,7 @@ export default async function Inicio() {
 
 function Atalho({ href, titulo, texto }: { href: string; titulo: string; texto: string }) {
   return (
-    <Link href={href} className="flex min-h-20 flex-col gap-1 rounded-2xl border border-borda bg-white p-3.5">
+    <Link href={href} className="flex min-h-20 flex-col gap-1 rounded-[var(--raio-botao,16px)] border border-borda bg-white p-3.5">
       <b className="text-sm">{titulo}</b>
       <span className="text-xs text-tinta-suave">{texto}</span>
     </Link>

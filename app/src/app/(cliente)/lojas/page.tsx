@@ -80,7 +80,7 @@ export default async function Lojas({ searchParams }: PageProps<"/lojas">) {
                 {loja.marcasAgua && <span className="selo selo-cinza">{loja.marcasAgua}</span>}
               </div>
               {plano && (
-                <div className="flex items-center justify-between gap-2 rounded-[14px] bg-acai-claro p-3">
+                <div className="flex items-center justify-between gap-2 rounded-[var(--raio-cartao,14px)] bg-acai-claro p-3">
                   <div>
                     <span className="text-xs font-bold uppercase tracking-[.6px] text-acai">Plano para sua família</span>
                     <b className="block">

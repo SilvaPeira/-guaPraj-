@@ -136,7 +136,7 @@ export default async function SiteDaLoja({ params }: Props) {
           <section className="pilha">
             <h2 className="titulo-secao mt-1">Planos mensais</h2>
             {planos.map((p) => (
-              <Link key={p.id} href={abrir("planos")} className="flex items-center justify-between gap-2 rounded-[18px] border border-borda2 bg-white p-3.5">
+              <Link key={p.id} href={abrir("planos")} className="flex items-center justify-between gap-2 rounded-[var(--raio-cartao,18px)] border border-borda2 bg-white p-3.5">
                 <span>
                   <b className="block">
                     {p.galoesMes} {p.galoesMes === 1 ? "galão" : "galões"}/mês
