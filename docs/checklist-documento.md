@@ -2,7 +2,7 @@
 
 Legenda: ✅ feito · 🟡 parcial · ⬜ falta · ↔️ mudou por decisão do dono
 
-Atualizado em: 24/11/2026
+Atualizado em: 24/11/2026 (etapa 7)
 
 ## Seção 6 — MVP (tabela)
 
@@ -20,11 +20,11 @@ Atualizado em: 24/11/2026
 | Ajustes do plano | Pausar | ✅ |
 | Ajustes do plano | Cancelar | ✅ |
 | Pagamento | Pix e cartão; Pix Automático/cartão recorrente | ⬜ Etapa 6 — hoje tudo é **pago na entrega** |
-| Avisos | WhatsApp/SMS na véspera e quando sai para entrega | ⬜ Etapa 7 |
+| Avisos | WhatsApp/SMS na véspera e quando sai para entrega | 🟡 Mensagens prontas (confirmado, saiu, entregue, não entregue, reagendado, cancelado, novo pedido p/ loja, lembrete da véspera com cron) · ⬜ ligar provedor de WhatsApp |
 | Loja – cadastro | Área de entrega, taxa, entrega/retirada, planos e preços, opções de horário | ✅ (área por **raio em km**; por bairros ⬜) |
 | Loja – operação | Agenda do dia por horário e bairro; "abrir no mapa"; atualizar status; cascos | ✅ Agenda por dia, Google Maps/Waze, status, cascos com clientes, entregadores |
-| Loja – financeiro | Assinantes ativos, recebido no mês, pendentes | ⬜ Etapa 7 |
-| Avaliação | Nota de 1 a 5 após a entrega | ⬜ Etapa 7 |
+| Loja – financeiro | Assinantes ativos, recebido no mês, pendentes | ✅ Recebido por origem, a receber, previsto, ticket médio, galões, pendências com "Recebi" |
+| Avaliação | Nota de 1 a 5 após a entrega | ✅ Cliente avalia (com comentário); média na loja, no site e no financeiro |
 | Produtos | Só água em galão (bebidas depois) | ↔️ Bebidas (inclusive alcoólicas com 18+) já no MVP |
 
 ## Seção 5 — Regras do plano
@@ -46,7 +46,7 @@ Atualizado em: 24/11/2026
 | Item | Situação |
 |---|---|
 | Status: recebido → confirmado → saiu → entregue / pronto → retirado | ✅ (código de retirada conferido) |
-| Lembrete à loja se não confirmar | ⬜ Etapa 7 |
+| Lembrete à loja se não confirmar | ✅ Contador no menu da loja + aviso na véspera (WhatsApp, quando ligado) |
 | Capacidade por janela e "próximos horários livres" | 🟡 Bloqueia janela lotada; sugestão automática de horário livre ⬜ |
 | Alerta na agenda de pedido perto de atrasar | ✅ Selo "Atrasado" + aviso de pedidos de dias anteriores sem desfecho |
 | Permissão de localização só na tela do mapa; LGPD | ✅ |

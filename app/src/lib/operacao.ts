@@ -92,16 +92,16 @@ export type Conclusao = {
   codigoRetirada?: string;
 };
 
-/** Muda o status de um ou mais pedidos da loja (atualização em lote). Devolve quantos mudaram. */
-export async function mudarStatus(lojaId: string, porUsuarioId: string, pedidoIds: string[], novo: StatusPedido, c: Conclusao = {}): Promise<number> {
+/** Muda o status de um ou mais pedidos da loja (atualização em lote). Devolve os ids que mudaram. */
+export async function mudarStatus(lojaId: string, porUsuarioId: string, pedidoIds: string[], novo: StatusPedido, c: Conclusao = {}): Promise<string[]> {
   const db = await getDb();
-  if (!pedidoIds.length) return 0;
+  if (!pedidoIds.length) return [];
   return db.transaction(async (tx) => {
     const pedidos = await tx
       .select()
       .from(schema.pedidos)
       .where(and(eq(schema.pedidos.lojaId, lojaId), inArray(schema.pedidos.id, pedidoIds)));
-    let mudou = 0;
+    const mudaram: string[] = [];
     for (const p of pedidos) {
       if (!proximosStatus(p.status, p.modo).includes(novo)) {
         if (pedidos.length === 1) throw new ErroPedido(`Não dá para passar de “${p.status}” para “${novo}”.`);
@@ -136,9 +136,9 @@ export async function mudarStatus(lojaId: string, porUsuarioId: string, pedidoId
       }
       await tx.update(schema.pedidos).set(mudanca).where(eq(schema.pedidos.id, p.id));
       await tx.insert(schema.eventosPedido).values({ pedidoId: p.id, status: novo, porUsuarioId, nota });
-      mudou++;
+      mudaram.push(p.id);
     }
-    return mudou;
+    return mudaram;
   });
 }
 

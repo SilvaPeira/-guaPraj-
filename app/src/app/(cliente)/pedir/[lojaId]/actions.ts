@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { exigirCliente } from "@/lib/cliente";
 import { criarPedido, ErroPedido } from "@/lib/pedidos";
+import { avisarLojaNovoPedido } from "@/lib/avisos";
 
 export type EstadoPedido = { erro?: string };
 
@@ -46,6 +47,7 @@ export async function fazerPedido(_: EstadoPedido, form: FormData): Promise<Esta
       assinaturaId: String(form.get("assinaturaId") ?? "") || null,
     });
     id = p.id;
+    await avisarLojaNovoPedido(p.id);
   } catch (e) {
     if (e instanceof ErroPedido) return { erro: e.message };
     throw e;

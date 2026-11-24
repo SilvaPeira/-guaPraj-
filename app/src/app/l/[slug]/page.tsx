@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
 import { getDb, schema } from "@/db";
 import { marcaPorSlug, temaDaMarca } from "@/lib/marca";
+import { mediasDasLojas, textoNota } from "@/lib/avaliacoes";
 import { garantirContrasteComBranco } from "@/lib/cores";
 import { linkWhatsApp } from "@/lib/telefone";
 import { usuarioAtual } from "@/lib/sessao";
@@ -56,6 +57,7 @@ export default async function SiteDaLoja({ params }: Props) {
     itens: aVenda.filter((p) => CATEGORIAS[p.categoria].grupo === g && p.categoria !== "agua_galao" && p.categoria !== "casco"),
   })).filter((g) => g.itens.length);
   const r = loja.regrasHorario;
+  const nota = textoNota((await mediasDasLojas([loja.id])).get(loja.id));
   const p = m.personalizacao ?? {};
   const abrir = (para?: string) => `/l/${m.slug}/abrir${para ? `?para=${para}` : ""}`;
 
@@ -92,6 +94,7 @@ export default async function SiteDaLoja({ params }: Props) {
             {loja.vendeAlcool && <span className="selo selo-acai">Bebidas (18+)</span>}
           </div>
           <p className="text-sm text-tinta-suave">
+            {nota ? <b className="mr-1 text-tinta">{nota} ·</b> : null}
             {loja.bairro}, {loja.cidade} · {r.dias.slice().sort().map((d) => DIAS_CURTOS[d]).join(", ")} · {r.abre}–{r.fecha}
           </p>
           {galao && (

@@ -9,6 +9,7 @@ import { COR_STATUS, ORIGEM, ROTULO_STATUS } from "@/lib/status";
 import { formatarReais } from "@/lib/validacao";
 import { formatarTelefone, linkWhatsApp } from "@/lib/telefone";
 import { Topo } from "@/components/ui";
+import AvaliarPedido from "@/components/AvaliarPedido";
 import { cancelarPedido } from "../../assinatura/actions";
 
 export const metadata: Metadata = { title: "Pedido" };
@@ -114,11 +115,20 @@ export default async function Pedido({ params, searchParams }: PageProps<"/pedid
             </div>
           )}
           <div className="flex items-baseline justify-between border-t border-borda pt-2">
-            <b>{p.totalCentavos > 0 ? "A pagar na entrega" : "Total"}</b>
+            <b>{p.totalCentavos === 0 ? "Total" : p.statusPagamento === "pago" ? "Pago" : "A pagar na entrega"}</b>
             <b className="font-titulo text-xl">{p.totalCentavos > 0 ? formatarReais(p.totalCentavos) : "incluído no plano"}</b>
           </div>
         </section>
 
+        {(p.status === "entregue" || p.status === "retirado") &&
+          (p.nota ? (
+            <p className="cartao text-sm">
+              Sua avaliação: <span style={{ color: "#f2a65a" }}>{"★".repeat(p.nota)}</span>
+              {p.comentario ? ` · “${p.comentario}”` : ""}
+            </p>
+          ) : (
+            <AvaliarPedido pedidoId={p.id} />
+          ))}
         <a className="botao-sec" href={linkWhatsApp(loja.telefone, `Olá! Sobre o meu pedido #${p.numero} no ÁguaPrajá.`)} target="_blank" rel="noopener noreferrer">
           Falar com a loja no WhatsApp · {formatarTelefone(loja.telefone)}
         </a>

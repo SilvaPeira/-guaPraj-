@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { exigirCliente } from "@/lib/cliente";
+import { mediasDasLojas, textoNota } from "@/lib/avaliacoes";
 import { marcaAtual } from "@/lib/marca";
 import { descontoPercentual, lojasQueAtendem, planoSugerido } from "@/lib/lojas-proximas";
 import { simular } from "@/lib/simulador";
@@ -22,6 +23,7 @@ export default async function Lojas({ searchParams }: PageProps<"/lojas">) {
   const r = simular(usuario.perfilFamilia, usuario.perfilFamilia);
   const galoesMes = r?.galoesMes ?? 0;
   let lojas = await lojasQueAtendem(endereco);
+  const notas = await mediasDasLojas(lojas.map((l) => l.loja.id));
   if (filtro === "entrega") lojas = lojas.filter((l) => l.entregaAqui);
   if (filtro === "retirada") lojas = lojas.filter((l) => l.loja.fazRetirada);
 
@@ -65,6 +67,7 @@ export default async function Lojas({ searchParams }: PageProps<"/lojas">) {
                   <h2 className="text-[17px] font-bold">{loja.nome}</h2>
                   <p className="text-sm text-tinta-suave">
                     {loja.bairro} · {formatarKm(distanciaKm)}
+                    {textoNota(notas.get(loja.id)) ? ` · ${textoNota(notas.get(loja.id))}` : ""}
                   </p>
                 </div>
                 {loja.seloFiscalDeclarado && <span className="selo selo-terra">Verificada</span>}

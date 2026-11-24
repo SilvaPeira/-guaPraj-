@@ -102,7 +102,11 @@ export default async function PainelLoja({ searchParams }: PageProps<"/loja">) {
           </>
         )}
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
+          <Link href="/loja/financeiro" className="cartao flex min-h-16 flex-col justify-center">
+            <b className="text-sm">Financeiro</b>
+            <span className="text-xs text-tinta-suave">Recebido, pendências, avaliações</span>
+          </Link>
           <Link href="/loja/cascos" className="cartao flex min-h-16 flex-col justify-center">
             <b className="text-sm">Cascos</b>
             <span className="text-xs text-tinta-suave">Vasilhames com clientes</span>

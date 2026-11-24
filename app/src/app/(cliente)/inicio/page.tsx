@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { and, asc, desc, eq, gte, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNull } from "drizzle-orm";
 import { schema } from "@/db";
 import { exigirCliente } from "@/lib/cliente";
 import { descreverAgenda, descreverHorario } from "@/lib/agenda";
 import { galoesNoCiclo, gerarEntregas } from "@/lib/pedidos";
-import { agoraLocal, dataBonita } from "@/lib/tempo";
+import { agoraLocal, dataBonita, somarDias } from "@/lib/tempo";
 import { COR_STATUS, ORIGEM, ROTULO_STATUS } from "@/lib/status";
 import { formatarReais } from "@/lib/validacao";
 import { Hero, Logo } from "@/components/ui";
@@ -46,6 +46,20 @@ export default async function Inicio() {
     .orderBy(asc(schema.pedidos.data), asc(schema.pedidos.horaInicio))
     .limit(4);
   const prox = proximos[0]?.p;
+  // Última entrega dos últimos 7 dias ainda sem avaliação.
+  const [paraAvaliar] = await db
+    .select({ id: schema.pedidos.id, data: schema.pedidos.data })
+    .from(schema.pedidos)
+    .where(
+      and(
+        eq(schema.pedidos.clienteId, u.id),
+        inArray(schema.pedidos.status, ["entregue", "retirado"]),
+        isNull(schema.pedidos.nota),
+        gte(schema.pedidos.data, somarDias(hoje, -7)),
+      ),
+    )
+    .orderBy(desc(schema.pedidos.data))
+    .limit(1);
   const ativa = assinatura && assinatura.a.status !== "cancelada" ? assinatura : null;
 
   return (
@@ -63,6 +77,15 @@ export default async function Inicio() {
         <h1 className="text-[26px] font-bold">Olá, {u.nome!.split(" ")[0]}!</h1>
       </Hero>
       <main className="conteudo -mt-10">
+        {paraAvaliar && (
+          <Link href={`/pedidos/${paraAvaliar.id}`} className="cartao-elevado flex items-center justify-between gap-2">
+            <span>
+              <b className="block">Como foi sua entrega de {dataBonita(paraAvaliar.data, hoje)}?</b>
+              <span className="text-sm text-tinta-suave">Toque para avaliar de 1 a 5</span>
+            </span>
+            <span className="text-2xl" style={{ color: "#f2a65a" }} aria-hidden="true">★★★★★</span>
+          </Link>
+        )}
         {prox ? (
           <Link href={`/pedidos/${prox.id}`} className="cartao-elevado pilha">
             <div className="flex items-center justify-between">

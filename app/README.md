@@ -38,7 +38,7 @@ No desenvolvimento, o **código de login aparece na tela** (modo de teste) e no 
 4. ✅ Pedido avulso, compra adicional e assinatura com agenda fixa (semanal, quinzenal ou mensal), ciência do dia/horário, pular, alterar, trocar de plano e cancelar
 5. ✅ Agenda da loja por dia, status (também em lote), "não entregue" + reagendar, entregador, cascos com clientes, 18+ conferido na entrega
 6. Pagamento (Pix, cartão, recorrência)
-7. Avisos por WhatsApp, avaliação, financeiro e controle de 18+ na entrega
+7. ✅ Avaliação de 1 a 5, financeiro da loja, contador de pedidos a confirmar · 🟡 avisos por WhatsApp prontos, falta ligar o provedor
 
 ## Site e app da loja (marca própria)
 

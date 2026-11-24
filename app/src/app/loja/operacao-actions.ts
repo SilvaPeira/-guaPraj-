@@ -6,6 +6,7 @@ import { schema } from "@/db";
 import { ErroPedido } from "@/lib/pedidos";
 import { exigirOperador, mudarStatus, reagendar, registrarCasco } from "@/lib/operacao";
 import { normalizarTelefone } from "@/lib/telefone";
+import { avisarCliente, avisarVarios, type Evento } from "@/lib/avisos";
 import type { StatusPedido } from "@/lib/status";
 
 export type EstadoOperacao = { erro?: string; ok?: string };
@@ -28,7 +29,7 @@ export async function mudarStatusAcao(_: EstadoOperacao, form: FormData): Promis
   if (!ids.length) return { erro: "Selecione pelo menos um pedido." };
   const recolhidos = form.get("cascosRecolhidos");
   try {
-    const n = await mudarStatus(loja.id, usuario.id, ids, novo, {
+    const mudaram = await mudarStatus(loja.id, usuario.id, ids, novo, {
       cascosRecolhidos: recolhidos === null ? undefined : Number(recolhidos),
       documentoConferido: form.get("documentoConferido") === "on",
       pagamentoRecebido: form.get("pagamentoRecebido") !== "nao",
@@ -36,7 +37,8 @@ export async function mudarStatusAcao(_: EstadoOperacao, form: FormData): Promis
       codigoRetirada: form.get("codigoRetirada") === null ? undefined : String(form.get("codigoRetirada")).trim(),
     });
     atualizarTelas();
-    return { ok: ids.length > 1 ? `${n} de ${ids.length} pedidos atualizados.` : "Atualizado." };
+    if (novo !== "separacao" && novo !== "recebido") await avisarVarios(mudaram, novo as Evento);
+    return { ok: ids.length > 1 ? `${mudaram.length} de ${ids.length} pedidos atualizados.` : "Atualizado." };
   } catch (e) {
     if (e instanceof ErroPedido) return { erro: e.message };
     throw e;
@@ -48,6 +50,7 @@ export async function reagendarAcao(_: EstadoOperacao, form: FormData): Promise<
   try {
     await reagendar(loja.id, usuario.id, String(form.get("pedidoId")), String(form.get("data")));
     atualizarTelas();
+    await avisarCliente(String(form.get("pedidoId")), "reagendado");
     return { ok: "Reagendado." };
   } catch (e) {
     if (e instanceof ErroPedido) return { erro: e.message };

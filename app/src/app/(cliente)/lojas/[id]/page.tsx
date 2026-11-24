@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
 import { schema } from "@/db";
 import { exigirCliente } from "@/lib/cliente";
+import { mediasDasLojas, textoNota } from "@/lib/avaliacoes";
 import { marcaAtual } from "@/lib/marca";
 import { descontoPercentual, planoSugerido } from "@/lib/lojas-proximas";
 import { frequenciaTexto, simular } from "@/lib/simulador";
@@ -36,6 +37,7 @@ export default async function Loja({ params }: PageProps<"/lojas/[id]">) {
   const r = usuario.perfilFamilia ? simular(usuario.perfilFamilia, usuario.perfilFamilia) : null;
   const sugerido = r ? planoSugerido(planos, r.galoesMes) : null;
   const km = distanciaKm(endereco, loja);
+  const nota = textoNota((await mediasDasLojas([loja.id])).get(loja.id));
   const entregaAqui = loja.fazEntrega && km <= loja.raioKm;
   const grupos = ORDEM_GRUPOS.map((g) => ({
     grupo: g,
@@ -45,7 +47,7 @@ export default async function Loja({ params }: PageProps<"/lojas/[id]">) {
 
   return (
     <>
-      <Topo titulo={loja.nome} subtitulo={`${loja.bairro} · ${formatarKm(km)}`} voltar={(await marcaAtual()) ? "/inicio" : "/lojas"} />
+      <Topo titulo={loja.nome} subtitulo={`${loja.bairro} · ${formatarKm(km)}${nota ? ` · ${nota}` : ""}`} voltar={(await marcaAtual()) ? "/inicio" : "/lojas"} />
       <main className="conteudo">
         <section className="cartao pilha">
           <div className="flex flex-wrap gap-1.5">
