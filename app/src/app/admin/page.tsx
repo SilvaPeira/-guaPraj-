@@ -6,6 +6,7 @@ import { Hero, Logo, Vazio } from "@/components/ui";
 import { formatarTelefone, linkWhatsApp } from "@/lib/telefone";
 import { mudarStatusLoja } from "./actions";
 import { sair } from "../entrar/actions";
+import LinkSenha from "./LinkSenha";
 
 export const metadata: Metadata = { title: "Admin" };
 
@@ -41,6 +42,8 @@ export default async function Admin() {
           <Kpi valor={aprovadas} rotulo="lojas ativas" />
           <Kpi valor={clientes} rotulo="clientes" />
         </div>
+
+        <LinkSenha />
 
         <h2 className="titulo-secao mt-2">Distribuidoras</h2>
         {lojas.length === 0 && <Vazio>Nenhuma distribuidora cadastrada ainda.</Vazio>}

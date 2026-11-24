@@ -1,5 +1,5 @@
 import "server-only";
-import { createHmac, randomInt, timingSafeEqual } from "node:crypto";
+import { createHmac, randomBytes, randomInt, timingSafeEqual } from "node:crypto";
 import { and, desc, eq, gt, isNull } from "drizzle-orm";
 import { getDb, schema } from "@/db";
 import { enviarWhatsApp } from "./mensagens";
@@ -16,6 +16,23 @@ function hash(telefone: string, codigo: string) {
 /** Mostra o código na tela? Só fora de produção ou em modo de teste explícito. */
 export function otpVisivelNaTela() {
   return process.env.NODE_ENV !== "production" || process.env.OTP_MODO_TESTE === "1";
+}
+
+/** Dá para mandar código (WhatsApp ligado, ou código na tela em teste)? */
+export function codigoDisponivel() {
+  return !!process.env.WHATSAPP_PROVEDOR || otpVisivelNaTela();
+}
+
+/** Link de uso único (24 h) para criar nova senha — gerado pelo admin, enviado por ele. */
+export async function criarTokenSenha(telefone: string): Promise<string> {
+  const db = await getDb();
+  const token = randomBytes(18).toString("base64url");
+  await db.insert(schema.codigosLogin).values({
+    telefone,
+    codigoHash: hash(telefone, token),
+    expiraEm: new Date(Date.now() + 24 * 3600_000),
+  });
+  return token;
 }
 
 export async function solicitarCodigo(telefone: string): Promise<{ ok: true; codigoDev?: string } | { ok: false; erro: string }> {

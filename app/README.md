@@ -32,7 +32,7 @@ No desenvolvimento, o **código de login aparece na tela** (modo de teste) e no 
 
 ## Etapas do plano
 
-1. ✅ Base: login por código, cadastro com pino no mapa, cadastro de loja, admin aprova lojas
+1. ✅ Base: login por **celular + senha** (código pelo WhatsApp só para recuperar a senha, quando houver provedor; sem provedor, o admin gera um link de nova senha), cadastro com pino no mapa, cadastro de loja, admin aprova lojas
 2. ✅ Catálogo (galão + bebidas, álcool só para loja habilitada), planos e ajustes de horário
 3. ✅ Simulador, lojas que atendem o endereço (raio de entrega ou retirada até 15 km) e plano sugerido
 4. ✅ Pedido avulso, compra adicional e assinatura com agenda fixa (semanal, quinzenal ou mensal), ciência do dia/horário, pular, alterar, trocar de plano e cancelar

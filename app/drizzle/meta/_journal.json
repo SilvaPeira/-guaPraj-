@@ -50,6 +50,13 @@
       "when": 1795538252519,
       "tag": "0006_pagamento_online",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1795540227394,
+      "tag": "0007_senha",
+      "breakpoints": true
     }
   ]
 }

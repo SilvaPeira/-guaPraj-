@@ -72,6 +72,10 @@ export const usuarios = pgTable(
     perfilFamilia: jsonb("perfil_familia").$type<PerfilFamilia>(),
     declarou18: boolean("declarou_18").notNull().default(false),
     aceitouTermosEm: timestamp("aceitou_termos_em", { withTimezone: true }),
+    /** Senha (scrypt). Vazia = conta antiga, entra por código. */
+    senhaHash: text("senha_hash"),
+    falhasSenha: smallint("falhas_senha").notNull().default(0),
+    bloqueadoAte: timestamp("bloqueado_ate", { withTimezone: true }),
     criadoEm: criadoEm(),
   },
   (t) => [uniqueIndex("usuarios_telefone_idx").on(t.telefone)],

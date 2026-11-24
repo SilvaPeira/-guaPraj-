@@ -4,7 +4,7 @@ import { Topo } from "@/components/ui";
 import { usuarioAtual } from "@/lib/sessao";
 import { marcaAtual } from "@/lib/marca";
 import { LogoLoja, SeloAguaPraja } from "@/components/marca";
-import { destinoDoUsuario } from "@/lib/destino";
+import { destinoDoUsuario, telefonesAdmin } from "@/lib/destino";
 
 export default async function Entrar({ searchParams }: PageProps<"/entrar">) {
   const sp = await searchParams;
@@ -23,7 +23,7 @@ export default async function Entrar({ searchParams }: PageProps<"/entrar">) {
           </div>
         )}
         <div className="cartao">
-          <FormEntrar intencao={intencao} />
+          <FormEntrar intencao={intencao} suporte={telefonesAdmin()[0] ?? null} />
         </div>
       </main>
       {marca && <SeloAguaPraja />}

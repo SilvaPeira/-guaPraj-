@@ -6,6 +6,7 @@ import { Topo } from "@/components/ui";
 import { SeloAguaPraja } from "@/components/marca";
 import { marcaAtual } from "@/lib/marca";
 import FormCadastro from "./FormCadastro";
+import { sair } from "../entrar/actions";
 
 export const metadata: Metadata = { title: "Seus dados" };
 
@@ -20,7 +21,13 @@ export default async function Cadastro() {
 
   return (
     <>
-      <Topo titulo="Seus dados" subtitulo="Para a distribuidora saber onde entregar" voltar={end ? "/inicio" : undefined} />
+      <Topo titulo="Seus dados" subtitulo="Para a distribuidora saber onde entregar" voltar={end ? "/inicio" : undefined}
+        acao={
+          <form action={sair}>
+            <button className="link-texto">Sair</button>
+          </form>
+        }
+      />
       <main className="conteudo">
         <FormCadastro nome={u.nome ?? ""} endereco={end ?? null} jaAceitou={!!u.aceitouTermosEm} />
       </main>

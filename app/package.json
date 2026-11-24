@@ -10,7 +10,8 @@
     "db:migrar": "tsx --env-file=.env.local scripts/migrar.ts",
     "db:gerar": "drizzle-kit generate",
     "test:assinatura": "tsx --conditions=react-server --tsconfig tsconfig.json scripts/testar-assinatura.ts",
-    "test:pagamento": "tsx --conditions=react-server --tsconfig tsconfig.json scripts/testar-pagamento.ts"
+    "test:pagamento": "tsx --conditions=react-server --tsconfig tsconfig.json scripts/testar-pagamento.ts",
+    "test:senha": "tsx --conditions=react-server --tsconfig tsconfig.json scripts/testar-senha.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.16",
