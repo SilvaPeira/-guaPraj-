@@ -12,6 +12,8 @@ export type ProdutoVenda = {
   nome: string;
   marca: string | null;
   grupo: string;
+  /** Ordem da categoria (Admin → Categorias). */
+  ordemGrupo: number;
   precoCentavos: number;
   /** Preço só do líquido quando o cliente entrega o casco vazio (retornável). */
   precoLiquidoCentavos: number | null;
@@ -60,7 +62,7 @@ export default function FormPedido(p: Props) {
   const [maior18, setMaior18] = useState(false);
   const [pagamento, setPagamento] = useState<"online" | "na_entrega">(p.pagaOnline ? "online" : "na_entrega");
 
-  const grupos = [...new Set(p.produtos.map((x) => x.grupo))];
+  const grupos = [...new Set([...p.produtos].sort((a, b) => a.ordemGrupo - b.ordemGrupo).map((x) => x.grupo))];
   const temAlcool = p.produtos.some((x) => x.alcoolico && (qtd[x.id] ?? 0) > 0);
   const nCascos = casco === "comprar" ? Math.min(cascosComprar, galoes) : 0;
   const gratis = Math.min(galoes, p.saldoGaloes ?? 0);

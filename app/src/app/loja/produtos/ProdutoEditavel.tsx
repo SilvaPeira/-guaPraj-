@@ -16,9 +16,12 @@ type Props = {
   precoLiquidoCentavos: number | null;
   podeRetornavel: boolean;
   fotoUrl: string | null;
+  /** Categoria atual e as que dá para escolher (vazio = não muda: galão e casco). */
+  categoriaId: string;
+  categorias: { id: string; nome: string; tipo: string }[];
 };
 
-export default function ProdutoEditavel({ id, nome, marca, precoCentavos, estoque, precoLiquidoCentavos, podeRetornavel, fotoUrl }: Props) {
+export default function ProdutoEditavel({ id, nome, marca, precoCentavos, estoque, precoLiquidoCentavos, podeRetornavel, fotoUrl, categoriaId, categorias }: Props) {
   const ed = useEdicao();
   const [salvando, iniciar] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
@@ -61,6 +64,18 @@ export default function ProdutoEditavel({ id, nome, marca, precoCentavos, estoqu
             Nome
             <input className="entrada min-h-11" name="nome" required maxLength={80} defaultValue={nome} />
           </label>
+          {categorias.length > 0 && (
+            <label className="campo col-span-2">
+              Categoria
+              <select className="entrada min-h-11" name="categoriaId" defaultValue={categoriaId}>
+                {categorias.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
         </fieldset>
       )}
       <fieldset disabled={!ed.editando} className="grid grid-cols-2 gap-2">

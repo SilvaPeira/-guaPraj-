@@ -13,7 +13,7 @@ export default async function Erros() {
   const lista = await errosAgrupados();
   return (
     <>
-      <Topo titulo="Erros do servidor" subtitulo="Últimos 30 dias, agrupados" voltar="/admin" />
+      <Topo titulo="Erros do servidor" subtitulo="Últimos 30 dias, agrupados" voltar="/admin/ajustes" />
       <main className="conteudo">
         <p className="text-sm text-tinta-suave">
           Quando algo quebra numa tela ou num botão, aparece aqui. Mande o código do erro para quem cuida do app: ele aponta o registro completo no log da Vercel.

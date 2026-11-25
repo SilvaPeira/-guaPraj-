@@ -55,6 +55,52 @@ test.describe.serial("Admin e distribuidora", () => {
     await expect(page.getByText("Marabá – PA")).toHaveCount(0);
   });
 
+  test("admin → Categorias: gelo e polpas separados; cria 'Cervejas' (tipo bebida alcoólica)", async ({ page }) => {
+    await entrar(page, TEL.admin);
+    // Ajustes reúne cidades, categorias e erros.
+    await page.getByRole("navigation", { name: "Menu do admin" }).getByRole("link", { name: "Ajustes" }).click();
+    await page.getByRole("link", { name: /Categorias do catálogo/ }).click();
+    await expect(page).toHaveURL(/\/admin\/categorias$/);
+    for (const nome of ["Água em galão 20 L", "Refrigerantes", "Gelo", "Polpas e açaí", "Bebidas alcoólicas", "Cascos"]) {
+      await expect(page.locator("article", { hasText: nome }).first()).toBeVisible();
+    }
+    // Galão e casco são do sistema: sem desativar nem excluir.
+    const galao = page.locator("article", { hasText: "Água em galão 20 L" });
+    await expect(galao.getByText("Sistema")).toBeVisible();
+    await expect(galao.getByRole("button", { name: "Desativar" })).toHaveCount(0);
+
+    const nova = page.locator("details", { hasText: "+ Nova categoria" });
+    await nova.evaluate((d) => ((d as HTMLDetailsElement).open = true));
+    await nova.getByLabel("Nome que o cliente vê").fill("Cervejas");
+    // Sem escolher o tipo, não cria.
+    await nova.getByRole("button", { name: "Criar categoria" }).click();
+    await expect(nova.locator(ALERTA)).toContainText("Escolha o tipo");
+    await escolherOpcao(nova.getByLabel("Tipo (define as regras)"), /^Bebida alcoólica/);
+    await nova.getByLabel("Ordem").fill("6");
+    await nova.getByRole("button", { name: "Criar categoria" }).click();
+    const cervejas = page.locator("article", { hasText: "Cervejas" });
+    await expect(cervejas).toBeVisible();
+    await expect(cervejas.getByText(/18\+ e documento na entrega/)).toBeVisible();
+
+    // Nome repetido é recusado.
+    await nova.evaluate((d) => ((d as HTMLDetailsElement).open = true));
+    await nova.getByLabel("Nome que o cliente vê").fill("Gelo");
+    await escolherOpcao(nova.getByLabel("Tipo (define as regras)"), /^Gelo/);
+    await nova.getByRole("button", { name: "Criar categoria" }).click();
+    await expect(nova.locator(ALERTA)).toContainText("Já existe a categoria Gelo");
+
+    // Categoria de teste: cria, desativa e exclui (sem produtos).
+    await nova.evaluate((d) => ((d as HTMLDetailsElement).open = true));
+    await nova.getByLabel("Nome que o cliente vê").fill("Temporária");
+    await escolherOpcao(nova.getByLabel("Tipo (define as regras)"), /^Acessório/);
+    await nova.getByRole("button", { name: "Criar categoria" }).click();
+    const temp = page.locator("article", { hasText: "Temporária" });
+    await temp.getByRole("button", { name: "Desativar" }).click();
+    await expect(temp.getByText("Desativada")).toBeVisible();
+    await temp.getByRole("button", { name: "Excluir" }).click();
+    await expect(page.locator("article", { hasText: "Temporária" })).toHaveCount(0);
+  });
+
   test("admin → Planos: cria Essencial e Completo (só o Completo tem app próprio)", async ({ page, browser }) => {
     await entrar(page, TEL.admin);
     await page.goto("/admin/planos");
@@ -152,7 +198,7 @@ test.describe.serial("Admin e distribuidora", () => {
     await expect(form.getByRole("img", { name: "Foto do produto" })).toBeVisible();
     await form.getByLabel("Nome").fill("Refrigerante 2 L vidro");
     await form.getByLabel("Marca").fill("Coca-Cola");
-    await form.getByLabel("Categoria").selectOption({ label: "Refrigerante" });
+    await form.getByLabel("Categoria").selectOption({ label: "Refrigerantes" });
     await form.getByLabel("Preço normal (R$)").fill("14");
     await form.getByLabel("Quantidade em estoque").fill("20");
 
@@ -177,14 +223,17 @@ test.describe.serial("Admin e distribuidora", () => {
     expect(r.headers()["content-type"]).toBe("image/jpeg");
   });
 
-  test("distribuidora → Catálogo: outros itens (gelo, cerveja 18+)", async ({ page }) => {
+  test("distribuidora → Catálogo: outros itens (gelo, polpa, cerveja 18+, acessório)", async ({ page }) => {
     await entrar(page, TEL.loja);
     await page.goto("/loja/produtos");
     const form = page.locator("form", { hasText: "Adicionar produto" });
+    // As opções de categoria vêm do painel (inclusive a "Cervejas" que o admin acabou de criar).
+    await expect(form.getByLabel("Categoria").locator("option", { hasText: "Cervejas" })).toHaveCount(1);
     for (const [nome, cat, preco] of [
       ["Gelo 5 kg", "Gelo", "10"],
-      ["Cerveja lata 350 ml", "Bebida alcoólica (18+)", "5"],
-      ["Copo descartável", "Acessório (copo, suporte, bomba)", "2"],
+      ["Polpa de acerola 1 kg", "Polpas e açaí", "12"],
+      ["Cerveja lata 350 ml", "Cervejas", "5"],
+      ["Copo descartável", "Acessórios", "2"],
     ] as const) {
       await form.getByLabel("Nome").fill(nome);
       await form.getByLabel("Categoria").selectOption({ label: cat });
@@ -192,7 +241,12 @@ test.describe.serial("Admin e distribuidora", () => {
       await form.getByRole("button", { name: "Adicionar", exact: true }).click();
       await expect(form.getByRole("status")).toContainText(`${nome} adicionado`);
     }
+    // A categoria "Cervejas" é do tipo bebida alcoólica: o produto já sai como 18+.
     await expect(page.locator("li", { hasText: "Cerveja lata 350 ml" }).getByText("18+")).toBeVisible();
+    // Gelo e polpas em grupos separados no catálogo da loja.
+    await expect(page.getByRole("heading", { name: "Gelo", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Polpas e açaí" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Cervejas" })).toBeVisible();
   });
 
   test("distribuidora → Catálogo: editar nome/foto e excluir produto", async ({ page }) => {

@@ -8,7 +8,8 @@ import { mediasDasLojas, textoNota } from "@/lib/avaliacoes";
 import { garantirContrasteComBranco } from "@/lib/cores";
 import { linkWhatsApp } from "@/lib/telefone";
 import { usuarioAtual } from "@/lib/sessao";
-import { CATEGORIAS, ORDEM_GRUPOS, podeVender } from "@/lib/catalogo";
+import { podeVender } from "@/lib/catalogo";
+import { agruparPorCategoria, mapaCategorias } from "@/lib/categorias";
 import { frequenciaTexto } from "@/lib/simulador";
 import { DIAS_CURTOS } from "@/lib/tempo";
 import { formatarReais } from "@/lib/validacao";
@@ -56,10 +57,10 @@ export default async function SiteDaLoja({ params }: Props) {
   ]);
   const aVenda = produtos.filter(podeVender);
   const galao = aVenda.find((p) => p.categoria === "agua_galao");
-  const grupos = ORDEM_GRUPOS.map((g) => ({
-    grupo: g,
-    itens: aVenda.filter((p) => CATEGORIAS[p.categoria].grupo === g && p.categoria !== "agua_galao" && p.categoria !== "casco"),
-  })).filter((g) => g.itens.length);
+  const grupos = agruparPorCategoria(
+    aVenda.filter((p) => p.categoria !== "agua_galao" && p.categoria !== "casco"),
+    await mapaCategorias(),
+  ).map((g) => ({ grupo: g.nome, itens: g.itens }));
   const r = loja.regrasHorario;
   const nota = textoNota((await mediasDasLojas([loja.id])).get(loja.id));
   const p = m.personalizacao ?? {};

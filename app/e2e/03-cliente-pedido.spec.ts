@@ -66,11 +66,22 @@ test.describe.serial("Cliente: pedido avulso e entrega", () => {
     await page.goto("/catalogo?q=coca");
     await expect(page.getByText(/1 produto para “coca”/)).toBeVisible();
 
+    // Categorias do painel, separadas: Gelo de um lado, Polpas e açaí do outro.
     await page.goto("/catalogo");
-    await page.getByRole("navigation", { name: "Categorias" }).getByRole("link", { name: "Gelo e polpas" }).click();
-    await expect(page).toHaveURL(/g=Gelo/);
+    const categorias = page.getByRole("navigation", { name: "Categorias" });
+    await expect(categorias.getByRole("link", { name: "Polpas e açaí" })).toBeVisible();
+    await expect(categorias.getByRole("link", { name: "Cervejas" })).toBeVisible();
+    await categorias.getByRole("link", { name: "Gelo", exact: true }).click();
+    await expect(page).toHaveURL(/g=[0-9a-f-]{36}/);
     await expect(page.getByText("Gelo em cubos 5 kg")).toBeVisible();
+    await expect(page.getByText("Polpa de acerola 1 kg")).toHaveCount(0);
     await expect(page.getByText("Refrigerante 2 L vidro")).toHaveCount(0);
+    await categorias.getByRole("link", { name: "Polpas e açaí" }).click();
+    await expect(page.getByText("Polpa de acerola 1 kg")).toBeVisible();
+    await expect(page.getByText("Gelo em cubos 5 kg")).toHaveCount(0);
+    // A busca também acha pelo nome da categoria.
+    await page.goto("/catalogo?q=cervejas");
+    await expect(page.getByText("Cerveja lata 350 ml")).toBeVisible();
 
     await page.goto("/catalogo?q=nada-disso-existe");
     await expect(page.getByText("Nada encontrado.")).toBeVisible();

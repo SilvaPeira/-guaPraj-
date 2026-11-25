@@ -192,12 +192,30 @@ export const entregadores = pgTable(
   (t) => [uniqueIndex("entregadores_loja_usuario_idx").on(t.lojaId, t.usuarioId)],
 );
 
+/**
+ * Categorias que o cliente vê no catálogo (Admin → Categorias).
+ * O "tipo" define as regras do produto: 18+, retornável, depende do plano da loja, galão do plano, casco.
+ * Galão e casco são do sistema (não dá para excluir nem mudar o tipo).
+ */
+export const categoriasProduto = pgTable("categorias_produto", {
+  id: id(),
+  nome: text("nome").notNull().unique(),
+  tipo: categoriaProduto("tipo").notNull(),
+  ordem: integer("ordem").notNull().default(0),
+  ativa: boolean("ativa").notNull().default(true),
+  sistema: boolean("sistema").notNull().default(false),
+  criadoEm: criadoEm(),
+});
+
 export const produtos = pgTable("produtos", {
   id: id(),
   lojaId: uuid("loja_id").notNull().references(() => lojas.id, { onDelete: "cascade" }),
   nome: text("nome").notNull(),
   marca: text("marca"),
+  /** Tipo (regras). Vem da categoria escolhida. */
   categoria: categoriaProduto("categoria").notNull(),
+  /** Categoria do catálogo (Admin → Categorias). Vazio = a primeira categoria do mesmo tipo. */
+  categoriaId: uuid("categoria_id").references(() => categoriasProduto.id),
   /** Quantidade disponível. null = loja não controla estoque deste item. */
   estoque: integer("estoque"),
   /** Retornável = tem casco (galão 20 L). */

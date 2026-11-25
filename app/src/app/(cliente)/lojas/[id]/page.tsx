@@ -9,7 +9,8 @@ import { marcaAtual } from "@/lib/marca";
 import { descontoPercentual, planoSugerido } from "@/lib/lojas-proximas";
 import { frequenciaTexto, simular } from "@/lib/simulador";
 import { distanciaKm, formatarKm } from "@/lib/geo";
-import { CATEGORIAS, ORDEM_GRUPOS, podeVender } from "@/lib/catalogo";
+import { podeVender } from "@/lib/catalogo";
+import { agruparPorCategoria, mapaCategorias } from "@/lib/categorias";
 import { ehExtra, recursosDaLoja } from "@/lib/planos-app";
 import { formatarReais } from "@/lib/validacao";
 import { Topo } from "@/components/ui";
@@ -42,10 +43,10 @@ export default async function Loja({ params }: PageProps<"/lojas/[id]">) {
   const km = distanciaKm(endereco, loja);
   const nota = textoNota((await mediasDasLojas([loja.id])).get(loja.id));
   const entregaAqui = loja.fazEntrega && km <= loja.raioKm;
-  const grupos = ORDEM_GRUPOS.map((g) => ({
-    grupo: g,
-    itens: aVenda.filter((p) => CATEGORIAS[p.categoria].grupo === g && p.categoria !== "agua_galao"),
-  })).filter((g) => g.itens.length);
+  const grupos = agruparPorCategoria(
+    aVenda.filter((p) => p.categoria !== "agua_galao" && p.categoria !== "casco"),
+    await mapaCategorias(),
+  ).map((g) => ({ grupo: g.nome, itens: g.itens }));
   const regras = loja.regrasHorario;
   const marca = await marcaAtual();
   // Plano mensal: o cliente assina com UMA distribuidora; avulso pode pedir em qualquer uma.

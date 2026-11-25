@@ -1,13 +1,14 @@
+/** Tipos de produto (regras do sistema). As categorias que o cliente vê ficam em Admin → Categorias. */
 export const CATEGORIAS = {
-  agua_galao: { nome: "Água em galão 20 L", grupo: "Água" },
-  agua: { nome: "Água (garrafa, fardo, com gás)", grupo: "Água" },
-  refrigerante: { nome: "Refrigerante", grupo: "Bebidas" },
-  suco: { nome: "Suco, isotônico, energético", grupo: "Bebidas" },
-  gelo: { nome: "Gelo", grupo: "Gelo e polpas" },
-  polpa: { nome: "Polpa de fruta / açaí", grupo: "Gelo e polpas" },
-  alcoolica: { nome: "Bebida alcoólica (18+)", grupo: "Bebidas alcoólicas" },
-  acessorio: { nome: "Acessório (copo, suporte, bomba)", grupo: "Acessórios" },
-  casco: { nome: "Casco (vasilhame)", grupo: "Acessórios" },
+  agua_galao: { nome: "Água em galão 20 L" },
+  agua: { nome: "Água (garrafa, fardo, com gás)" },
+  refrigerante: { nome: "Refrigerante" },
+  suco: { nome: "Suco, isotônico, energético" },
+  gelo: { nome: "Gelo" },
+  polpa: { nome: "Polpa de fruta / açaí" },
+  alcoolica: { nome: "Bebida alcoólica (18+)" },
+  acessorio: { nome: "Acessório (copo, suporte, bomba)" },
+  casco: { nome: "Casco (vasilhame)" },
 } as const;
 
 export type Categoria = keyof typeof CATEGORIAS;
@@ -24,5 +25,3 @@ export const podeSerRetornavel = (categoria: string) => (PODE_SER_RETORNAVEL as 
 
 export const ESTOQUE_BAIXO = 5;
 
-/** Ordem em que os grupos aparecem para o cliente. */
-export const ORDEM_GRUPOS = ["Água", "Bebidas", "Gelo e polpas", "Bebidas alcoólicas", "Acessórios"];

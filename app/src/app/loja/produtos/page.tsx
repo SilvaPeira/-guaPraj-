@@ -3,7 +3,8 @@ import { and, asc, eq, isNull } from "drizzle-orm";
 import { schema } from "@/db";
 import { exigirLoja } from "@/lib/loja";
 import { Topo } from "@/components/ui";
-import { CATEGORIAS, ESTOQUE_BAIXO, ORDEM_GRUPOS, podeSerRetornavel, podeVender } from "@/lib/catalogo";
+import { ESTOQUE_BAIXO, podeSerRetornavel, podeVender } from "@/lib/catalogo";
+import { agruparPorCategoria, categoriaDo, mapaCategorias, type MapaCategorias } from "@/lib/categorias";
 import FormNovoProduto from "./FormNovoProduto";
 import Link from "next/link";
 import { recursosDaLoja } from "@/lib/planos-app";
@@ -24,7 +25,11 @@ export default async function Produtos() {
     .where(and(eq(schema.produtos.lojaId, loja.id), isNull(schema.produtos.excluidoEm)))
     .orderBy(asc(schema.produtos.ordem), asc(schema.produtos.nome));
 
-  const grupos = ORDEM_GRUPOS.map((g) => ({ grupo: g, itens: lista.filter((p) => CATEGORIAS[p.categoria].grupo === g) })).filter((g) => g.itens.length);
+  const mapa = await mapaCategorias();
+  const grupos = agruparPorCategoria(lista, mapa).map((g) => ({ grupo: g.nome, itens: g.itens }));
+  // Para escolher num produto novo: as ativas. Para trocar num existente: as ativas que não são do sistema.
+  const ativas = mapa.lista.filter((c) => c.ativa);
+  const opcoesNovo = ativas.map(({ id, nome, tipo }) => ({ id, nome, tipo }));
   const baixos = lista.filter((p) => p.disponivel && p.estoque !== null && p.estoque <= ESTOQUE_BAIXO);
 
   return (
@@ -52,18 +57,22 @@ export default async function Produtos() {
             <h2 className="titulo-secao">{grupo}</h2>
             <ul className="divide-y divide-borda">
               {itens.map((p) => (
-                <ItemProduto key={p.id} p={p} />
+                <ItemProduto key={p.id} p={p} mapa={mapa} vendeAlcool={loja.vendeAlcool} />
               ))}
             </ul>
           </section>
         ))}
-        <FormNovoProduto vendeAlcool={loja.vendeAlcool} />
+        <FormNovoProduto vendeAlcool={loja.vendeAlcool} categorias={opcoesNovo} />
       </main>
     </>
   );
 }
 
-function ItemProduto({ p }: { p: Produto }) {
+function ItemProduto({ p, mapa, vendeAlcool }: { p: Produto; mapa: MapaCategorias; vendeAlcool: boolean }) {
+  const fixa = p.categoria === "agua_galao" || p.categoria === "casco";
+  const trocaveis = fixa
+    ? []
+    : mapa.lista.filter((c) => c.ativa && !c.sistema && (vendeAlcool || c.tipo !== "alcoolica")).map(({ id, nome, tipo }) => ({ id, nome, tipo }));
   const vende = podeVender(p);
   return (
     <li className={`flex flex-col gap-2 py-3 ${vende ? "" : "opacity-70"}`}>
@@ -110,6 +119,8 @@ function ItemProduto({ p }: { p: Produto }) {
       <ProdutoEditavel
         id={p.id}
         nome={p.nome}
+        categoriaId={categoriaDo(p, mapa).id}
+        categorias={trocaveis}
         fotoUrl={urlFoto(p)}
         marca={p.marca}
         precoCentavos={p.precoCentavos}

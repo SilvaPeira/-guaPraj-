@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { schema } from "@/db";
 import { exigirCliente } from "@/lib/cliente";
-import { CATEGORIAS, podeVender } from "@/lib/catalogo";
+import { podeVender } from "@/lib/catalogo";
+import { categoriaDo, mapaCategorias } from "@/lib/categorias";
 import { distanciaKm, RAIO_RETIRADA_KM } from "@/lib/geo";
 import { datasDisponiveis, regrasParaCliente } from "@/lib/opcoes-pedido";
 import { Topo, Vazio } from "@/components/ui";
@@ -44,13 +45,15 @@ export default async function Pedir({ params, searchParams }: PageProps<"/pedir/
   const galao = produtos.find((p) => p.categoria === "agua_galao" && podeVender(p));
   const casco = produtos.find((p) => p.categoria === "casco" && podeVender(p));
   const { produtosExtras } = await recursosDaLoja(loja.id);
+  const mapa = await mapaCategorias();
   const extras = produtos
     .filter((p) => podeVender(p) && p.categoria !== "agua_galao" && p.categoria !== "casco" && (!p.alcoolico || loja.vendeAlcool) && (produtosExtras || !ehExtra(p.categoria)))
     .map((p) => ({
       id: p.id,
       nome: p.nome,
       marca: p.marca,
-      grupo: CATEGORIAS[p.categoria].grupo,
+      grupo: categoriaDo(p, mapa).nome,
+      ordemGrupo: categoriaDo(p, mapa).ordem,
       precoCentavos: p.precoCentavos,
       precoLiquidoCentavos: p.precoLiquidoCentavos,
       alcoolico: p.alcoolico,

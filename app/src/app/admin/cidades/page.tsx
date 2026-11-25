@@ -22,7 +22,7 @@ export default async function Cidades() {
 
   return (
     <>
-      <Topo titulo="Cidades atendidas" subtitulo="Onde clientes e distribuidoras podem se cadastrar" voltar="/admin" />
+      <Topo titulo="Cidades atendidas" subtitulo="Onde clientes e distribuidoras podem se cadastrar" voltar="/admin/ajustes" />
       <main className="conteudo">
         <p className="text-sm text-tinta-suave">
           Só as cidades <b>ativas</b> aparecem no cadastro do cliente e da distribuidora, e no site. Desativar não apaga ninguém: quem já está cadastrado continua

@@ -7,7 +7,8 @@ import { exigirCliente } from "@/lib/cliente";
 import { marcaAtual } from "@/lib/marca";
 import { lojasQueAtendem } from "@/lib/lojas-proximas";
 import { mediasDasLojas, textoNota } from "@/lib/avaliacoes";
-import { CATEGORIAS, ORDEM_GRUPOS, podeVender } from "@/lib/catalogo";
+import { podeVender } from "@/lib/catalogo";
+import { categoriaDo, mapaCategorias } from "@/lib/categorias";
 import { ehExtra, recursosDaLoja } from "@/lib/planos-app";
 import { formatarKm } from "@/lib/geo";
 import { formatarReais } from "@/lib/validacao";
@@ -29,6 +30,8 @@ type Item = {
   nome: string;
   marca: string | null;
   categoria: string;
+  /** Categoria do catálogo (Admin → Categorias). */
+  grupoId: string;
   grupo: string;
   precoCentavos: number;
   precoLiquidoCentavos: number | null;
@@ -44,7 +47,6 @@ export default async function Catalogo({ searchParams }: PageProps<"/catalogo">)
   if (marca) redirect(`/lojas/${marca.lojaId}`);
   const sp = await searchParams;
   const q = typeof sp.q === "string" ? sp.q.trim().slice(0, 60) : "";
-  const grupo = typeof sp.g === "string" && ORDEM_GRUPOS.includes(sp.g) ? sp.g : "";
 
   const lojas = await lojasQueAtendem(endereco);
   const ids = lojas.map((l) => l.loja.id);
@@ -65,6 +67,8 @@ export default async function Catalogo({ searchParams }: PageProps<"/catalogo">)
       .where(and(eq(schema.assinaturas.clienteId, usuario.id), inArray(schema.assinaturas.status, ["ativa", "pausada"])))
       .limit(1),
   ]);
+  const mapa = await mapaCategorias();
+  const grupo = typeof sp.g === "string" && mapa.porId.has(sp.g) ? sp.g : "";
   const extrasLiberados = new Map(await Promise.all(ids.map(async (id) => [id, (await recursosDaLoja(id)).produtosExtras] as const)));
   const logos = new Set(comLogo.map((l) => l.id));
 
@@ -79,18 +83,20 @@ export default async function Catalogo({ searchParams }: PageProps<"/catalogo">)
       nome: p.nome,
       marca: p.marca,
       categoria: p.categoria,
-      grupo: CATEGORIAS[p.categoria].grupo,
+      grupoId: categoriaDo(p, mapa).id,
+      grupo: categoriaDo(p, mapa).nome,
       precoCentavos: p.precoCentavos,
       precoLiquidoCentavos: p.precoLiquidoCentavos,
       fotoUrl: urlFoto(p),
       alcoolico: p.alcoolico,
     }));
-  const gruposComItens = ORDEM_GRUPOS.filter((g) => itens.some((i) => i.grupo === g));
+  // Botões de categoria: só as que têm produto à venda, na ordem do painel.
+  const gruposComItens = mapa.lista.filter((c) => c.tipo !== "casco" && itens.some((i) => i.grupoId === c.id));
   const buscando = !!q || !!grupo;
   const termos = simples(q).split(/\s+/).filter(Boolean);
   const achados = buscando
     ? itens
-        .filter((i) => (!grupo || i.grupo === grupo) && termos.every((t) => simples(`${i.nome} ${i.marca ?? ""} ${CATEGORIAS[i.categoria as keyof typeof CATEGORIAS].nome}`).includes(t)))
+        .filter((i) => (!grupo || i.grupoId === grupo) && termos.every((t) => simples(`${i.nome} ${i.marca ?? ""} ${i.grupo}`).includes(t)))
         .sort((a, b) => a.precoCentavos - b.precoCentavos)
     : [];
   /** Na loja do plano, o pedido vira compra adicional (galão pelo preço do plano). */
@@ -125,14 +131,14 @@ export default async function Catalogo({ searchParams }: PageProps<"/catalogo">)
 
         {gruposComItens.length > 1 && (
           <nav className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1" aria-label="Categorias">
-            {["", ...gruposComItens].map((g) => (
+            {[{ id: "", nome: "Tudo" }, ...gruposComItens].map((g) => (
               <Link
-                key={g || "todos"}
-                href={hrefGrupo(g)}
-                aria-current={grupo === g ? "page" : undefined}
-                className={`flex min-h-10 flex-none items-center rounded-full border px-3.5 text-sm font-semibold ${grupo === g ? "border-verde bg-verde text-white" : "border-borda2 bg-white"}`}
+                key={g.id || "todos"}
+                href={hrefGrupo(g.id)}
+                aria-current={grupo === g.id ? "page" : undefined}
+                className={`flex min-h-10 flex-none items-center rounded-full border px-3.5 text-sm font-semibold ${grupo === g.id ? "border-verde bg-verde text-white" : "border-borda2 bg-white"}`}
               >
-                {g || "Tudo"}
+                {g.nome}
               </Link>
             ))}
           </nav>
@@ -159,7 +165,7 @@ export default async function Catalogo({ searchParams }: PageProps<"/catalogo">)
             <p className="text-sm text-tinta-suave">
               {achados.length === 0
                 ? "Nada encontrado."
-                : `${achados.length} ${achados.length === 1 ? "produto" : "produtos"}${q ? ` para “${q}”` : ""}${grupo ? ` em ${grupo}` : ""} · do menor preço`}
+                : `${achados.length} ${achados.length === 1 ? "produto" : "produtos"}${q ? ` para “${q}”` : ""}${grupo ? ` em ${mapa.porId.get(grupo)?.nome}` : ""} · do menor preço`}
               {(q || grupo) && (
                 <>
                   {" · "}

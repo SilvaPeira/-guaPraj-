@@ -5,7 +5,7 @@ import { and, count, eq, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { schema } from "@/db";
 import { exigirLoja } from "@/lib/loja";
-import { CATEGORIAS, podeSerRetornavel, type Categoria } from "@/lib/catalogo";
+import { podeSerRetornavel } from "@/lib/catalogo";
 import { primeiroErro, reaisParaCentavos } from "@/lib/validacao";
 
 export type EstadoForm = { erro?: string; ok?: string };
@@ -42,22 +42,35 @@ function lerEstoque(v: FormDataEntryValue | null): { ok: true; valor: number | n
 const esquemaNovo = z.object({
   nome: z.string().trim().min(2, "Informe o nome do produto.").max(80),
   marca: z.string().trim().max(60).optional(),
-  categoria: z.enum(Object.keys(CATEGORIAS) as [Categoria, ...Categoria[]], { message: "Escolha a categoria." }),
+  categoriaId: z.string().uuid({ message: "Escolha a categoria." }),
 });
+
+/** Categoria escolhida (Admin → Categorias): precisa existir e estar ativa. O tipo dela define as regras. */
+async function lerCategoria(db: Awaited<ReturnType<typeof exigirLoja>>["db"], id: string) {
+  const [c] = await db
+    .select()
+    .from(schema.categoriasProduto)
+    .where(and(eq(schema.categoriasProduto.id, id), eq(schema.categoriasProduto.ativa, true)))
+    .limit(1);
+  return c ?? null;
+}
 
 export async function criarProduto(_: EstadoForm, form: FormData): Promise<EstadoForm> {
   const { loja, db } = await exigirLoja();
   const r = esquemaNovo.safeParse(Object.fromEntries(form));
   if (!r.success) return { erro: primeiroErro(r.error) };
+  const cat = await lerCategoria(db, r.data.categoriaId);
+  if (!cat) return { erro: "Escolha uma categoria da lista." };
+  const tipo = cat.tipo;
   const preco = reaisParaCentavos(form.get("preco"));
   if (!preco) return { erro: "Informe o preço." };
   const estoque = lerEstoque(form.get("estoque"));
   if (!estoque.ok) return { erro: "Quantidade em estoque inválida (use um número inteiro, ou deixe vazio)." };
-  const liquido = lerLiquido(form, r.data.categoria, preco);
+  const liquido = lerLiquido(form, tipo, preco);
   if (!liquido.ok) return { erro: liquido.erro };
   const foto = lerFoto(form);
   if (!foto.ok) return { erro: foto.erro };
-  const alcoolico = r.data.categoria === "alcoolica";
+  const alcoolico = tipo === "alcoolica";
   if (alcoolico && !loja.vendeAlcool) {
     return { erro: "Sua loja não está habilitada para bebida alcoólica. Ative em Ajustes (precisa de alvará)." };
   }
@@ -65,14 +78,15 @@ export async function criarProduto(_: EstadoForm, form: FormData): Promise<Estad
     lojaId: loja.id,
     nome: r.data.nome,
     marca: r.data.marca || null,
-    categoria: r.data.categoria,
-    retornavel: r.data.categoria === "agua_galao",
+    categoria: tipo,
+    categoriaId: cat.id,
+    retornavel: tipo === "agua_galao",
     alcoolico,
     precoCentavos: preco,
     precoLiquidoCentavos: liquido.valor,
     foto: foto.valor ?? null,
     estoque: estoque.valor,
-    ordem: r.data.categoria === "casco" ? 99 : 10,
+    ordem: tipo === "casco" ? 99 : 10,
   });
   revalidatePath("/loja/produtos");
   return { ok: `${r.data.nome} adicionado.` };
@@ -105,18 +119,30 @@ export async function atualizarProduto(form: FormData): Promise<EstadoForm> {
   } else if (acao === "salvar") {
     const nome = String(form.get("nome") ?? "").trim().slice(0, 80);
     if (nome.length < 2) return { erro: "Informe o nome do produto." };
+    // Trocar de categoria: galão e casco não mudam (os planos e a troca de casco dependem deles).
+    let novaCat: { id: string; tipo: typeof p.categoria } | null = null;
+    const pedidaId = String(form.get("categoriaId") ?? "");
+    if (pedidaId && pedidaId !== p.categoriaId) {
+      if (p.categoria === "agua_galao" || p.categoria === "casco") return { erro: "Galão e casco não mudam de categoria." };
+      const c = await lerCategoria(db, pedidaId);
+      if (!c || c.sistema) return { erro: "Escolha uma categoria da lista." };
+      if (c.tipo === "alcoolica" && !loja.vendeAlcool) return { erro: "Sua loja não está habilitada para bebida alcoólica. Ative em Ajustes (precisa de alvará)." };
+      novaCat = { id: c.id, tipo: c.tipo };
+    }
+    const tipoFinal = novaCat?.tipo ?? p.categoria;
     const foto = lerFoto(form);
     if (!foto.ok) return { erro: foto.erro };
     const preco = reaisParaCentavos(form.get("preco"));
     const estoque = lerEstoque(form.get("estoque"));
     const marca = String(form.get("marca") ?? "").trim().slice(0, 60) || null;
-    const liquido = lerLiquido(form, p.categoria, preco ?? p.precoCentavos);
+    const liquido = lerLiquido(form, tipoFinal, preco ?? p.precoCentavos);
     if (!liquido.ok) return { erro: liquido.erro };
     await db
       .update(schema.produtos)
       .set({
         nome,
         marca,
+        ...(novaCat ? { categoriaId: novaCat.id, categoria: novaCat.tipo, alcoolico: novaCat.tipo === "alcoolica" } : {}),
         precoLiquidoCentavos: liquido.valor,
         ...(foto.valor !== undefined ? { foto: foto.valor } : {}),
         ...(preco ? { precoCentavos: preco } : {}),
