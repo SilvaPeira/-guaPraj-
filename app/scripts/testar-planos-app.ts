@@ -19,12 +19,14 @@ async function main() {
   // Regras puras
   const planos = PLANOS_APP_SUGERIDOS.map((p, i) => ({ ...p, id: `p${i}`, ativo: true, criadoEm: new Date() }) as PlanoApp);
   confere("sem planos cadastrados: sem limites", calcularSituacao({ planoAppId: null, planoAppPagoAte: null }, [], "2026-11-25").recursos.limiteAssinantes, null);
-  confere("sem plano escolhido: vale o grátis", calcularSituacao({ planoAppId: null, planoAppPagoAte: null }, planos, "2026-11-25").vigente?.nome, "Grátis");
-  const pago = calcularSituacao({ planoAppId: "p2", planoAppPagoAte: "2026-12-01" }, planos, "2026-11-25");
-  confere("Completo pago em dia vale", [pago.vigente?.nome, pago.vencido], ["Completo", false]);
-  const venc = calcularSituacao({ planoAppId: "p2", planoAppPagoAte: "2026-11-24" }, planos, "2026-11-25");
-  confere("Completo vencido volta ao grátis", [venc.vigente?.nome, venc.vencido], ["Grátis", true]);
-  confere("último dia pago ainda vale", calcularSituacao({ planoAppId: "p1", planoAppPagoAte: "2026-11-25" }, planos, "2026-11-25").vigente?.nome, "Essencial");
+  const sem = calcularSituacao({ planoAppId: null, planoAppPagoAte: null }, planos, "2026-11-25");
+  confere("sem plano pago: regras básicas, sem app próprio", [sem.vigente, sem.recursos.limiteAssinantes, sem.recursos.appProprio], [null, 15, false]);
+  const pago = calcularSituacao({ planoAppId: "p1", planoAppPagoAte: "2026-12-01" }, planos, "2026-11-25");
+  confere("Completo pago em dia vale, com app próprio", [pago.vigente?.nome, pago.vencido, pago.recursos.appProprio], ["Completo", false, true]);
+  const venc = calcularSituacao({ planoAppId: "p1", planoAppPagoAte: "2026-11-24" }, planos, "2026-11-25");
+  confere("Completo vencido volta ao básico", [venc.vigente, venc.vencido, venc.recursos.appProprio], [null, true, false]);
+  const ess = calcularSituacao({ planoAppId: "p0", planoAppPagoAte: "2026-11-25" }, planos, "2026-11-25");
+  confere("Essencial (último dia pago) vale, sem app próprio", [ess.vigente?.nome, ess.recursos.appProprio], ["Essencial", false]);
 
   // No banco
   const db = await getDb();
@@ -47,7 +49,7 @@ async function main() {
   const [refri] = await db.insert(schema.produtos).values({ lojaId: loja.id, nome: "Refri 2 L", categoria: "refrigerante", precoCentavos: 1000 }).returning();
   await conectarSimulado(loja.id);
 
-  confere("grátis: sem pagamento online", await aceitaOnline(loja.id), false);
+  confere("sem plano: sem pagamento online", await aceitaOnline(loja.id), false);
   const pedirRefri = () =>
     criarPedido({
       clienteId: cliente.id, lojaId: loja.id, enderecoId: end.id, ponto: end, modo: "entrega", tipoHorario: "periodo",
@@ -59,18 +61,20 @@ async function main() {
   } catch (e) {
     erro = e instanceof ErroPedido ? "recusado" : String(e);
   }
-  confere("grátis: refrigerante recusado", erro, "recusado");
+  confere("sem plano: refrigerante recusado", erro, "recusado");
 
   await db.update(schema.lojas).set({ planoAppId: essencial.id, planoAppPagoAte: "2026-12-24" }).where(eq(schema.lojas.id, loja.id));
   confere("Essencial: pagamento online liberado", await aceitaOnline(loja.id), true);
-  confere("Essencial: assinantes ilimitados", await aceitaNovoAssinante(loja.id), true);
+  confere("Essencial: aceita assinante (limite 100)", await aceitaNovoAssinante(loja.id), true);
+  confere("Essencial: sem app próprio", (await recursosDaLoja(loja.id)).appProprio, false);
 
   await db.update(schema.lojas).set({ planoAppId: completo.id, planoAppPagoAte: "2026-12-24" }).where(eq(schema.lojas.id, loja.id));
-  confere("Completo: bebidas liberadas", (await recursosDaLoja(loja.id)).produtosExtras, true);
+  confere("Completo: app próprio liberado", (await recursosDaLoja(loja.id)).appProprio, true);
   confere("Completo: pedido com refrigerante passa", !!(await pedirRefri()).id, true);
 
   await db.update(schema.lojas).set({ planoAppPagoAte: "2026-11-01" }).where(eq(schema.lojas.id, loja.id));
-  confere("Completo vencido: volta a não vender bebida", (await recursosDaLoja(loja.id)).produtosExtras, false);
+  const r = await recursosDaLoja(loja.id);
+  confere("Completo vencido: perde app próprio e bebidas", [r.appProprio, r.produtosExtras], [false, false]);
 
   console.log(falhas ? `\n${falhas} falha(s).` : "\nTudo certo.");
   process.exit(falhas ? 1 : 0);

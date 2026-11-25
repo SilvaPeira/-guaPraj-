@@ -13,6 +13,7 @@ export type DadosPlanoApp = {
   limiteEntregadores: number | null;
   pagamentoOnline: boolean;
   produtosExtras: boolean;
+  appProprio: boolean;
   ordem: number;
 };
 
@@ -60,6 +61,10 @@ export default function FormPlanoApp({ p, novo = false }: { p: DadosPlanoApp; no
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" name="produtosExtras" defaultChecked={p.produtosExtras} className="h-5 w-5 accent-verde" />
           Pode vender bebidas, gelo e polpas
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" name="appProprio" defaultChecked={p.appProprio} className="h-5 w-5 accent-verde" />
+          App próprio (site e app instalável com a marca da loja)
         </label>
       </fieldset>
       {e.erro && (

@@ -10,16 +10,16 @@ const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency"
 
 /** Quando o admin ainda não cadastrou planos, mostra os do documento. */
 const PLANOS_PADRAO = [
-  { id: "g", nome: "Grátis", precoCentavos: 0, descricao: "Para começar: pedidos e agenda, pagamento na entrega.", limiteAssinantes: 15, limiteEntregadores: 1, pagamentoOnline: false, produtosExtras: false },
-  { id: "e", nome: "Essencial", precoCentavos: 9900, descricao: "Assinantes ilimitados e pagamento pelo app (Pix e cartão).", limiteAssinantes: null, limiteEntregadores: 1, pagamentoOnline: true, produtosExtras: false },
-  { id: "c", nome: "Completo", precoCentavos: 19900, descricao: "Vários entregadores, bebidas e outros produtos além da água.", limiteAssinantes: null, limiteEntregadores: null, pagamentoOnline: true, produtosExtras: true },
+  { id: "e", nome: "Essencial", precoCentavos: 4490, descricao: "Pedidos, assinaturas e pagamento pelo app (Pix e cartão).", limiteAssinantes: 100, limiteEntregadores: 3, pagamentoOnline: true, produtosExtras: true, appProprio: false },
+  { id: "c", nome: "Completo", precoCentavos: 9990, descricao: "Tudo do Essencial, sem limites, e o app próprio com a marca da sua loja.", limiteAssinantes: null, limiteEntregadores: null, pagamentoOnline: true, produtosExtras: true, appProprio: true },
 ];
 
-type PlanoVitrine = Pick<PlanoApp, "id" | "nome" | "precoCentavos" | "descricao" | "limiteAssinantes" | "limiteEntregadores" | "pagamentoOnline" | "produtosExtras">;
+type PlanoVitrine = Pick<PlanoApp, "id" | "nome" | "precoCentavos" | "descricao" | "limiteAssinantes" | "limiteEntregadores" | "pagamentoOnline" | "produtosExtras" | "appProprio">;
 
 export default function SiteAguaPraja({ planos, suporte }: { planos: PlanoVitrine[]; suporte: string | null }) {
   const vitrine = planos.length ? planos : PLANOS_PADRAO;
-  const destaque = vitrine.length > 1 ? vitrine[Math.min(1, vitrine.length - 1)].id : null;
+  // Destaque: o plano com app próprio (ou o segundo).
+  const destaque = vitrine.find((p) => p.appProprio)?.id ?? (vitrine.length > 1 ? vitrine[1].id : null);
   return (
     <div className="bg-white">
       {/* Topo */}
@@ -110,7 +110,7 @@ export default function SiteAguaPraja({ planos, suporte }: { planos: PlanoVitrin
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Recurso titulo="Agenda do dia pronta" texto="Entregas por horário, com mapa, Waze e WhatsApp do cliente. Confirme tudo em lote." />
             <Recurso titulo="Assinaturas recorrentes" texto="O cliente escolhe o plano e a agenda; o app gera as entregas e a cobrança do mês." />
-            <Recurso titulo="App com a sua marca" texto="Seu nome, logo e cores. O cliente instala no celular como o app da sua loja." />
+            <Recurso titulo="App próprio (plano Completo)" texto="Site com seu nome, logo e cores, só com a sua loja. O cliente instala no celular ou no computador, sem Play Store nem App Store." />
             <Recurso titulo="Pix e cartão" texto="O dinheiro cai direto na sua conta Mercado Pago. Pedido pago fica marcado sozinho." />
             <Recurso titulo="Controle de cascos" texto="Saiba quantos vasilhames estão com cada cliente." />
             <Recurso titulo="Financeiro e avaliações" texto="Recebido no mês, a receber, ticket médio e a nota dos seus clientes." />
@@ -129,7 +129,7 @@ export default function SiteAguaPraja({ planos, suporte }: { planos: PlanoVitrin
             const top = p.id === destaque;
             return (
               <article key={p.id} className={`flex flex-col rounded-3xl border-2 p-6 ${top ? "border-verde shadow-lg" : "border-borda"}`}>
-                {top && <span className="mb-2 self-start rounded-full bg-verde px-3 py-1 text-xs font-bold text-white">Mais escolhido</span>}
+                {top && <span className="mb-2 self-start rounded-full bg-verde px-3 py-1 text-xs font-bold text-white">{p.appProprio ? "Com app próprio" : "Mais escolhido"}</span>}
                 <h3 className="text-xl font-bold">{p.nome}</h3>
                 <p className="mt-2">
                   <b className="font-titulo text-4xl">{p.precoCentavos ? brl(p.precoCentavos) : "R$ 0"}</b>
@@ -140,9 +140,9 @@ export default function SiteAguaPraja({ planos, suporte }: { planos: PlanoVitrin
                   <Item>{textoLimite(p.limiteAssinantes, "assinante", "assinantes")}</Item>
                   <Item>{textoLimite(p.limiteEntregadores, "entregador", "entregadores")}</Item>
                   <Item>Pedidos avulsos, agenda e cascos</Item>
-                  <Item>App com a marca da sua loja</Item>
                   <Item off={!p.pagamentoOnline}>Cliente paga pelo app (Pix e cartão)</Item>
                   <Item off={!p.produtosExtras}>Bebidas, gelo e polpas no catálogo</Item>
+                  <Item off={!p.appProprio}>App próprio com a marca da sua loja</Item>
                 </ul>
                 <Link href="/entrar?para=loja" className={`mt-6 rounded-full px-5 py-3 text-center font-bold ${top ? "bg-verde text-white" : "border-2 border-verde text-verde"}`}>
                   Começar

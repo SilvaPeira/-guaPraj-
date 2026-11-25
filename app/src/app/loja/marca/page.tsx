@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { schema } from "@/db";
 import { exigirLoja } from "@/lib/loja";
 import { slugLivre } from "@/lib/marca";
+import { recursosDaLoja } from "@/lib/planos-app";
 import { Topo } from "@/components/ui";
 import FormMarca from "./FormMarca";
 import BotaoCopiar from "./BotaoCopiar";
@@ -23,6 +24,7 @@ export default async function MeuApp() {
     await db.update(schema.lojas).set({ slug: loja.slug }).where(eq(schema.lojas.id, loja.id));
   }
   const slug = loja.slug;
+  const { appProprio } = await recursosDaLoja(loja.id);
   const link = `${base}/l/${slug}`;
   const msg = `Agora você pode pedir água e bebidas da ${loja.nome} pelo nosso app: ${link}`;
 
@@ -30,6 +32,17 @@ export default async function MeuApp() {
     <>
       <Topo titulo="Meu app" subtitulo="Seu site com a cara da sua loja" />
       <main className="conteudo">
+        {!appProprio && (
+          <div className="aviso-info pilha text-sm">
+            <p>
+              <b>O app próprio faz parte do plano Completo.</b> Você já pode deixar tudo pronto aqui (logo, cores, frase). O site e o botão de instalar ficam no ar para os
+              clientes quando o plano Completo estiver ativo. Até lá, eles encontram a sua loja dentro do ÁguaPrajá.
+            </p>
+            <Link href="/loja/plano" className="botao-peq self-start">
+              Ver planos
+            </Link>
+          </div>
+        )}
         <section className="cartao-elevado pilha">
           <b>Seu link</b>
           {loja.slug ? (
@@ -57,6 +70,10 @@ export default async function MeuApp() {
               </li>
               <li>
                 <b>iPhone:</b> abre no Safari, toca em Compartilhar → “Adicionar à Tela de Início”.
+              </li>
+              <li>
+                <b>Computador (Windows):</b> abre o link no Chrome ou no Edge e clica no ícone de instalar na barra de endereço (ou no menu → “Instalar {loja.nome}”). Ele vira um
+                programa com ícone na área de trabalho e no menu Iniciar.
               </li>
               <li>Não precisa de Play Store nem App Store. O ícone e o nome que aparecem no celular são os da sua loja.</li>
             </ul>

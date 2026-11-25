@@ -53,6 +53,7 @@ export default async function MeuPlano() {
             </li>
             <li>Pagamento pelo app (Pix/cartão): {s.recursos.pagamentoOnline ? "sim" : "não"}</li>
             <li>Bebidas e outros produtos além da água: {s.recursos.produtosExtras ? "sim" : "não"}</li>
+            <li>App próprio com a sua marca: {s.recursos.appProprio ? "sim" : "não"}</li>
           </ul>
         </section>
 
@@ -99,6 +100,7 @@ function CartaoPlano({ p, atual }: { p: PlanoApp; atual: boolean }) {
         <li>{textoLimite(p.limiteEntregadores, "entregador", "entregadores")}</li>
         <li>{p.pagamentoOnline ? "Cliente paga pelo app (Pix e cartão)" : "Pagamento na entrega"}</li>
         {p.produtosExtras && <li>Bebidas, gelo e polpas no catálogo</li>}
+        {p.appProprio && <li>App próprio: site e app instalável com a marca da sua loja</li>}
       </ul>
       {atual ? (
         <span className="selo selo-verde self-start">Seu plano</span>

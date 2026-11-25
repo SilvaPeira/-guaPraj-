@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
 import { getDb, schema } from "@/db";
 import { marcaPorSlug, temaDaMarca } from "@/lib/marca";
@@ -20,6 +20,7 @@ type Props = { params: Promise<{ slug: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const m = await marcaPorSlug((await params).slug);
   if (!m) return { title: "Loja não encontrada" };
+  if (!m.appProprio) return { title: { absolute: m.nome } };
   return {
     title: { absolute: m.nome },
     description: m.descricao ?? `Peça água e bebidas da ${m.nome}, com entrega no dia e horário que você escolher.`,
@@ -45,6 +46,8 @@ export default async function SiteDaLoja({ params }: Props) {
   const [loja] = await db.select().from(schema.lojas).where(eq(schema.lojas.id, m.lojaId)).limit(1);
   const ehDono = u?.id === loja.donoId;
   if (m.status !== "aprovada" && !ehDono && u?.papel !== "admin") notFound();
+  // Site/app próprio é do plano Completo: sem ele, o cliente vai para o ÁguaPrajá.
+  if (!m.appProprio && !ehDono && u?.papel !== "admin") redirect("/");
 
   const [planos, produtos] = await Promise.all([
     db.select().from(schema.planos).where(and(eq(schema.planos.lojaId, loja.id), eq(schema.planos.ativo, true))).orderBy(asc(schema.planos.galoesMes)),
@@ -63,6 +66,14 @@ export default async function SiteDaLoja({ params }: Props) {
 
   return (
     <div style={temaDaMarca(m) as React.CSSProperties} className="min-h-screen bg-fundo">
+      {!m.appProprio && (
+        <p className="bg-terra-claro px-4 py-2 text-center text-sm font-semibold text-terra-esc">
+          Prévia: o site e o app da sua loja ficam no ar com o plano Completo.{" "}
+          <Link href="/loja/plano" className="underline">
+            Ver planos
+          </Link>
+        </p>
+      )}
       {m.status !== "aprovada" && (
         <p className="bg-terra-claro px-4 py-2 text-center text-sm font-semibold text-terra-esc">
           Prévia: o site fica visível para os clientes quando a loja for aprovada.

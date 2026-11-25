@@ -31,7 +31,7 @@ export default async function PlanosApp() {
             <Vazio>Nenhum plano cadastrado: hoje todas as lojas usam tudo sem limite.</Vazio>
             <form action={acaoPlanoApp}>
               <button name="acao" value="sugeridos" className="botao w-full">
-                Criar os 3 planos do documento (Grátis, Essencial R$ 99, Completo R$ 199)
+                Criar os planos Essencial e Completo
               </button>
             </form>
           </div>
@@ -76,7 +76,7 @@ export default async function PlanosApp() {
             <FormPlanoApp
               key={planos.length}
               novo
-              p={{ nome: "", precoCentavos: 0, descricao: null, limiteAssinantes: null, limiteEntregadores: null, pagamentoOnline: false, produtosExtras: false, ordem: planos.length + 1 }}
+              p={{ nome: "", precoCentavos: 0, descricao: null, limiteAssinantes: null, limiteEntregadores: null, pagamentoOnline: false, produtosExtras: false, appProprio: false, ordem: planos.length + 1 }}
             />
           </div>
         </details>

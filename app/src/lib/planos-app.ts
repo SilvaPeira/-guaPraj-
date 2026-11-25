@@ -10,11 +10,10 @@ import { agoraLocal } from "./tempo";
 
 export type PlanoApp = typeof schema.planosApp.$inferSelect;
 
-/** Sugestão do documento: Grátis / Essencial R$ 99 / Completo R$ 199. */
+/** Ponto de partida: Essencial e Completo (só o Completo tem app próprio). */
 export const PLANOS_APP_SUGERIDOS: Omit<typeof schema.planosApp.$inferInsert, "id">[] = [
-  { nome: "Grátis", precoCentavos: 0, descricao: "Para começar: pedidos e agenda, pagamento na entrega.", limiteAssinantes: 15, limiteEntregadores: 1, pagamentoOnline: false, produtosExtras: false, ordem: 1 },
-  { nome: "Essencial", precoCentavos: 9900, descricao: "Assinantes ilimitados e pagamento pelo app (Pix e cartão).", limiteAssinantes: null, limiteEntregadores: 1, pagamentoOnline: true, produtosExtras: false, ordem: 2 },
-  { nome: "Completo", precoCentavos: 19900, descricao: "Vários entregadores, bebidas e outros produtos além da água.", limiteAssinantes: null, limiteEntregadores: null, pagamentoOnline: true, produtosExtras: true, ordem: 3 },
+  { nome: "Essencial", precoCentavos: 4490, descricao: "Pedidos, assinaturas e pagamento pelo app (Pix e cartão).", limiteAssinantes: 100, limiteEntregadores: 3, pagamentoOnline: true, produtosExtras: true, appProprio: false, ordem: 1 },
+  { nome: "Completo", precoCentavos: 9990, descricao: "Tudo do Essencial, sem limites, e o app próprio com a marca da sua loja.", limiteAssinantes: null, limiteEntregadores: null, pagamentoOnline: true, produtosExtras: true, appProprio: true, ordem: 2 },
 ];
 
 /** Categorias que contam como "produtos extras" (além da água). */
@@ -26,11 +25,12 @@ export type Recursos = {
   limiteEntregadores: number | null;
   pagamentoOnline: boolean;
   produtosExtras: boolean;
+  appProprio: boolean;
 };
 
-const SEM_LIMITES: Recursos = { limiteAssinantes: null, limiteEntregadores: null, pagamentoOnline: true, produtosExtras: true };
+const SEM_LIMITES: Recursos = { limiteAssinantes: null, limiteEntregadores: null, pagamentoOnline: true, produtosExtras: true, appProprio: true };
 /** Sem plano grátis cadastrado, quem não pagou fica com o básico do documento. */
-const BASICO: Recursos = { limiteAssinantes: 15, limiteEntregadores: 1, pagamentoOnline: false, produtosExtras: false };
+const BASICO: Recursos = { limiteAssinantes: 15, limiteEntregadores: 1, pagamentoOnline: false, produtosExtras: false, appProprio: false };
 
 export type SituacaoPlano = {
   /** Plano escolhido pela loja (pode estar vencido). */
@@ -56,6 +56,7 @@ const recursosDe = (p: PlanoApp): Recursos => ({
   limiteEntregadores: p.limiteEntregadores,
   pagamentoOnline: p.pagamentoOnline,
   produtosExtras: p.produtosExtras,
+  appProprio: p.appProprio,
 });
 
 export function calcularSituacao(

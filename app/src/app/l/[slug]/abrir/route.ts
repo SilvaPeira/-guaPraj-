@@ -9,7 +9,7 @@ export async function GET(req: Request, ctx: RouteContext<"/l/[slug]/abrir">) {
   const { slug } = await ctx.params;
   const url = new URL(req.url);
   const m = await marcaPorSlug(slug);
-  if (!m || m.status !== "aprovada") return NextResponse.redirect(new URL("/", url));
+  if (!m || m.status !== "aprovada" || !m.appProprio) return NextResponse.redirect(new URL("/", url));
 
   const c = await cookies();
   c.set(COOKIE_MARCA, m.slug, { path: "/", sameSite: "lax", httpOnly: true, secure: process.env.NODE_ENV === "production", maxAge: 365 * 24 * 3600 });

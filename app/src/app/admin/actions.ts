@@ -72,6 +72,7 @@ export async function salvarPlanoApp(_: EstadoPlanoApp, form: FormData): Promise
     limiteEntregadores,
     pagamentoOnline: form.get("pagamentoOnline") === "on",
     produtosExtras: form.get("produtosExtras") === "on",
+    appProprio: form.get("appProprio") === "on",
     ordem: Number(form.get("ordem")) || 0,
   };
   const db = await getDb();

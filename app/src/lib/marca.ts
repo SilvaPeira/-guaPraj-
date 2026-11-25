@@ -4,6 +4,7 @@ import { and, eq, ne, sql } from "drizzle-orm";
 import { getDb, schema } from "@/db";
 import type { Personalizacao } from "@/db/schema";
 import { temaDaLoja } from "./cores";
+import { recursosDaLoja } from "./planos-app";
 
 /** Cookie que diz "este visitante está no site/app da loja X". */
 export const COOKIE_MARCA = "aguapraja_loja";
@@ -19,6 +20,8 @@ export type Marca = {
   temCapa: boolean;
   personalizacao: Personalizacao;
   status: "pendente" | "aprovada" | "suspensa";
+  /** O plano da loja inclui site/app próprio? */
+  appProprio: boolean;
 };
 
 const colunas = {
@@ -40,16 +43,17 @@ export async function marcaPorSlug(slug: string): Promise<Marca | null> {
   const db = await getDb();
   const [r] = await db.select(colunas).from(schema.lojas).where(eq(schema.lojas.slug, slug)).limit(1);
   if (!r || !r.slug) return null;
-  return { ...r, slug: r.slug, temLogo: !!r.temLogo, temCapa: !!r.temCapa };
+  const { appProprio } = await recursosDaLoja(r.lojaId);
+  return { ...r, slug: r.slug, temLogo: !!r.temLogo, temCapa: !!r.temCapa, appProprio };
 }
 
-/** Marca ativa para este visitante (cookie), se a loja estiver aprovada. */
+/** Marca ativa para este visitante (cookie), se a loja estiver aprovada e tiver app próprio no plano. */
 export async function marcaAtual(): Promise<Marca | null> {
   const c = await cookies();
   const slug = c.get(COOKIE_MARCA)?.value;
   if (!slug) return null;
   const m = await marcaPorSlug(slug);
-  return m && m.status === "aprovada" ? m : null;
+  return m && m.status === "aprovada" && m.appProprio ? m : null;
 }
 
 /** "Distribuidora JM Beer" → "distribuidora-jm-beer" */

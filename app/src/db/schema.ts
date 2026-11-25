@@ -361,6 +361,8 @@ export const planosApp = pgTable("planos_app", {
   pagamentoOnline: boolean("pagamento_online").notNull().default(false),
   /** Bebidas, gelo, polpas etc. (além da água). */
   produtosExtras: boolean("produtos_extras").notNull().default(false),
+  /** Site e app instalável com a marca da loja (/l/<endereço>). */
+  appProprio: boolean("app_proprio").notNull().default(false),
   ativo: boolean("ativo").notNull().default(true),
   ordem: integer("ordem").notNull().default(0),
   criadoEm: criadoEm(),

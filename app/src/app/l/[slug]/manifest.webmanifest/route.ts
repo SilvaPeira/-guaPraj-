@@ -5,7 +5,7 @@ import { garantirContrasteComBranco, garantirFundoClaro } from "@/lib/cores";
 export async function GET(_: Request, ctx: RouteContext<"/l/[slug]/manifest.webmanifest">) {
   const { slug } = await ctx.params;
   const m = await marcaPorSlug(slug);
-  if (!m) return new Response("Loja não encontrada", { status: 404 });
+  if (!m || !m.appProprio) return new Response("Loja não encontrada", { status: 404 });
   const nomeCurto = (m.personalizacao.nomeCurto || m.nome.replace(/^(distribuidora|dep[oó]sito)\s+/i, "")).slice(0, 20);
   const manifesto = {
     id: `/l/${m.slug}`,

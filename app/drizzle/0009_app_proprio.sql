@@ -1,0 +1,1 @@
+ALTER TABLE "planos_app" ADD COLUMN "app_proprio" boolean DEFAULT false NOT NULL;
