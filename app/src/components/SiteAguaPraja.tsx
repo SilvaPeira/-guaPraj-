@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import { IconeGota } from "@/components/ui";
 import { textoLimite, type PlanoApp } from "@/lib/planos-app";
 import { linkWhatsApp } from "@/lib/telefone";
+import type { LojaVitrine } from "@/lib/vitrine";
+import CalculadoraSite from "./CalculadoraSite";
 
 // Site público do ÁguaPrajá: apresenta o serviço para clientes e distribuidoras.
 
@@ -16,7 +18,7 @@ const PLANOS_PADRAO = [
 
 type PlanoVitrine = Pick<PlanoApp, "id" | "nome" | "precoCentavos" | "descricao" | "limiteAssinantes" | "limiteEntregadores" | "pagamentoOnline" | "produtosExtras" | "appProprio">;
 
-export default function SiteAguaPraja({ planos, suporte }: { planos: PlanoVitrine[]; suporte: string | null }) {
+export default function SiteAguaPraja({ planos, suporte, lojas }: { planos: PlanoVitrine[]; suporte: string | null; lojas: LojaVitrine[] }) {
   const vitrine = planos.length ? planos : PLANOS_PADRAO;
   // Destaque: o plano com app próprio (ou o segundo).
   const destaque = vitrine.find((p) => p.appProprio)?.id ?? (vitrine.length > 1 ? vitrine[1].id : null);
@@ -30,8 +32,8 @@ export default function SiteAguaPraja({ planos, suporte }: { planos: PlanoVitrin
             ÁguaPrajá
           </span>
           <nav className="flex items-center gap-4 text-sm font-semibold">
-            <a href="#clientes" className="hidden hover:underline sm:inline">
-              Para você
+            <a href="#calcular" className="hidden hover:underline sm:inline">
+              Calcular consumo
             </a>
             <a href="#distribuidoras" className="hidden hover:underline sm:inline">
               Para distribuidoras
@@ -57,9 +59,9 @@ export default function SiteAguaPraja({ planos, suporte }: { planos: PlanoVitrin
               Assine um plano com a distribuidora do seu bairro, escolha o dia e o horário, e nunca mais fique sem galão. Bebidas e gelo vão na mesma entrega.
             </p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <Link href="/entrar" className="rounded-full bg-white px-6 py-3.5 text-center font-bold text-floresta">
-                Quero receber água
-              </Link>
+              <a href="#calcular" className="rounded-full bg-white px-6 py-3.5 text-center font-bold text-floresta">
+                Calcular meu consumo
+              </a>
               <Link href="/entrar?para=loja" className="rounded-full border-2 border-white/60 px-6 py-3.5 text-center font-bold text-white">
                 Sou distribuidora
               </Link>
@@ -82,6 +84,16 @@ export default function SiteAguaPraja({ planos, suporte }: { planos: PlanoVitrin
           </div>
         </div>
       </header>
+
+      {/* Calculadora + distribuidoras */}
+      <section id="calcular" className="scroll-mt-4">
+        <div className="mx-auto max-w-5xl px-4 py-14">
+          <p className="text-sm font-bold uppercase tracking-wide text-rio">Calcule em 10 segundos</p>
+          <h2 className="mb-2 mt-1 text-3xl font-bold">Quanta água sua família usa?</h2>
+          <p className="mb-8 text-tinta-suave">Conte quem mora na casa e veja na hora o plano certo em cada distribuidora.</p>
+          <CalculadoraSite lojas={lojas} />
+        </div>
+      </section>
 
       {/* Clientes */}
       <Secao id="clientes" chapeu="Para você" titulo="Simples como deve ser">
