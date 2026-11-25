@@ -5,6 +5,7 @@ import { CATEGORIAS, podeSerRetornavel } from "@/lib/catalogo";
 import { criarProduto, type EstadoForm } from "./actions";
 import CampoRetornavel from "./CampoRetornavel";
 import CampoFoto from "./CampoFoto";
+import { enviarSemLimpar } from "@/lib/formulario";
 
 export default function FormNovoProduto({ vendeAlcool }: { vendeAlcool: boolean }) {
   const [estado, enviar, enviando] = useActionState<EstadoForm, FormData>(criarProduto, {});
@@ -25,7 +26,7 @@ export default function FormNovoProduto({ vendeAlcool }: { vendeAlcool: boolean 
   }, [estado]);
 
   return (
-    <form ref={ref} action={enviar} className="cartao pilha">
+    <form ref={ref} onSubmit={enviarSemLimpar(enviar)} className="cartao pilha">
       <h2 className="titulo-secao">Adicionar produto</h2>
       <CampoFoto key={`foto-${versao}`} />
       <label className="campo">

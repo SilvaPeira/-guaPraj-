@@ -46,3 +46,7 @@ next-env.d.ts
 .vercel
 .env*
 !.env.example
+
+# Testes ponta a ponta
+/e2e-resultados/
+/e2e-relatorio/

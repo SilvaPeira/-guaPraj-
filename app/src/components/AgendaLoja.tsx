@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { mudarStatusAcao, reagendarAcao, type EstadoOperacao } from "@/app/loja/operacao-actions";
 import { COR_STATUS, ORIGEM, ROTULO_STATUS, proximosStatus, type StatusPedido } from "@/lib/status";
+import { enviarSemLimpar } from "@/lib/formulario";
 
 export type CartaoPedido = {
   id: string;
@@ -77,7 +78,7 @@ export default function AgendaLoja({ pedidos, ehDono, amanha }: { pedidos: Carta
       </nav>
 
       {selecionados.length > 0 && (
-        <form action={enviarLote} className="sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded-[var(--raio-cartao,20px)] border border-borda bg-white p-3 shadow-md">
+        <form onSubmit={enviarSemLimpar(enviarLote)} className="sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded-[var(--raio-cartao,20px)] border border-borda bg-white p-3 shadow-md">
           {selecionados.map((p) => (
             <input key={p.id} type="hidden" name="pedidoId" value={p.id} />
           ))}
@@ -182,7 +183,7 @@ function Cartao({ p, ehDono, marcado, onMarcar, amanha }: { p: CartaoPedido; ehD
       {!final || p.status === "nao_entregue" ? (
         <div className="flex flex-wrap gap-2 border-t border-borda pt-3">
           {simples.map((s) => (
-            <form key={s} action={enviar}>
+            <form key={s} onSubmit={enviarSemLimpar(enviar)}>
               <input type="hidden" name="pedidoId" value={p.id} />
               <button name="novo" value={s} className="botao-peq" disabled={enviando}>
                 {ROTULO_ACAO[s]}
@@ -213,7 +214,7 @@ function Cartao({ p, ehDono, marcado, onMarcar, amanha }: { p: CartaoPedido; ehD
       ) : null}
 
       {painel === "concluir" && !final && (
-        <form action={enviar} className="pilha rounded-[var(--raio-campo,12px)] bg-verde-claro p-3">
+        <form onSubmit={enviarSemLimpar(enviar)} className="pilha rounded-[var(--raio-campo,12px)] bg-verde-claro p-3">
           <input type="hidden" name="pedidoId" value={p.id} />
           <input type="hidden" name="novo" value={p.modo === "entrega" ? "entregue" : "retirado"} />
           {p.itens
@@ -263,7 +264,7 @@ function Cartao({ p, ehDono, marcado, onMarcar, amanha }: { p: CartaoPedido; ehD
       )}
 
       {painel === "falhou" && !final && (
-        <form action={enviar} className="pilha rounded-[var(--raio-campo,12px)] bg-terra-claro p-3">
+        <form onSubmit={enviarSemLimpar(enviar)} className="pilha rounded-[var(--raio-campo,12px)] bg-terra-claro p-3">
           <input type="hidden" name="pedidoId" value={p.id} />
           <input type="hidden" name="novo" value="nao_entregue" />
           <label className="campo">
@@ -284,7 +285,7 @@ function Cartao({ p, ehDono, marcado, onMarcar, amanha }: { p: CartaoPedido; ehD
       )}
 
       {painel === "reagendar" && p.status === "nao_entregue" && (
-        <form action={enviarR} className="pilha rounded-[var(--raio-campo,12px)] bg-rio-claro p-3">
+        <form onSubmit={enviarSemLimpar(enviarR)} className="pilha rounded-[var(--raio-campo,12px)] bg-rio-claro p-3">
           <input type="hidden" name="pedidoId" value={p.id} />
           <label className="campo">
             Nova data
@@ -299,7 +300,7 @@ function Cartao({ p, ehDono, marcado, onMarcar, amanha }: { p: CartaoPedido; ehD
       )}
 
       {painel === "cancelar" && !final && (
-        <form action={enviar} className="pilha rounded-[var(--raio-campo,12px)] bg-terra-claro p-3">
+        <form onSubmit={enviarSemLimpar(enviar)} className="pilha rounded-[var(--raio-campo,12px)] bg-terra-claro p-3">
           <input type="hidden" name="pedidoId" value={p.id} />
           <input type="hidden" name="novo" value="cancelado" />
           <label className="campo">

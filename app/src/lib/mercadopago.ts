@@ -24,6 +24,8 @@ export type ModoPagamento = "real" | "simulado" | "desligado";
 export function modoPagamento(): ModoPagamento {
   if (process.env.MP_CLIENT_ID && process.env.MP_CLIENT_SECRET) return "real";
   if (process.env.NODE_ENV !== "production") return "simulado";
+  // Testes ponta a ponta rodam o build de produção no próprio computador: nunca vale em domínio público.
+  if (process.env.E2E_PAGAMENTO_SIMULADO === "1" && /^http:\/\/localhost:\d+$/.test(process.env.APP_URL ?? "")) return "simulado";
   return "desligado";
 }
 

@@ -126,7 +126,7 @@ export default async function Pedido({ params, searchParams }: PageProps<"/pedid
               .filter((it) => it.cascosFaltaram > 0 && it.precoCheioCentavos !== null)
               .map((it) => (
                 <li key={`casco-${it.id}`} className="flex justify-between gap-2 py-2 text-sm">
-                  <span>{it.cascosFaltaram}× casco não entregue ({it.nome.replace(/ (retornável)$/, "")})</span>
+                  <span>{it.cascosFaltaram}× casco não entregue ({it.nome.replace(/ \(retornável\)$/, "")})</span>
                   <b>{formatarReais(it.cascosFaltaram * (it.precoCheioCentavos! - it.precoUnitCentavos))}</b>
                 </li>
               ))}

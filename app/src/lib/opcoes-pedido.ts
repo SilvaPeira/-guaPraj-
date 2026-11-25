@@ -12,7 +12,7 @@ export function datasDisponiveis(r: RegrasHorario, quantas = 7): OpcaoData[] {
   for (let i = 0; i < 21 && out.length < quantas; i++) {
     const d = somarDias(agora.data, i);
     if (!r.dias.includes(diaDaSemana(d))) continue;
-    if (i === 0 && agora.minutos + 45 > paraMinutos(r.fecha)) continue;
+    if (i === 0 && agora.minutos + 60 > paraMinutos(r.fecha)) continue; // hoje só se ainda cabe 30 min de antecedência + 30 min de janela
     out.push({ data: d, rotulo: dataBonita(d, agora.data), ehHoje: i === 0 });
   }
   return out;

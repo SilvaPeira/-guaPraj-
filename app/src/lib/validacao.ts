@@ -9,8 +9,12 @@ const opcional = (max: number) =>
     .max(max)
     .optional()
     .transform((v) => (v ? v : null));
+// Campo vazio NÃO pode virar 0 (z.coerce faria "" → 0, um ponto no oceano): sem pino marcado, recusa.
 const coord = (min: number, max: number) =>
-  z.coerce.number({ message: "Marque o ponto no mapa." }).refine((v) => Number.isFinite(v) && v >= min && v <= max, "Marque o ponto no mapa.");
+  z.preprocess(
+    (v) => (v === "" || v === null || v === undefined ? undefined : Number(v)),
+    z.number({ message: "Marque o ponto no mapa." }).refine((v) => Number.isFinite(v) && v >= min && v <= max && v !== 0, "Marque o ponto no mapa."),
+  );
 
 export const esquemaEndereco = z.object({
   logradouro: texto(3, 120, "Informe a rua."),

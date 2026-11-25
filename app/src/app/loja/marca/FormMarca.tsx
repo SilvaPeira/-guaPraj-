@@ -6,6 +6,7 @@ import { CANTOS, FONTES, FUNDOS, PALETAS, temaDaLoja, type Cantos, type Fonte } 
 import { salvarMarca, type EstadoMarca } from "./actions";
 import { prepararImagem } from "@/lib/imagem";
 import { BotoesEdicao, useEdicao } from "@/components/Edicao";
+import { enviarSemLimpar } from "@/lib/formulario";
 
 type Props = {
   nome: string;
@@ -138,7 +139,7 @@ function FormMarcaInterno(p: Props & { aoCancelar: () => void }) {
   }
 
   return (
-    <form action={enviar} className="pilha">
+    <form onSubmit={enviarSemLimpar(enviar)} className="pilha">
       <input type="hidden" name="logo" value={logo} />
       <input type="hidden" name="capa" value={capa} />
       <input type="hidden" name="remover_logo" value={removerLogo ? "1" : ""} />

@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { avaliar, type EstadoAvaliacao } from "@/app/(cliente)/pedidos/[id]/actions";
+import { enviarSemLimpar } from "@/lib/formulario";
 
 const ROTULOS = ["", "Ruim", "Fraco", "Ok", "Bom", "Ótimo"];
 
@@ -10,7 +11,7 @@ export default function AvaliarPedido({ pedidoId }: { pedidoId: string }) {
   const [nota, setNota] = useState(0);
   if (estado.ok) return <p className="aviso-ok">Obrigado pela avaliação! ⭐</p>;
   return (
-    <form action={enviar} className="cartao pilha">
+    <form onSubmit={enviarSemLimpar(enviar)} className="cartao pilha">
       <input type="hidden" name="pedidoId" value={pedidoId} />
       <input type="hidden" name="nota" value={nota} />
       <b className="titulo-secao">Como foi a entrega?</b>

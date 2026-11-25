@@ -5,6 +5,7 @@ import EscolhaHorario, { valorInicialPlano, type ValorHorario } from "./EscolhaH
 import type { AgendaPlano } from "@/db/schema";
 import type { RegrasCliente } from "@/lib/opcoes-pedido";
 import { galoesPorMes, textoAceite } from "@/lib/agenda";
+import { enviarSemLimpar } from "@/lib/formulario";
 
 const DIAS = [
   [1, "Seg"],
@@ -74,7 +75,7 @@ export default function FormAgenda(p: Props) {
   }
 
   return (
-    <form action={enviar} className="pilha">
+    <form onSubmit={enviarSemLimpar(enviar)} className="pilha">
       {Object.entries(p.camposExtras ?? {}).map(([k, v]) => (
         <input key={k} type="hidden" name={k} value={v} />
       ))}

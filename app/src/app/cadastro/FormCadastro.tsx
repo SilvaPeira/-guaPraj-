@@ -5,6 +5,7 @@ import Link from "next/link";
 import CamposEndereco, { type CidadeEndereco, type EnderecoInicial } from "@/components/CamposEndereco";
 import { BotoesEdicao, useEdicao } from "@/components/Edicao";
 import { salvarCadastro, type EstadoForm } from "./actions";
+import { enviarSemLimpar } from "@/lib/formulario";
 
 /** Cadastro novo: campos abertos. Cadastro existente: bloqueado até tocar em "Editar". */
 export default function FormCadastro(p: { nome: string; endereco: EnderecoInicial | null; jaAceitou: boolean; cidades: CidadeEndereco[] }) {
@@ -32,7 +33,7 @@ function Interno({
   const editando = ed.editando;
 
   return (
-    <form action={enviar} className="pilha">
+    <form onSubmit={enviarSemLimpar(enviar)} className="pilha">
       {!novo && !editando && <BotoesEdicao ed={ed} textoEditar="Editar meus dados" />}
       <fieldset disabled={!editando} className="pilha">
         <div className="cartao pilha">

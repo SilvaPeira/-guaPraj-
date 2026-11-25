@@ -57,3 +57,22 @@ Cada distribuidora tem o seu site em `/l/<endereço>` (ex.: `/l/jm-beer`), com l
 - Entrar pelo site da loja liga o tema dela no app inteiro (cookie `aguapraja_loja`) e esconde a lista de outras lojas.
 - Ícones do app são gerados a partir da logo (`/l/<endereço>/icone/192`, `512`, `180`).
 - Com o domínio próprio, dá para usar subdomínio por loja (ex.: `jmbeer.seudominio.com.br`).
+
+## Testes
+
+**Unitários** (regras de negócio, banco em memória, segundos): `npm run test:unit`
+— assinatura, pagamento, senha, planos do app, bebida retornável.
+
+**Ponta a ponta** (navegador de verdade, ~4 min): `npm run test:e2e`
+(gera o build) ou `npm run test:e2e:rapido` (usa o último build).
+Sobe o app de produção na porta 3230 com banco PGlite descartável (`.data/pglite-e2e`)
+e usa o Chrome instalado. Não toca no banco do dev nem no de produção.
+Relatório com fotos e rastreio das falhas: `npx playwright show-report e2e-relatorio`.
+
+| Arquivo | O que cobre |
+|---|---|
+| `e2e/01-site.spec.ts` | site público, calculadora, cidades vindas do painel, termos, rotas protegidas, página 404 |
+| `e2e/02-distribuidora.spec.ts` | admin (cidades, planos do app, aprovar loja, plano Completo); cadastro da loja com validações (mapa, selo fiscal); planos mensais; catálogo (foto, retornável, 18+, editar, excluir, em falta); Mercado Pago de teste; endereço do site |
+| `e2e/03-cliente-pedido.spec.ts` | cadastro do cliente; Catálogo (fotos, busca sem acento, categorias); pedido com retornável, galão, 18+ e totais; horários de hoje sem nada vencido; loja confirma/sai/entrega com casco faltando; cliente vê a cobrança e avalia; Pix simulado; pagamento recusado; cancelamento |
+| `e2e/04-assinatura-e-app.spec.ts` | assinar plano mensal (com aceite), um plano por vez, cancelar; site próprio e instalação (só no Completo) |
+| `e2e/05-login-seguranca.spec.ts` | senha fraca/diferente, celular inválido, bloqueio após 5 erros, "esqueci a senha", link do admin (uso único), cada perfil na sua área, sair |

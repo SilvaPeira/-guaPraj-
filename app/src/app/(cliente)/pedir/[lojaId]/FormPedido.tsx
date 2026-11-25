@@ -1,10 +1,11 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import EscolhaHorario, { type ValorHorario } from "@/components/EscolhaHorario";
+import EscolhaHorario, { valorInicialPedido, type ValorHorario } from "@/components/EscolhaHorario";
 import type { OpcaoData, RegrasCliente } from "@/lib/opcoes-pedido";
 import { fazerPedido, type EstadoPedido } from "./actions";
 import FotoProduto from "@/components/FotoProduto";
+import { enviarSemLimpar } from "@/lib/formulario";
 
 export type ProdutoVenda = {
   id: string;
@@ -53,7 +54,9 @@ export default function FormPedido(p: Props) {
   const [modo, setModo] = useState<"entrega" | "retirada">(p.podeEntregar ? "entrega" : "retirada");
   const [casco, setCasco] = useState<"tenho" | "comprar">("tenho");
   const [cascosComprar, setCascosComprar] = useState(1);
-  const [horario, setHorario] = useState<ValorHorario | null>(null);
+  // O horário escolhido vale para o modo em que foi escolhido; trocar entrega/retirada volta ao padrão daquele modo.
+  const [escolha, setEscolha] = useState<{ modo: "entrega" | "retirada"; v: ValorHorario } | null>(null);
+  const horario = escolha?.modo === modo ? escolha.v : valorInicialPedido(p.regras, p.datas, modo === "entrega");
   const [maior18, setMaior18] = useState(false);
   const [pagamento, setPagamento] = useState<"online" | "na_entrega">(p.pagaOnline ? "online" : "na_entrega");
 
@@ -69,7 +72,7 @@ export default function FormPedido(p: Props) {
   const vazio = galoes === 0 && !Object.values(qtd).some((n) => n > 0);
 
   return (
-    <form action={enviar} className="pilha">
+    <form onSubmit={enviarSemLimpar(enviar)} className="pilha">
       <input type="hidden" name="lojaId" value={p.lojaId} />
       {p.assinaturaId && <input type="hidden" name="assinaturaId" value={p.assinaturaId} />}
 
@@ -187,7 +190,7 @@ export default function FormPedido(p: Props) {
         )}
         {!(p.podeEntregar && p.podeRetirar) && <input type="hidden" name="modo" value={modo} />}
         {!p.podeEntregar && <p className="text-sm text-tinta-suave">Esta loja não entrega no seu endereço: o pedido é para retirar no balcão.</p>}
-        <EscolhaHorario key={modo} regras={p.regras} datas={p.datas} ehEntrega={modo === "entrega"} onChange={setHorario} />
+        <EscolhaHorario key={modo} regras={p.regras} datas={p.datas} ehEntrega={modo === "entrega"} onChange={(v) => setEscolha({ modo, v })} />
       </section>
 
       <section className="cartao pilha">

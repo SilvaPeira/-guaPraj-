@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { entrar, type EstadoLogin } from "./actions";
 import { formatarTelefone, linkWhatsApp } from "@/lib/telefone";
+import { enviarSemLimpar } from "@/lib/formulario";
 
 type Props = { intencao: string | null; suporte: string | null };
 
@@ -54,7 +55,7 @@ export default function FormEntrar({ intencao, suporte }: Props) {
 
   if (e.etapa === "telefone" || !e.telefone) {
     return (
-      <form action={enviar} className="pilha">
+      <form onSubmit={enviarSemLimpar(enviar)} className="pilha">
         {ocultos("telefone")}
         <label className="campo">
           Seu celular
@@ -71,7 +72,7 @@ export default function FormEntrar({ intencao, suporte }: Props) {
 
   if (e.etapa === "criar") {
     return (
-      <form action={enviar} className="pilha">
+      <form onSubmit={enviarSemLimpar(enviar)} className="pilha">
         {ocultos("criar")}
         {cabecalho}
         <p className="text-sm text-tinta-suave">Este celular ainda não tem conta. Crie uma senha para entrar das próximas vezes.</p>
@@ -88,7 +89,7 @@ export default function FormEntrar({ intencao, suporte }: Props) {
 
   if (e.etapa === "codigo") {
     return (
-      <form action={enviar} className="pilha">
+      <form onSubmit={enviarSemLimpar(enviar)} className="pilha">
         {ocultos("codigo")}
         {cabecalho}
         <p className="text-sm">Enviamos um código de 6 números para o seu WhatsApp. Digite o código e crie uma senha nova.</p>
@@ -115,7 +116,7 @@ export default function FormEntrar({ intencao, suporte }: Props) {
   // etapa "senha"
   return (
     <div className="pilha">
-      <form action={enviar} className="pilha">
+      <form onSubmit={enviarSemLimpar(enviar)} className="pilha">
         {ocultos("senha")}
         {cabecalho}
         {campoSenha("senha", "Senha", false, true)}
@@ -126,7 +127,7 @@ export default function FormEntrar({ intencao, suporte }: Props) {
         </button>
       </form>
       {e.podeCodigo ? (
-        <form action={enviar}>
+        <form onSubmit={enviarSemLimpar(enviar)}>
           {ocultos("esqueci")}
           <button className="link-texto" disabled={enviando}>
             Esqueci a senha (receber código no WhatsApp)

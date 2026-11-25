@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import dynamic from "next/dynamic";
 import { salvarCidade, type EstadoCidade } from "./actions";
+import { enviarSemLimpar } from "@/lib/formulario";
 
 const MapaPin = dynamic(() => import("@/components/MapaPin"), {
   ssr: false,
@@ -17,7 +18,7 @@ export default function FormCidade({ c }: { c: Cidade }) {
   const [estado, enviar, enviando] = useActionState<EstadoCidade, FormData>(salvarCidade, {});
   const novo = !c.id;
   return (
-    <form action={enviar} className="pilha">
+    <form onSubmit={enviarSemLimpar(enviar)} className="pilha">
       {c.id && <input type="hidden" name="id" value={c.id} />}
       <div className="grid grid-cols-[1fr_auto_auto] gap-2">
         <label className="campo">

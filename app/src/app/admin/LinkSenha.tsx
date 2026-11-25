@@ -3,13 +3,14 @@
 import { useActionState } from "react";
 import { gerarLinkSenha, type EstadoLinkSenha } from "./actions";
 import { linkWhatsApp } from "@/lib/telefone";
+import { enviarSemLimpar } from "@/lib/formulario";
 
 export default function LinkSenha() {
   const [e, enviar, enviando] = useActionState<EstadoLinkSenha, FormData>(gerarLinkSenha, {});
   return (
     <details className="cartao">
       <summary className="cursor-pointer font-semibold">Alguém esqueceu a senha?</summary>
-      <form action={enviar} className="pilha mt-3">
+      <form onSubmit={enviarSemLimpar(enviar)} className="pilha mt-3">
         <label className="campo">
           Celular da pessoa
           <input className="entrada" name="telefone" inputMode="tel" placeholder="(94) 9 9999-9999" required />

@@ -17,8 +17,8 @@ export const SEMANAS_POR_MES = 4.3;
 /** Planos padrão sugeridos (a loja pode criar outros no app). */
 export const PLANOS_PADRAO = [8, 12, 16, 20, 24, 32];
 
-/** Preço de referência do galão avulso em Canaã — HIPÓTESE a confirmar em campo. */
-export const PRECO_GALAO_AVULSO = 15;
+/** Preço de referência do galão avulso em Canaã: média do que se cobra hoje (R$ 7,99 a R$ 13,00). */
+export const PRECO_GALAO_AVULSO = 10.5;
 /** Desconto de referência do plano sobre o avulso (doc sugere 5% a 15%). */
 export const DESCONTO_PLANO = 0.1;
 

@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { BotoesEdicao, useEdicao } from "@/components/Edicao";
 import { definirPlanoLoja, type EstadoPlanoLoja } from "../actions";
+import { enviarSemLimpar } from "@/lib/formulario";
 
 type Props = {
   lojaId: string;
@@ -17,7 +18,7 @@ export default function PlanoDaLoja(p: Props) {
   const [e, enviar, salvando] = useActionState<EstadoPlanoLoja, FormData>(definirPlanoLoja, {});
   const ed = useEdicao(e);
   return (
-    <form key={ed.chave} action={enviar} className="pilha">
+    <form key={ed.chave} onSubmit={enviarSemLimpar(enviar)} className="pilha">
       <input type="hidden" name="lojaId" value={p.lojaId} />
       <fieldset disabled={!ed.editando} className="grid grid-cols-2 gap-2">
         <label className="campo">

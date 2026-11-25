@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { cancelar, trocarPlano, type EstadoSimples } from "./actions";
+import { enviarSemLimpar } from "@/lib/formulario";
 
 const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -20,7 +21,7 @@ export function FormTrocarPlano({
 }) {
   const [estado, enviar, enviando] = useActionState<EstadoSimples, FormData>(trocarPlano, {});
   return (
-    <form action={enviar} className="pilha">
+    <form onSubmit={enviarSemLimpar(enviar)} className="pilha">
       <input type="hidden" name="assinaturaId" value={assinaturaId} />
       <p className="text-sm text-tinta-suave">O novo plano começa no próximo mês ({aPartirDe}). Até lá, segue o plano atual.</p>
       <div className="pilha">
@@ -49,7 +50,7 @@ export function FormTrocarPlano({
 export function FormCancelar({ assinaturaId, validaAte }: { assinaturaId: string; validaAte: string }) {
   const [estado, enviar, enviando] = useActionState<EstadoSimples, FormData>(cancelar, {});
   return (
-    <form action={enviar} className="pilha">
+    <form onSubmit={enviarSemLimpar(enviar)} className="pilha">
       <input type="hidden" name="assinaturaId" value={assinaturaId} />
       <p className="text-sm">
         Sem multa. As entregas continuam até <b>{validaAte}</b> (fim do mês já pago) e depois param.

@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { BotoesEdicao, useEdicao } from "@/components/Edicao";
 import { salvarPlanoApp, type EstadoPlanoApp } from "../actions";
+import { enviarSemLimpar } from "@/lib/formulario";
 
 export type DadosPlanoApp = {
   id?: string;
@@ -23,7 +24,7 @@ export default function FormPlanoApp({ p, novo = false }: { p: DadosPlanoApp; no
   const ed = useEdicao(e, novo);
   const reais = (p.precoCentavos / 100).toFixed(2).replace(".", ",");
   return (
-    <form key={ed.chave} action={enviar} className="pilha">
+    <form key={ed.chave} onSubmit={enviarSemLimpar(enviar)} className="pilha">
       {p.id && <input type="hidden" name="id" value={p.id} />}
       <fieldset disabled={!ed.editando && !novo} className="pilha">
         <div className="grid grid-cols-[1fr_auto] gap-2">

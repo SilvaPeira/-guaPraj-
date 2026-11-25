@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import type { RegrasHorario } from "@/db/schema";
 import { salvarAjustes, type EstadoForm } from "./actions";
 import { BotoesEdicao, useEdicao } from "@/components/Edicao";
+import { enviarSemLimpar } from "@/lib/formulario";
 
 const DIAS = [
   [1, "Seg"],
@@ -43,7 +44,7 @@ export default function FormAjustes(p: Props) {
   const ed = useEdicao(estado);
   const r = p.regras;
   return (
-    <form key={ed.chave} action={enviar} className="pilha">
+    <form key={ed.chave} onSubmit={enviarSemLimpar(enviar)} className="pilha">
       {!ed.editando && <BotoesEdicao ed={ed} textoEditar="Editar ajustes" />}
       <fieldset disabled={!ed.editando} className="pilha">
       <section className="cartao pilha">

@@ -2,11 +2,12 @@
 
 import { useActionState } from "react";
 import { adicionarEntregador, type EstadoOperacao } from "../operacao-actions";
+import { enviarSemLimpar } from "@/lib/formulario";
 
 export default function FormEntregador() {
   const [estado, enviar, enviando] = useActionState<EstadoOperacao, FormData>(adicionarEntregador, {});
   return (
-    <form action={enviar} key={estado.ok ?? "novo"} className="cartao pilha">
+    <form onSubmit={enviarSemLimpar(enviar)} key={estado.ok ?? "novo"} className="cartao pilha">
       <h2 className="titulo-secao">Cadastrar entregador</h2>
       <label className="campo">
         Nome

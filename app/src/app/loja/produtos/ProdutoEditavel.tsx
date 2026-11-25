@@ -5,6 +5,7 @@ import { BotoesEdicao, useEdicao } from "@/components/Edicao";
 import { atualizarProduto } from "./actions";
 import CampoRetornavel from "./CampoRetornavel";
 import CampoFoto from "./CampoFoto";
+import { enviarSemLimpar } from "@/lib/formulario";
 
 type Props = {
   id: string;
@@ -37,7 +38,7 @@ export default function ProdutoEditavel({ id, nome, marca, precoCentavos, estoqu
   return (
     <form
       key={ed.chave}
-      action={(fd) =>
+      onSubmit={enviarSemLimpar((fd) =>
         iniciar(async () => {
           const r = await atualizarProduto(fd);
           if (r.erro) setErro(r.erro);
@@ -45,8 +46,8 @@ export default function ProdutoEditavel({ id, nome, marca, precoCentavos, estoqu
             setErro(null);
             ed.concluir();
           }
-        })
-      }
+        }),
+      )}
       className="pilha"
     >
       <input type="hidden" name="id" value={id} />

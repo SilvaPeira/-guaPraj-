@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import Link from "next/link";
 import CamposEndereco, { type CidadeEndereco } from "@/components/CamposEndereco";
 import { cadastrarLoja, type EstadoForm } from "./actions";
+import { enviarSemLimpar } from "@/lib/formulario";
 
 const DIAS = [
   [1, "Seg"],
@@ -18,7 +19,7 @@ const DIAS = [
 export default function FormLoja({ cidades }: { cidades: CidadeEndereco[] }) {
   const [estado, enviar, enviando] = useActionState<EstadoForm, FormData>(cadastrarLoja, {});
   return (
-    <form action={enviar} className="pilha">
+    <form onSubmit={enviarSemLimpar(enviar)} className="pilha">
       <section className="cartao pilha">
         <h2 className="titulo-secao">Dados da loja</h2>
         <label className="campo">

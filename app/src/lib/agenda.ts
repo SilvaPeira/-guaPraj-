@@ -54,7 +54,7 @@ export function descreverHorario(tipo: TipoHorario, inicio: string, fim: string)
   if (tipo === "imediato") return "o quanto antes";
   if (tipo === "exato") return `às ${horaBonita(inicio)}`;
   if (tipo === "periodo") {
-    const p = inicio === PERIODOS.manha.inicio ? "de manhã" : "à tarde";
+    const p = paraMinutos(inicio) < paraMinutos(PERIODOS.tarde.inicio) ? "de manhã" : "à tarde";
     return `${p} (${horaBonita(inicio)}–${horaBonita(fim)})`;
   }
   return `entre ${horaBonita(inicio)} e ${horaBonita(fim)}`;
@@ -91,7 +91,8 @@ export function validarHorario(
     if (i !== f) return "Horário exato inválido.";
   }
   if (tipo === "janela" && f - i < r.janelaMinimaMin) return `A janela precisa ter pelo menos ${r.janelaMinimaMin} minutos.`;
-  if (tipo === "periodo" && !(inicio === PERIODOS.manha.inicio || inicio === PERIODOS.tarde.inicio)) return "Período inválido.";
+  // O período vem ajustado ao funcionamento da loja (ex.: abre às 9h → manhã 09:00–12:00).
+  if (tipo === "periodo" && !(["manha", "tarde"] as const).some((p) => periodoDaLoja(r, p)?.inicio === inicio)) return "Período inválido.";
   if (!opcoes.ehPlano && data === agora.data && i < agora.minutos + 30) return "Escolha um horário pelo menos 30 minutos à frente.";
   return null;
 }

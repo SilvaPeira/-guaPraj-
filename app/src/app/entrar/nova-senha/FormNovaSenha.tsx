@@ -3,12 +3,13 @@
 import { useActionState, useState } from "react";
 import { novaSenhaPorLink } from "../actions";
 import { formatarTelefone } from "@/lib/telefone";
+import { enviarSemLimpar } from "@/lib/formulario";
 
 export default function FormNovaSenha({ telefone, token }: { telefone: string; token: string }) {
   const [e, enviar, enviando] = useActionState<{ erro?: string }, FormData>(novaSenhaPorLink, {});
   const [ver, setVer] = useState(false);
   return (
-    <form action={enviar} className="pilha">
+    <form onSubmit={enviarSemLimpar(enviar)} className="pilha">
       <input type="hidden" name="telefone" value={telefone} />
       <input type="hidden" name="token" value={token} />
       <p>

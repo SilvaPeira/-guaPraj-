@@ -2,11 +2,12 @@
 
 import { useActionState, useState } from "react";
 import { criarPlano, type EstadoForm } from "./actions";
+import { enviarSemLimpar } from "@/lib/formulario";
 
 export default function FormNovoPlano({ precoAvulsoCentavos }: { precoAvulsoCentavos: number }) {
   const [estado, enviar, enviando] = useActionState<EstadoForm, FormData>(criarPlano, {});
   return (
-    <form action={enviar} className="cartao pilha">
+    <form onSubmit={enviarSemLimpar(enviar)} className="cartao pilha">
       <h2 className="titulo-secao">Criar plano</h2>
       <p className="text-sm text-tinta-suave">Você escolhe a quantidade e o preço. Ex.: 3 galões por R$ 30,00 ou 20 galões por R$ 270,00.</p>
       {/* A key muda a cada plano criado, limpando os campos. */}
