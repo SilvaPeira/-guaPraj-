@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { simular, porSemanaTexto, type Moradores } from "@/lib/simulador";
+import { simular, frequenciaTexto, type Moradores } from "@/lib/simulador";
 import { distanciaKm, formatarKm, RAIO_RETIRADA_KM } from "@/lib/geo";
 import type { LojaVitrine } from "@/lib/vitrine";
 
@@ -90,7 +90,7 @@ export default function CalculadoraSite({ lojas }: { lojas: LojaVitrine[] }) {
               <span className="text-lg">galões de 20 L por mês</span>
             </p>
             <p className="mt-2 text-rio-luz">
-              ≈ {r.litrosDia.toLocaleString("pt-BR")} L por dia · {porSemanaTexto(r.galoesMes)}
+              ≈ {r.litrosDia.toLocaleString("pt-BR")} L por dia · {frequenciaTexto(r.galoesMes)} galões
             </p>
           </div>
         ) : (
@@ -102,7 +102,7 @@ export default function CalculadoraSite({ lojas }: { lojas: LojaVitrine[] }) {
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-xl font-bold">Distribuidoras disponíveis</h3>
-          {!ponto && (
+          {!ponto && lojas.length > 0 && (
             <button type="button" onClick={pedirLocal} disabled={local === "buscando"} className="rounded-full border-2 border-verde px-4 py-2 text-sm font-bold text-verde">
               {local === "buscando" ? "Localizando…" : "📍 Ver quem entrega para mim"}
             </button>
