@@ -6,6 +6,7 @@ import { Topo } from "@/components/ui";
 import { SeloAguaPraja } from "@/components/marca";
 import { marcaAtual } from "@/lib/marca";
 import FormCadastro from "./FormCadastro";
+import { cidadesParaEndereco } from "@/lib/cidades";
 import { sair } from "../entrar/actions";
 
 export const metadata: Metadata = { title: "Seus dados" };
@@ -29,7 +30,7 @@ export default async function Cadastro() {
         }
       />
       <main className="conteudo">
-        <FormCadastro nome={u.nome ?? ""} endereco={end ?? null} jaAceitou={!!u.aceitouTermosEm} />
+        <FormCadastro nome={u.nome ?? ""} endereco={end ?? null} jaAceitou={!!u.aceitouTermosEm} cidades={await cidadesParaEndereco()} />
       </main>
       {(await marcaAtual()) && <SeloAguaPraja />}
     </>

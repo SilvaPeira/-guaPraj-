@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-export const CIDADES = ["Canaã dos Carajás", "Parauapebas", "Marabá"] as const;
 
 const texto = (min: number, max: number, msg: string) => z.string().trim().min(min, msg).max(max);
 const opcional = (max: number) =>
@@ -18,7 +17,8 @@ export const esquemaEndereco = z.object({
   numero: opcional(20),
   complemento: opcional(80),
   bairro: texto(2, 80, "Informe o bairro."),
-  cidade: z.enum(CIDADES),
+  // A lista de cidades atendidas fica no banco (painel admin); a action confere com erroCidade().
+  cidade: z.string().trim().min(2, "Escolha a cidade.").max(80),
   referencia: opcional(160),
   lat: coord(-90, 90),
   lng: coord(-180, 180),

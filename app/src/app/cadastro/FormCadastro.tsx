@@ -2,17 +2,29 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
-import CamposEndereco, { type EnderecoInicial } from "@/components/CamposEndereco";
+import CamposEndereco, { type CidadeEndereco, type EnderecoInicial } from "@/components/CamposEndereco";
 import { BotoesEdicao, useEdicao } from "@/components/Edicao";
 import { salvarCadastro, type EstadoForm } from "./actions";
 
 /** Cadastro novo: campos abertos. Cadastro existente: bloqueado até tocar em "Editar". */
-export default function FormCadastro(p: { nome: string; endereco: EnderecoInicial | null; jaAceitou: boolean }) {
+export default function FormCadastro(p: { nome: string; endereco: EnderecoInicial | null; jaAceitou: boolean; cidades: CidadeEndereco[] }) {
   const [versao, setVersao] = useState(0);
   return <Interno key={versao} {...p} aoCancelar={() => setVersao((v) => v + 1)} />;
 }
 
-function Interno({ nome, endereco, jaAceitou, aoCancelar }: { nome: string; endereco: EnderecoInicial | null; jaAceitou: boolean; aoCancelar: () => void }) {
+function Interno({
+  nome,
+  endereco,
+  jaAceitou,
+  cidades,
+  aoCancelar,
+}: {
+  nome: string;
+  endereco: EnderecoInicial | null;
+  jaAceitou: boolean;
+  cidades: CidadeEndereco[];
+  aoCancelar: () => void;
+}) {
   const [estado, enviar, enviando] = useActionState<EstadoForm, FormData>(salvarCadastro, {});
   const novo = !endereco;
   const edicao = useEdicao(null, novo);
@@ -31,7 +43,7 @@ function Interno({ nome, endereco, jaAceitou, aoCancelar }: { nome: string; ende
         </div>
         <div className="cartao pilha relative">
           <h2 className="titulo-secao">Endereço de entrega</h2>
-          <CamposEndereco inicial={endereco} />
+          <CamposEndereco inicial={endereco} cidades={cidades} />
           {/* Com o cadastro bloqueado, o mapa não pode ser arrastado. */}
           {!editando && <div className="absolute inset-0 z-[1100] cursor-default" aria-hidden="true" />}
         </div>

@@ -18,7 +18,18 @@ const PLANOS_PADRAO = [
 
 type PlanoVitrine = Pick<PlanoApp, "id" | "nome" | "precoCentavos" | "descricao" | "limiteAssinantes" | "limiteEntregadores" | "pagamentoOnline" | "produtosExtras" | "appProprio">;
 
-export default function SiteAguaPraja({ planos, suporte, lojas }: { planos: PlanoVitrine[]; suporte: string | null; lojas: LojaVitrine[] }) {
+export default function SiteAguaPraja({
+  planos,
+  suporte,
+  lojas,
+  cidades,
+}: {
+  planos: PlanoVitrine[];
+  suporte: string | null;
+  lojas: LojaVitrine[];
+  /** Cidades atendidas (painel admin). */
+  cidades: string[];
+}) {
   const vitrine = planos.length ? planos : PLANOS_PADRAO;
   // Destaque: o plano com app próprio (ou o segundo).
   const destaque = vitrine.find((p) => p.appProprio)?.id ?? (vitrine.length > 1 ? vitrine[1].id : null);
@@ -49,7 +60,7 @@ export default function SiteAguaPraja({ planos, suporte, lojas }: { planos: Plan
 
         <div className="mx-auto grid max-w-5xl gap-8 px-4 pb-16 pt-8 md:grid-cols-[1.2fr_1fr] md:items-center md:pt-14">
           <div>
-            <p className="mb-3 inline-block rounded-full bg-white/10 px-3 py-1 text-sm text-hero-texto">Canaã dos Carajás · Parauapebas</p>
+            {cidades.length > 0 && <p className="mb-3 inline-block rounded-full bg-white/10 px-3 py-1 text-sm text-hero-texto">{cidades.join(" · ")}</p>}
             <h1 className="text-[34px] font-extrabold leading-tight md:text-5xl">
               Água na sua porta,
               <br />

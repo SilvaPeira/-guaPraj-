@@ -6,6 +6,7 @@ import { z } from "zod";
 import { getDb, schema } from "@/db";
 import { exigirUsuario } from "@/lib/sessao";
 import { esquemaEndereco, primeiroErro } from "@/lib/validacao";
+import { erroCidade } from "@/lib/cidades";
 
 export type EstadoForm = { erro?: string };
 
@@ -19,6 +20,8 @@ export async function salvarCadastro(_: EstadoForm, form: FormData): Promise<Est
   const r = esquema.safeParse(Object.fromEntries(form));
   if (!r.success) return { erro: primeiroErro(r.error) };
   const d = r.data;
+  const semCidade = await erroCidade(d.cidade);
+  if (semCidade) return { erro: semCidade };
   const db = await getDb();
 
   await db

@@ -9,6 +9,7 @@ import { exigirUsuario } from "@/lib/sessao";
 import { slugLivre } from "@/lib/marca";
 import { normalizarTelefone } from "@/lib/telefone";
 import { esquemaEndereco, primeiroErro, reaisParaCentavos } from "@/lib/validacao";
+import { erroCidade } from "@/lib/cidades";
 
 export type EstadoForm = { erro?: string };
 
@@ -56,6 +57,8 @@ export async function cadastrarLoja(_: EstadoForm, form: FormData): Promise<Esta
   const r = esquema.safeParse(bruto);
   if (!r.success) return { erro: primeiroErro(r.error) };
   const d = r.data;
+  const semCidade = await erroCidade(d.cidade);
+  if (semCidade) return { erro: semCidade };
   if (!d.fazEntrega && !d.fazRetirada) return { erro: "Marque entrega, retirada ou os dois." };
   if (d.abre >= d.fecha) return { erro: "O horário de fechar precisa ser depois do de abrir." };
   if (d.precoGalao <= 0) return { erro: "Informe o preço do galão avulso." };

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import SiteAguaPraja from "@/components/SiteAguaPraja";
+import { listarCidades } from "@/lib/cidades";
 import { lojasDaVitrine } from "@/lib/vitrine";
 import { listarPlanosApp } from "@/lib/planos-app";
 import { telefonesAdmin } from "@/lib/destino";
@@ -10,5 +11,5 @@ export const metadata: Metadata = {
 };
 
 export default async function Sobre() {
-  return <SiteAguaPraja planos={await listarPlanosApp(true)} suporte={telefonesAdmin()[0] ?? null} lojas={await lojasDaVitrine()} />;
+  return <SiteAguaPraja planos={await listarPlanosApp(true)} suporte={telefonesAdmin()[0] ?? null} lojas={await lojasDaVitrine()} cidades={(await listarCidades()).map((c) => c.nome)} />;
 }

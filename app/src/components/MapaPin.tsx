@@ -13,11 +13,14 @@ type Props = {
   nomeLng?: string;
   inicial?: { lat: number; lng: number } | null;
   cidade?: string;
+  uf?: string;
+  /** Centro da cidade escolhida (onde o mapa abre quando ainda não há ponto marcado). */
+  centro?: { lat: number; lng: number };
 };
 
 const pinSvg = `<svg width="36" height="46" viewBox="0 0 36 46" xmlns="http://www.w3.org/2000/svg"><path d="M18 1C8.6 1 1 8.6 1 18c0 12.4 17 27 17 27s17-14.6 17-27C35 8.6 27.4 1 18 1z" fill="#1b6b47" stroke="#fff" stroke-width="2"/><circle cx="18" cy="18" r="6.5" fill="#fff"/></svg>`;
 
-export default function MapaPin({ nomeLat = "lat", nomeLng = "lng", inicial, cidade = "Canaã dos Carajás" }: Props) {
+export default function MapaPin({ nomeLat = "lat", nomeLng = "lng", inicial, cidade = "Canaã dos Carajás", uf = "PA", centro }: Props) {
   const divRef = useRef<HTMLDivElement>(null);
   const mapaRef = useRef<LMap | null>(null);
   const pinRef = useRef<Marker | null>(null);
@@ -31,14 +34,14 @@ export default function MapaPin({ nomeLat = "lat", nomeLng = "lng", inicial, cid
     (async () => {
       const L = (await import("leaflet")).default;
       if (cancelado || !divRef.current || mapaRef.current) return;
-      const centro = inicial ?? CENTRO_PADRAO;
-      const mapa = L.map(divRef.current, { zoomControl: true, attributionControl: true }).setView([centro.lat, centro.lng], inicial ? 17 : 14);
+      const inicio = inicial ?? centro ?? CENTRO_PADRAO;
+      const mapa = L.map(divRef.current, { zoomControl: true, attributionControl: true }).setView([inicio.lat, inicio.lng], inicial ? 17 : 14);
       L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       }).addTo(mapa);
       const icone = L.divIcon({ html: pinSvg, className: "", iconSize: [36, 46], iconAnchor: [18, 45] });
-      const pin = L.marker([centro.lat, centro.lng], { draggable: true, icon: icone, autoPan: true }).addTo(mapa);
+      const pin = L.marker([inicio.lat, inicio.lng], { draggable: true, icon: icone, autoPan: true }).addTo(mapa);
       pin.on("dragend", () => {
         const p = pin.getLatLng();
         setPos({ lat: p.lat, lng: p.lng });
@@ -87,7 +90,7 @@ export default function MapaPin({ nomeLat = "lat", nomeLng = "lng", inicial, cid
     setMsg("");
     setCarregando(true);
     try {
-      const q = encodeURIComponent(`${busca}, ${cidade}, PA, Brasil`);
+      const q = encodeURIComponent(`${busca}, ${cidade}, ${uf}, Brasil`);
       const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q=${q}`, {
         headers: { "Accept-Language": "pt-BR" },
       });

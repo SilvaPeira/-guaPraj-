@@ -382,3 +382,16 @@ export const planosApp = pgTable("planos_app", {
   ordem: integer("ordem").notNull().default(0),
   criadoEm: criadoEm(),
 });
+
+/** Cidades atendidas (configuradas no painel admin). Cliente e loja só se cadastram nas ativas. */
+export const cidades = pgTable("cidades", {
+  id: id(),
+  nome: text("nome").notNull().unique(),
+  uf: text("uf").notNull().default("PA"),
+  /** Centro do mapa ao escolher a cidade. */
+  lat: doublePrecision("lat").notNull(),
+  lng: doublePrecision("lng").notNull(),
+  ativa: boolean("ativa").notNull().default(true),
+  ordem: integer("ordem").notNull().default(0),
+  criadoEm: criadoEm(),
+});

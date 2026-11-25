@@ -5,6 +5,7 @@ import { getDb, schema } from "@/db";
 import { exigirUsuario } from "@/lib/sessao";
 import { Topo } from "@/components/ui";
 import FormLoja from "./FormLoja";
+import { cidadesParaEndereco } from "@/lib/cidades";
 
 export const metadata: Metadata = { title: "Cadastrar distribuidora" };
 
@@ -18,7 +19,7 @@ export default async function CadastroLoja() {
     <>
       <Topo titulo="Cadastrar distribuidora" subtitulo="Leva uns 3 minutos" voltar="/" />
       <main className="conteudo">
-        <FormLoja />
+        <FormLoja cidades={await cidadesParaEndereco()} />
       </main>
     </>
   );

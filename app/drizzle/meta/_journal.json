@@ -85,6 +85,13 @@
       "when": 1795619435885,
       "tag": "0011_produto_foto_excluir",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1795630212633,
+      "tag": "0012_cidades",
+      "breakpoints": true
     }
   ]
 }

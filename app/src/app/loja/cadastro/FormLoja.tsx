@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
-import CamposEndereco from "@/components/CamposEndereco";
+import CamposEndereco, { type CidadeEndereco } from "@/components/CamposEndereco";
 import { cadastrarLoja, type EstadoForm } from "./actions";
 
 const DIAS = [
@@ -15,7 +15,7 @@ const DIAS = [
   [0, "Dom"],
 ] as const;
 
-export default function FormLoja() {
+export default function FormLoja({ cidades }: { cidades: CidadeEndereco[] }) {
   const [estado, enviar, enviando] = useActionState<EstadoForm, FormData>(cadastrarLoja, {});
   return (
     <form action={enviar} className="pilha">
@@ -41,7 +41,7 @@ export default function FormLoja() {
 
       <section className="cartao pilha">
         <h2 className="titulo-secao">Endereço da loja</h2>
-        <CamposEndereco comReferencia={false} />
+        <CamposEndereco comReferencia={false} cidades={cidades} />
       </section>
 
       <section className="cartao pilha">
