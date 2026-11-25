@@ -36,7 +36,14 @@ export function paraCartao(p: PedidoAgenda): CartaoPedido {
           lng: p.endereco.lng,
         }
       : null,
-    itens: p.itens.map((i) => ({ nome: i.nome, qtd: i.qtd })),
+    itens: p.itens.map((i) => ({
+      id: i.id,
+      nome: i.nome,
+      qtd: i.qtd,
+      trocaCasco: i.trocaCasco,
+      diferencaCentavos: i.trocaCasco && i.precoCheioCentavos !== null ? i.precoCheioCentavos - i.precoUnitCentavos : 0,
+      cascosFaltaram: i.cascosFaltaram,
+    })),
     atrasado: passou && !STATUS_FINAIS.includes(p.status),
   };
 }

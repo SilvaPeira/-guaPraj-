@@ -176,7 +176,10 @@ export default async function SiteDaLoja({ params }: Props) {
                       {p.alcoolico && <span className="selo selo-acai ml-1">18+</span>}
                     </span>
                   </span>
-                  <b className="flex-none">{formatarReais(p.precoCentavos)}</b>
+                  <span className="flex-none text-right">
+                    <b className="block">{formatarReais(p.precoCentavos)}</b>
+                    {p.precoLiquidoCentavos !== null && <span className="text-xs text-tinta-suave">retornável {formatarReais(p.precoLiquidoCentavos)}</span>}
+                  </span>
                 </li>
               ))}
             </ul>

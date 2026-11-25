@@ -111,7 +111,10 @@ export default async function Loja({ params }: PageProps<"/lojas/[id]">) {
                       {p.alcoolico && <span className="selo selo-acai ml-1">18+</span>}
                     </p>
                   </div>
-                  <b className="flex-none">{formatarReais(p.precoCentavos)}</b>
+                  <span className="flex-none text-right">
+                    <b className="block">{formatarReais(p.precoCentavos)}</b>
+                    {p.precoLiquidoCentavos !== null && <span className="text-xs text-tinta-suave">retornável {formatarReais(p.precoLiquidoCentavos)}</span>}
+                  </span>
                 </li>
               ))}
             </ul>

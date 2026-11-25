@@ -3,11 +3,11 @@ import { asc, eq } from "drizzle-orm";
 import { schema } from "@/db";
 import { exigirLoja } from "@/lib/loja";
 import { Topo } from "@/components/ui";
-import { CATEGORIAS, ESTOQUE_BAIXO, ORDEM_GRUPOS, podeVender } from "@/lib/catalogo";
+import { CATEGORIAS, ESTOQUE_BAIXO, ORDEM_GRUPOS, podeSerRetornavel, podeVender } from "@/lib/catalogo";
 import FormNovoProduto from "./FormNovoProduto";
 import Link from "next/link";
 import { recursosDaLoja } from "@/lib/planos-app";
-import { atualizarProduto } from "./actions";
+import { acaoRapidaProduto } from "./actions";
 import ProdutoEditavel from "./ProdutoEditavel";
 
 export const metadata: Metadata = { title: "Catálogo" };
@@ -71,12 +71,15 @@ function ItemProduto({ p }: { p: Produto }) {
           <div className="mt-1 flex flex-wrap gap-1">
             {p.alcoolico && <span className="selo selo-acai">18+</span>}
             {p.retornavel && <span className="selo selo-rio">troca de casco</span>}
+            {p.precoLiquidoCentavos !== null && (
+              <span className="selo selo-rio">retornável · líquido {(p.precoLiquidoCentavos / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+            )}
             {!p.disponivel && <span className="selo selo-cinza">em falta</span>}
             {p.disponivel && p.estoque === 0 && <span className="selo selo-terra">esgotado</span>}
             {p.disponivel && p.estoque !== null && p.estoque > 0 && p.estoque <= ESTOQUE_BAIXO && <span className="selo selo-terra">estoque baixo</span>}
           </div>
         </div>
-        <form action={atualizarProduto} className="flex-none">
+        <form action={acaoRapidaProduto} className="flex-none">
           <input type="hidden" name="id" value={p.id} />
           <button name="acao" value="alternar" className={p.disponivel ? "botao-peq-sec" : "botao-peq"}>
             {p.disponivel ? "Marcar em falta" : "Tenho de novo"}
@@ -85,7 +88,7 @@ function ItemProduto({ p }: { p: Produto }) {
       </div>
 
       {p.estoque !== null && (
-        <form action={atualizarProduto} className="flex items-center gap-2">
+        <form action={acaoRapidaProduto} className="flex items-center gap-2">
           <input type="hidden" name="id" value={p.id} />
           <span className="text-sm text-tinta-suave">Em estoque:</span>
           <button name="acao" value="tirar" className="botao-peq-sec w-11 px-0" aria-label={`Tirar 1 de ${p.nome}`} disabled={p.estoque === 0}>
@@ -100,7 +103,14 @@ function ItemProduto({ p }: { p: Produto }) {
         </form>
       )}
 
-      <ProdutoEditavel id={p.id} marca={p.marca} precoCentavos={p.precoCentavos} estoque={p.estoque} />
+      <ProdutoEditavel
+        id={p.id}
+        marca={p.marca}
+        precoCentavos={p.precoCentavos}
+        estoque={p.estoque}
+        precoLiquidoCentavos={p.precoLiquidoCentavos}
+        podeRetornavel={podeSerRetornavel(p.categoria)}
+      />
       {p.estoque === null && <p className="text-xs text-tinta-suave">Estoque não controlado</p>}
     </li>
   );

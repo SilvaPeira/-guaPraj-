@@ -2,7 +2,7 @@ import "server-only";
 import { redirect } from "next/navigation";
 import { and, asc, eq, inArray, notInArray, sql } from "drizzle-orm";
 import { getDb, schema } from "@/db";
-import { devolverEstoque, ErroPedido, gerarEntregas } from "./pedidos";
+import { cobrarCascosDeBebida, devolverEstoque, ErroPedido, gerarEntregas } from "./pedidos";
 import { exigirUsuario } from "./sessao";
 import { agoraLocal, somarDias } from "./tempo";
 import { proximosStatus, type StatusPedido } from "./status";
@@ -87,6 +87,8 @@ export async function pendentesAtrasados(db: Db, lojaId: string) {
 
 export type Conclusao = {
   cascosRecolhidos?: number;
+  /** Bebida retornável: cascos vazios recebidos por item (id do item → quantidade). Ausente = recebeu todos. */
+  cascosBebida?: Record<string, number>;
   documentoConferido?: boolean;
   pagamentoRecebido?: boolean;
   motivo?: string;
@@ -117,6 +119,13 @@ export async function mudarStatus(lojaId: string, porUsuarioId: string, pedidoId
           throw new ErroPedido("Código de retirada não confere.");
         }
         mudanca.documentoConferido = !!c.documentoConferido;
+        // Bebida retornável sem casco: cobra a diferença para o preço normal.
+        const extra = await cobrarCascosDeBebida(tx, p.id, c.cascosBebida);
+        if (extra.valor > 0) {
+          mudanca.subtotalCentavos = p.subtotalCentavos + extra.valor;
+          mudanca.totalCentavos = p.totalCentavos + extra.valor;
+          nota = extra.nota;
+        }
         if (c.pagamentoRecebido !== false && p.totalCentavos > 0) mudanca.statusPagamento = "pago";
         // Cascos: o que não voltou fica "em mãos" do cliente (comodato).
         const recolhidos = Math.max(0, Math.min(c.cascosRecolhidos ?? p.cascosTroca, p.cascosTroca));

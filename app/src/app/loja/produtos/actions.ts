@@ -5,10 +5,19 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { schema } from "@/db";
 import { exigirLoja } from "@/lib/loja";
-import { CATEGORIAS, type Categoria } from "@/lib/catalogo";
+import { CATEGORIAS, podeSerRetornavel, type Categoria } from "@/lib/catalogo";
 import { primeiroErro, reaisParaCentavos } from "@/lib/validacao";
 
 export type EstadoForm = { erro?: string; ok?: string };
+
+/** Retornável: checkbox + preço só do líquido (menor que o preço normal). */
+function lerLiquido(form: FormData, categoria: string, preco: number | null): { ok: true; valor: number | null } | { ok: false; erro: string } {
+  if (form.get("retornavelBebida") !== "on" || !podeSerRetornavel(categoria)) return { ok: true, valor: null };
+  const liquido = reaisParaCentavos(form.get("precoLiquido"));
+  if (!liquido) return { ok: false, erro: "Informe o preço só do líquido (com o casco vazio)." };
+  if (preco && liquido >= preco) return { ok: false, erro: "O preço do líquido deve ser menor que o preço normal (com casco)." };
+  return { ok: true, valor: liquido };
+}
 
 /** Estoque digitado: vazio = não controla; senão inteiro de 0 a 99999. */
 function lerEstoque(v: FormDataEntryValue | null): { ok: true; valor: number | null } | { ok: false } {
@@ -32,6 +41,8 @@ export async function criarProduto(_: EstadoForm, form: FormData): Promise<Estad
   if (!preco) return { erro: "Informe o preço." };
   const estoque = lerEstoque(form.get("estoque"));
   if (!estoque.ok) return { erro: "Quantidade em estoque inválida (use um número inteiro, ou deixe vazio)." };
+  const liquido = lerLiquido(form, r.data.categoria, preco);
+  if (!liquido.ok) return { erro: liquido.erro };
   const alcoolico = r.data.categoria === "alcoolica";
   if (alcoolico && !loja.vendeAlcool) {
     return { erro: "Sua loja não está habilitada para bebida alcoólica. Ative em Ajustes (precisa de alvará)." };
@@ -44,6 +55,7 @@ export async function criarProduto(_: EstadoForm, form: FormData): Promise<Estad
     retornavel: r.data.categoria === "agua_galao",
     alcoolico,
     precoCentavos: preco,
+    precoLiquidoCentavos: liquido.valor,
     estoque: estoque.valor,
     ordem: r.data.categoria === "casco" ? 99 : 10,
   });
@@ -51,13 +63,13 @@ export async function criarProduto(_: EstadoForm, form: FormData): Promise<Estad
   return { ok: `${r.data.nome} adicionado.` };
 }
 
-export async function atualizarProduto(form: FormData) {
+export async function atualizarProduto(form: FormData): Promise<EstadoForm> {
   const { loja, db } = await exigirLoja();
   const id = String(form.get("id") ?? "");
   const acao = String(form.get("acao") ?? "");
   const onde = and(eq(schema.produtos.id, id), eq(schema.produtos.lojaId, loja.id));
   const [p] = await db.select().from(schema.produtos).where(onde).limit(1);
-  if (!p) return;
+  if (!p) return { erro: "Produto não encontrado." };
 
   if (acao === "alternar") {
     await db.update(schema.produtos).set({ disponivel: !p.disponivel }).where(onde);
@@ -65,10 +77,13 @@ export async function atualizarProduto(form: FormData) {
     const preco = reaisParaCentavos(form.get("preco"));
     const estoque = lerEstoque(form.get("estoque"));
     const marca = String(form.get("marca") ?? "").trim().slice(0, 60) || null;
+    const liquido = lerLiquido(form, p.categoria, preco ?? p.precoCentavos);
+    if (!liquido.ok) return { erro: liquido.erro };
     await db
       .update(schema.produtos)
       .set({
         marca,
+        precoLiquidoCentavos: liquido.valor,
         ...(preco ? { precoCentavos: preco } : {}),
         ...(estoque.ok ? { estoque: estoque.valor } : {}),
       })
@@ -81,4 +96,10 @@ export async function atualizarProduto(form: FormData) {
     }
   }
   revalidatePath("/loja/produtos");
+  return { ok: "Salvo." };
+}
+
+/** Botões rápidos da lista (em falta, +1, −1). */
+export async function acaoRapidaProduto(form: FormData): Promise<void> {
+  await atualizarProduto(form);
 }

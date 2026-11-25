@@ -71,6 +71,13 @@
       "when": 1795608168477,
       "tag": "0009_app_proprio",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1795610065716,
+      "tag": "0010_bebida_retornavel",
+      "breakpoints": true
     }
   ]
 }

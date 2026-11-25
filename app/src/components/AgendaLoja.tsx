@@ -24,7 +24,7 @@ export type CartaoPedido = {
   clienteNome: string;
   clienteTelefone: string;
   endereco: { linha: string; bairro: string; referencia: string | null; lat: number; lng: number } | null;
-  itens: { nome: string; qtd: number }[];
+  itens: { id: string; nome: string; qtd: number; trocaCasco: boolean; diferencaCentavos: number; cascosFaltaram: number }[];
   atrasado: boolean;
 };
 
@@ -147,6 +147,9 @@ function Cartao({ p, ehDono, marcado, onMarcar, amanha }: { p: CartaoPedido; ehD
       </ul>
       <div className="flex flex-wrap gap-1.5 text-xs">
         {p.cascosTroca > 0 && <span className="selo selo-rio">Recolher {p.cascosTroca} casco(s)</span>}
+        {p.itens.some((i) => i.trocaCasco) && (
+          <span className="selo selo-rio">Bebida retornável: receber {p.itens.filter((i) => i.trocaCasco).reduce((t, i) => t + i.qtd, 0)} casco(s)</span>
+        )}
         {p.cascosComprados > 0 && <span className="selo selo-cinza">{p.cascosComprados} casco(s) vendido(s)</span>}
         {p.temAlcool && <span className="selo selo-acai">18+: conferir documento</span>}
         {p.totalCentavos > 0 && (
@@ -213,6 +216,15 @@ function Cartao({ p, ehDono, marcado, onMarcar, amanha }: { p: CartaoPedido; ehD
         <form action={enviar} className="pilha rounded-[var(--raio-campo,12px)] bg-verde-claro p-3">
           <input type="hidden" name="pedidoId" value={p.id} />
           <input type="hidden" name="novo" value={p.modo === "entrega" ? "entregue" : "retirado"} />
+          {p.itens
+            .filter((i) => i.trocaCasco)
+            .map((i) => (
+              <label key={i.id} className="campo">
+                Cascos de {i.nome.replace(/ \(retornável\)$/, "")} recebidos (de {i.qtd})
+                <input className="entrada" type="number" name={`cascoBebida:${i.id}`} min={0} max={i.qtd} defaultValue={i.qtd} />
+                <span className="text-xs font-normal text-tinta-suave">Cada casco que faltar: cobre {brl(i.diferencaCentavos)} a mais na hora (preço normal).</span>
+              </label>
+            ))}
           {p.cascosTroca > 0 && (
             <label className="campo">
               Cascos vazios recolhidos (de {p.cascosTroca})

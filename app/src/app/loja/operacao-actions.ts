@@ -29,9 +29,14 @@ export async function mudarStatusAcao(_: EstadoOperacao, form: FormData): Promis
   const ids = form.getAll("pedidoId").map(String).filter((x) => /^[0-9a-f-]{36}$/.test(x));
   if (!ids.length) return { erro: "Selecione pelo menos um pedido." };
   const recolhidos = form.get("cascosRecolhidos");
+  const cascosBebida: Record<string, number> = {};
+  for (const [k, v] of form.entries()) {
+    if (k.startsWith("cascoBebida:") && /^[0-9a-f-]{36}$/.test(k.slice(12))) cascosBebida[k.slice(12)] = Math.max(0, Number(v) || 0);
+  }
   try {
     const mudaram = await mudarStatus(loja.id, usuario.id, ids, novo, {
       cascosRecolhidos: recolhidos === null ? undefined : Number(recolhidos),
+      cascosBebida: Object.keys(cascosBebida).length ? cascosBebida : undefined,
       documentoConferido: form.get("documentoConferido") === "on",
       pagamentoRecebido: form.get("pagamentoRecebido") !== "nao",
       motivo: String(form.get("motivo") ?? "").trim().slice(0, 120) || undefined,

@@ -12,7 +12,8 @@
     "test:assinatura": "tsx --conditions=react-server --tsconfig tsconfig.json scripts/testar-assinatura.ts",
     "test:pagamento": "tsx --conditions=react-server --tsconfig tsconfig.json scripts/testar-pagamento.ts",
     "test:senha": "tsx --conditions=react-server --tsconfig tsconfig.json scripts/testar-senha.ts",
-    "test:planos-app": "tsx --conditions=react-server --tsconfig tsconfig.json scripts/testar-planos-app.ts"
+    "test:planos-app": "tsx --conditions=react-server --tsconfig tsconfig.json scripts/testar-planos-app.ts",
+    "test:retornavel": "tsx --conditions=react-server --tsconfig tsconfig.json scripts/testar-retornavel.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.16",

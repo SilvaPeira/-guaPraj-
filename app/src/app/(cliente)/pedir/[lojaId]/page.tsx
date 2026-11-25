@@ -45,7 +45,16 @@ export default async function Pedir({ params, searchParams }: PageProps<"/pedir/
   const { produtosExtras } = await recursosDaLoja(loja.id);
   const extras = produtos
     .filter((p) => podeVender(p) && p.categoria !== "agua_galao" && p.categoria !== "casco" && (!p.alcoolico || loja.vendeAlcool) && (produtosExtras || !ehExtra(p.categoria)))
-    .map((p) => ({ id: p.id, nome: p.nome, marca: p.marca, grupo: CATEGORIAS[p.categoria].grupo, precoCentavos: p.precoCentavos, alcoolico: p.alcoolico, estoque: p.estoque }));
+    .map((p) => ({
+      id: p.id,
+      nome: p.nome,
+      marca: p.marca,
+      grupo: CATEGORIAS[p.categoria].grupo,
+      precoCentavos: p.precoCentavos,
+      precoLiquidoCentavos: p.precoLiquidoCentavos,
+      alcoolico: p.alcoolico,
+      estoque: p.estoque,
+    }));
 
   const km = distanciaKm(endereco, loja);
   const podeEntregar = loja.fazEntrega && km <= loja.raioKm;

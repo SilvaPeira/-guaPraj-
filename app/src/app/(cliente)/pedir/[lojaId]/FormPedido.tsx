@@ -5,7 +5,17 @@ import EscolhaHorario, { type ValorHorario } from "@/components/EscolhaHorario";
 import type { OpcaoData, RegrasCliente } from "@/lib/opcoes-pedido";
 import { fazerPedido, type EstadoPedido } from "./actions";
 
-export type ProdutoVenda = { id: string; nome: string; marca: string | null; grupo: string; precoCentavos: number; alcoolico: boolean; estoque: number | null };
+export type ProdutoVenda = {
+  id: string;
+  nome: string;
+  marca: string | null;
+  grupo: string;
+  precoCentavos: number;
+  /** Preço só do líquido quando o cliente entrega o casco vazio (retornável). */
+  precoLiquidoCentavos: number | null;
+  alcoolico: boolean;
+  estoque: number | null;
+};
 
 type Props = {
   lojaId: string;
@@ -31,6 +41,9 @@ export default function FormPedido(p: Props) {
   const [estado, enviar, enviando] = useActionState<EstadoPedido, FormData>(fazerPedido, {});
   const [galoes, setGaloes] = useState(p.galoesInicial);
   const [qtd, setQtd] = useState<Record<string, number>>({});
+  /** Produtos que o cliente escolheu como retornável (vai entregar o casco vazio). */
+  const [ret, setRet] = useState<Record<string, boolean>>({});
+  const precoDe = (x: ProdutoVenda) => (ret[x.id] && x.precoLiquidoCentavos !== null ? x.precoLiquidoCentavos : x.precoCentavos);
   const [modo, setModo] = useState<"entrega" | "retirada">(p.podeEntregar ? "entrega" : "retirada");
   const [casco, setCasco] = useState<"tenho" | "comprar">("tenho");
   const [cascosComprar, setCascosComprar] = useState(1);
@@ -43,7 +56,7 @@ export default function FormPedido(p: Props) {
   const nCascos = casco === "comprar" ? Math.min(cascosComprar, galoes) : 0;
   const gratis = Math.min(galoes, p.saldoGaloes ?? 0);
   const subtotal =
-    (galoes - gratis) * p.precoGalaoCentavos + p.produtos.reduce((s, x) => s + (qtd[x.id] ?? 0) * x.precoCentavos, 0) + nCascos * (p.precoCascoCentavos ?? 0);
+    (galoes - gratis) * p.precoGalaoCentavos + p.produtos.reduce((s, x) => s + (qtd[x.id] ?? 0) * precoDe(x), 0) + nCascos * (p.precoCascoCentavos ?? 0);
   const taxaEntrega = modo === "entrega" ? p.taxaEntregaCentavos : 0;
   const taxaHorario = modo === "entrega" && (horario?.tipo === "imediato" || horario?.tipo === "exato") ? p.regras.taxaExtraCentavos : 0;
   const total = subtotal + taxaEntrega + taxaHorario;
@@ -101,17 +114,40 @@ export default function FormPedido(p: Props) {
             {p.produtos
               .filter((x) => x.grupo === g)
               .map((x) => (
-                <li key={x.id} className="flex items-center justify-between gap-2 py-2.5">
-                  <div className="min-w-0">
-                    <p className="text-[15px] font-semibold">{x.nome}</p>
-                    <p className="text-sm text-tinta-suave">
-                      {brl(x.precoCentavos)}
-                      {x.marca ? ` · ${x.marca}` : ""}
-                      {x.alcoolico && <span className="selo selo-acai ml-1">18+</span>}
-                      {x.estoque !== null && x.estoque <= 5 ? ` · restam ${x.estoque}` : ""}
-                    </p>
+                <li key={x.id} className="flex flex-col gap-2 py-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-[15px] font-semibold">{x.nome}</p>
+                      <p className="text-sm text-tinta-suave">
+                        {brl(precoDe(x))}
+                        {x.marca ? ` · ${x.marca}` : ""}
+                        {x.alcoolico && <span className="selo selo-acai ml-1">18+</span>}
+                        {x.estoque !== null && x.estoque <= 5 ? ` · restam ${x.estoque}` : ""}
+                      </p>
+                    </div>
+                    <Passo valor={qtd[x.id] ?? 0} onChange={(n) => setQtd((q) => ({ ...q, [x.id]: n }))} nome={`item:${x.id}`} rotulo={x.nome} max={x.estoque ?? 50} />
                   </div>
-                  <Passo valor={qtd[x.id] ?? 0} onChange={(n) => setQtd((q) => ({ ...q, [x.id]: n }))} nome={`item:${x.id}`} rotulo={x.nome} max={x.estoque ?? 50} />
+                  {x.precoLiquidoCentavos !== null && (
+                    <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={`Como comprar ${x.nome}`}>
+                      <label className="escolha flex-col items-start p-2 text-sm">
+                        <input type="radio" checked={!ret[x.id]} onChange={() => setRet((r) => ({ ...r, [x.id]: false }))} className="sr-only" />
+                        <b>Normal · {brl(x.precoCentavos)}</b>
+                        <span className="text-xs text-tinta-suave">com o casco</span>
+                      </label>
+                      <label className="escolha flex-col items-start p-2 text-sm">
+                        <input type="radio" checked={!!ret[x.id]} onChange={() => setRet((r) => ({ ...r, [x.id]: true }))} className="sr-only" />
+                        <b>Retornável · {brl(x.precoLiquidoCentavos)}</b>
+                        <span className="text-xs text-tinta-suave">entrego o casco vazio</span>
+                      </label>
+                    </div>
+                  )}
+                  {ret[x.id] && x.precoLiquidoCentavos !== null && <input type="hidden" name={`ret:${x.id}`} value="1" />}
+                  {ret[x.id] && x.precoLiquidoCentavos !== null && (
+                    <p className="aviso-info text-sm">
+                      Retornável: {modo === "entrega" ? "entregue" : "leve"} <b>{Math.max(1, qtd[x.id] ?? 0)} casco(s) vazio(s)</b> de {x.nome} no momento{" "}
+                      {modo === "entrega" ? "da entrega" : "da retirada"}. Se não tiver o casco, você paga o preço normal ({brl(x.precoCentavos)} cada).
+                    </p>
+                  )}
                 </li>
               ))}
           </ul>

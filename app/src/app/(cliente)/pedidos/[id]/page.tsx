@@ -122,7 +122,21 @@ export default async function Pedido({ params, searchParams }: PageProps<"/pedid
                 <b>{it.precoUnitCentavos ? formatarReais(it.precoUnitCentavos * it.qtd) : "no plano"}</b>
               </li>
             ))}
+            {itens
+              .filter((it) => it.cascosFaltaram > 0 && it.precoCheioCentavos !== null)
+              .map((it) => (
+                <li key={`casco-${it.id}`} className="flex justify-between gap-2 py-2 text-sm">
+                  <span>{it.cascosFaltaram}× casco não entregue ({it.nome.replace(/ (retornável)$/, "")})</span>
+                  <b>{formatarReais(it.cascosFaltaram * (it.precoCheioCentavos! - it.precoUnitCentavos))}</b>
+                </li>
+              ))}
           </ul>
+          {itens.some((it) => it.trocaCasco) && !["entregue", "retirado", "cancelado", "nao_entregue"].includes(p.status) && (
+            <p className="aviso-info text-sm">
+              Retornável: {p.modo === "entrega" ? "entregue" : "leve"} {itens.filter((it) => it.trocaCasco).reduce((t, it) => t + it.qtd, 0)} casco(s) vazio(s) de bebida no
+              momento {p.modo === "entrega" ? "da entrega" : "da retirada"}. Sem o casco, você paga o preço normal.
+            </p>
+          )}
           {p.cascosTroca > 0 && <p className="text-sm text-tinta-suave">Deixe {p.cascosTroca} casco(s) vazio(s) para troca.</p>}
           {p.temAlcool && <p className="text-sm text-terra-esc">Tenha um documento com foto para receber a bebida alcoólica.</p>}
           {p.taxaEntregaCentavos > 0 && (

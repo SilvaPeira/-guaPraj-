@@ -18,6 +18,10 @@ export function podeVender(p: { disponivel: boolean; estoque: number | null }): 
 }
 
 /** Abaixo disso a loja recebe o alerta de estoque baixo. */
+/** Categorias que podem ser vendidas como retornável (cliente traz o casco vazio). */
+export const PODE_SER_RETORNAVEL = ["refrigerante", "suco", "alcoolica", "agua"] as const;
+export const podeSerRetornavel = (categoria: string) => (PODE_SER_RETORNAVEL as readonly string[]).includes(categoria);
+
 export const ESTOQUE_BAIXO = 5;
 
 /** Ordem em que os grupos aparecem para o cliente. */

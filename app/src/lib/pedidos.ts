@@ -11,7 +11,7 @@ import { distanciaKm } from "./geo";
 import { agoraLocal, deMinutos, somarDias } from "./tempo";
 
 type Db = Awaited<ReturnType<typeof getDb>>;
-type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
+export type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
 export type Loja = typeof schema.lojas.$inferSelect;
 export type Assinatura = typeof schema.assinaturas.$inferSelect;
 
@@ -45,7 +45,7 @@ export type NovoPedido = {
   fim: string;
   galoes: number;
   cascosComprados: number;
-  itens: { produtoId: string; qtd: number }[];
+  itens: { produtoId: string; qtd: number; /** Bebida retornável: cliente entrega o casco vazio. */ trocaCasco?: boolean }[];
   formaPagamento: "online" | "na_entrega";
   declarou18: boolean;
   /** Compra adicional de assinante: galão sai pelo preço do plano. */
@@ -80,7 +80,7 @@ export async function criarPedido(n: NovoPedido): Promise<{ id: string; numero: 
     const produtos = await tx.select().from(schema.produtos).where(eq(schema.produtos.lojaId, loja.id));
     const galao = produtos.find((p) => p.categoria === "agua_galao");
     const casco = produtos.find((p) => p.categoria === "casco");
-    const linhas: { produto: (typeof produtos)[number]; qtd: number; preco: number; nome?: string }[] = [];
+    const linhas: { produto: (typeof produtos)[number]; qtd: number; preco: number; nome?: string; trocaCasco?: boolean }[] = [];
 
     let precoGalao = galao?.precoCentavos ?? 0;
     let doSaldo = 0;
@@ -105,7 +105,14 @@ export async function criarPedido(n: NovoPedido): Promise<{ id: string; numero: 
       const p = produtos.find((x) => x.id === it.produtoId);
       if (!p || !podeVender(p) || p.categoria === "agua_galao" || p.categoria === "casco" || (!produtosExtras && ehExtra(p.categoria))) throw new ErroPedido("Um dos produtos não está mais disponível.");
       if (p.alcoolico && !loja.vendeAlcool) throw new ErroPedido("Esta loja não vende bebida alcoólica.");
-      linhas.push({ produto: p, qtd: it.qtd, preco: p.precoCentavos });
+      const ret = !!it.trocaCasco && p.precoLiquidoCentavos !== null;
+      linhas.push({
+        produto: p,
+        qtd: it.qtd,
+        preco: ret ? p.precoLiquidoCentavos! : p.precoCentavos,
+        trocaCasco: ret,
+        nome: ret ? `${p.marca ? `${p.nome} · ${p.marca}` : p.nome} (retornável)` : undefined,
+      });
     }
     const cascosComprados = Math.max(0, Math.min(n.cascosComprados, n.galoes));
     if (cascosComprados > 0) {
@@ -164,6 +171,8 @@ export async function criarPedido(n: NovoPedido): Promise<{ id: string; numero: 
         precoUnitCentavos: l.preco,
         alcoolico: l.produto.alcoolico,
         retornavel: l.produto.retornavel,
+        trocaCasco: !!l.trocaCasco,
+        precoCheioCentavos: l.trocaCasco ? l.produto.precoCentavos : null,
       })),
     );
     await tx.insert(schema.eventosPedido).values({ pedidoId: pedido.id, status: "recebido", porUsuarioId: n.clienteId });
@@ -476,4 +485,29 @@ export async function galoesNoCiclo(db: Db | Tx, a: Assinatura): Promise<{ progr
     entregues: linhas.filter((l) => l.status === "entregue" || l.status === "retirado").reduce((s, l) => s + l.qtd, 0),
     fim,
   };
+}
+
+/**
+ * Na entrega/retirada: para cada bebida retornável, quantos cascos vazios vieram.
+ * O que faltar é cobrado pelo preço normal (diferença entre normal e líquido).
+ */
+export async function cobrarCascosDeBebida(tx: Tx, pedidoId: string, recebidos?: Record<string, number>): Promise<{ valor: number; nota: string | null }> {
+  if (!recebidos) return { valor: 0, nota: null };
+  const itens = await tx
+    .select()
+    .from(schema.itensPedido)
+    .where(and(eq(schema.itensPedido.pedidoId, pedidoId), eq(schema.itensPedido.trocaCasco, true)));
+  let valor = 0;
+  const partes: string[] = [];
+  for (const it of itens) {
+    const veio = recebidos[it.id];
+    if (veio === undefined || it.precoCheioCentavos === null) continue;
+    const faltaram = Math.max(0, it.qtd - Math.max(0, Math.floor(veio)));
+    await tx.update(schema.itensPedido).set({ cascosFaltaram: faltaram }).where(eq(schema.itensPedido.id, it.id));
+    if (faltaram > 0) {
+      valor += faltaram * (it.precoCheioCentavos - it.precoUnitCentavos);
+      partes.push(`${faltaram} casco(s) de ${it.nome.replace(/ \(retornável\)$/, "")} não entregue(s)`);
+    }
+  }
+  return { valor, nota: partes.length ? partes.join("; ") : null };
 }

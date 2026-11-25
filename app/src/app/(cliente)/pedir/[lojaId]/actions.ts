@@ -22,9 +22,9 @@ export async function fazerPedido(_: EstadoPedido, form: FormData): Promise<Esta
   const data = String(form.get("data") ?? "");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) return { erro: "Escolha o dia." };
 
-  const itens: { produtoId: string; qtd: number }[] = [];
+  const itens: { produtoId: string; qtd: number; trocaCasco: boolean }[] = [];
   for (const [k, v] of form.entries()) {
-    if (k.startsWith("item:")) itens.push({ produtoId: k.slice(5), qtd: inteiro(v) });
+    if (k.startsWith("item:")) itens.push({ produtoId: k.slice(5), qtd: inteiro(v), trocaCasco: form.get(`ret:${k.slice(5)}`) === "1" });
   }
   const galoes = inteiro(form.get("galoes"));
   const cascosComprados = form.get("casco") === "comprar" ? inteiro(form.get("cascosComprar")) : 0;

@@ -202,6 +202,11 @@ export const produtos = pgTable("produtos", {
   retornavel: boolean("retornavel").notNull().default(false),
   alcoolico: boolean("alcoolico").notNull().default(false),
   precoCentavos: integer("preco_centavos").notNull(),
+  /**
+   * Bebida em casco retornável: preço só do líquido, quando o cliente entrega o casco vazio.
+   * null = não vende como retornável.
+   */
+  precoLiquidoCentavos: integer("preco_liquido_centavos"),
   disponivel: boolean("disponivel").notNull().default(true),
   ordem: integer("ordem").notNull().default(0),
   criadoEm: criadoEm(),
@@ -311,6 +316,12 @@ export const itensPedido = pgTable("itens_pedido", {
   precoUnitCentavos: integer("preco_unit_centavos").notNull(),
   alcoolico: boolean("alcoolico").notNull().default(false),
   retornavel: boolean("retornavel").notNull().default(false),
+  /** Bebida comprada como retornável: o cliente entrega o casco vazio e paga só o líquido. */
+  trocaCasco: boolean("troca_casco").notNull().default(false),
+  /** Preço normal (com casco), cobrado por casco que o cliente não entregar. */
+  precoCheioCentavos: integer("preco_cheio_centavos"),
+  /** Quantos cascos o cliente não entregou (cobrados pelo preço normal). */
+  cascosFaltaram: integer("cascos_faltaram").notNull().default(0),
 });
 
 /** Linha do tempo do pedido (seção 3 — status). */
