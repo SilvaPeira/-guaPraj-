@@ -5,6 +5,8 @@ import { exigirLoja } from "@/lib/loja";
 import { Topo } from "@/components/ui";
 import { CATEGORIAS, ESTOQUE_BAIXO, ORDEM_GRUPOS, podeVender } from "@/lib/catalogo";
 import FormNovoProduto from "./FormNovoProduto";
+import Link from "next/link";
+import { recursosDaLoja } from "@/lib/planos-app";
 import { atualizarProduto } from "./actions";
 import ProdutoEditavel from "./ProdutoEditavel";
 
@@ -14,6 +16,7 @@ type Produto = typeof schema.produtos.$inferSelect;
 
 export default async function Produtos() {
   const { loja, db } = await exigirLoja();
+  const { produtosExtras } = await recursosDaLoja(loja.id);
   const lista = await db
     .select()
     .from(schema.produtos)
@@ -27,6 +30,14 @@ export default async function Produtos() {
     <>
       <Topo titulo="Catálogo" subtitulo={loja.nome} />
       <main className="conteudo">
+        {!produtosExtras && (
+          <p className="aviso-info text-sm">
+            Seu plano atual vende só água. Bebidas, gelo e polpas ficam salvos aqui, mas os clientes não veem.{" "}
+            <Link href="/loja/plano" className="link-texto">
+              Ver planos
+            </Link>
+          </p>
+        )}
         <p className="text-sm text-tinta-suave">O cliente pode pedir estes itens junto com a água. Itens esgotados ou em falta não aparecem para ele.</p>
         {baixos.length > 0 && (
           <p role="status" className="aviso-erro text-sm">

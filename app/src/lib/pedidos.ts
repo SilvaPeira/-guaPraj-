@@ -4,6 +4,7 @@ import { and, eq, gte, inArray, lt, lte, ne, notInArray, sql } from "drizzle-orm
 import { getDb, schema } from "@/db";
 import { capacidadeDaJanela, entregaNaData, proximasEntregas, sobrepoe, validarHorario, type TipoHorario } from "./agenda";
 import { estornarCancelados } from "./mercadopago";
+import { ehExtra, recursosDaLoja } from "./planos-app";
 export { textoAceite } from "./agenda";
 import { podeVender } from "./catalogo";
 import { distanciaKm } from "./geo";
@@ -53,6 +54,7 @@ export type NovoPedido = {
 
 export async function criarPedido(n: NovoPedido): Promise<{ id: string; numero: number }> {
   const db = await getDb();
+  const { produtosExtras } = await recursosDaLoja(n.lojaId); // fora da transação (PGlite tem 1 conexão)
   return db.transaction(async (tx) => {
     const [loja] = await tx.select().from(schema.lojas).where(and(eq(schema.lojas.id, n.lojaId), eq(schema.lojas.status, "aprovada"))).limit(1);
     if (!loja) throw new ErroPedido("Esta distribuidora não está disponível.");
@@ -101,7 +103,7 @@ export async function criarPedido(n: NovoPedido): Promise<{ id: string; numero: 
     for (const it of n.itens) {
       if (it.qtd <= 0) continue;
       const p = produtos.find((x) => x.id === it.produtoId);
-      if (!p || !podeVender(p) || p.categoria === "agua_galao" || p.categoria === "casco") throw new ErroPedido("Um dos produtos não está mais disponível.");
+      if (!p || !podeVender(p) || p.categoria === "agua_galao" || p.categoria === "casco" || (!produtosExtras && ehExtra(p.categoria))) throw new ErroPedido("Um dos produtos não está mais disponível.");
       if (p.alcoolico && !loja.vendeAlcool) throw new ErroPedido("Esta loja não vende bebida alcoólica.");
       linhas.push({ produto: p, qtd: it.qtd, preco: p.precoCentavos });
     }

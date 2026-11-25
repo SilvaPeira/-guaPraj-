@@ -10,6 +10,7 @@ import { descontoPercentual, planoSugerido } from "@/lib/lojas-proximas";
 import { frequenciaTexto, simular } from "@/lib/simulador";
 import { distanciaKm, formatarKm } from "@/lib/geo";
 import { CATEGORIAS, ORDEM_GRUPOS, podeVender } from "@/lib/catalogo";
+import { ehExtra, recursosDaLoja } from "@/lib/planos-app";
 import { formatarReais } from "@/lib/validacao";
 import { Topo } from "@/components/ui";
 
@@ -32,7 +33,8 @@ export default async function Loja({ params }: PageProps<"/lojas/[id]">) {
     db.select().from(schema.planos).where(and(eq(schema.planos.lojaId, loja.id), eq(schema.planos.ativo, true))).orderBy(asc(schema.planos.galoesMes)),
     db.select().from(schema.produtos).where(eq(schema.produtos.lojaId, loja.id)).orderBy(asc(schema.produtos.ordem), asc(schema.produtos.nome)),
   ]);
-  const aVenda = produtos.filter(podeVender);
+  const { produtosExtras } = await recursosDaLoja(loja.id);
+  const aVenda = produtos.filter((p) => podeVender(p) && (produtosExtras || !ehExtra(p.categoria)));
   const galao = aVenda.find((p) => p.categoria === "agua_galao");
   const r = usuario.perfilFamilia ? simular(usuario.perfilFamilia, usuario.perfilFamilia) : null;
   const sugerido = r ? planoSugerido(planos, r.galoesMes) : null;

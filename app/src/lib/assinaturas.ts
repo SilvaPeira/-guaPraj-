@@ -6,6 +6,7 @@ import { proximasEntregas, validarHorario } from "./agenda";
 import { distanciaKm, RAIO_RETIRADA_KM } from "./geo";
 import { ErroPedido, fimDoCiclo, gerarEntregas, reativarCiclo, removerEntregasFuturas, temVaga, textoAceite } from "./pedidos";
 import { agoraLocal, somarDias } from "./tempo";
+import { aceitaNovoAssinante } from "./planos-app";
 
 export type DadosAgenda = Omit<AgendaPlano, "primeiraData">;
 
@@ -56,6 +57,7 @@ export async function criarAssinatura(n: {
   if (!plano) throw new ErroPedido("Este plano não está disponível.");
   const [loja] = await db.select().from(schema.lojas).where(and(eq(schema.lojas.id, plano.lojaId), eq(schema.lojas.status, "aprovada"))).limit(1);
   if (!loja) throw new ErroPedido("Esta distribuidora não está disponível.");
+  if (!(await aceitaNovoAssinante(loja.id))) throw new ErroPedido("Esta distribuidora não está aceitando novos assinantes no momento. Você ainda pode fazer pedidos avulsos.");
   const km = distanciaKm(n.endereco, loja);
   if (n.modo === "entrega" && !(loja.fazEntrega && km <= loja.raioKm)) throw new ErroPedido("Seu endereço está fora da área de entrega desta loja.");
   if (n.modo === "retirada" && !(loja.fazRetirada && km <= RAIO_RETIRADA_KM)) throw new ErroPedido("Esta loja não faz retirada para você.");

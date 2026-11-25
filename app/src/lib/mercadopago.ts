@@ -2,6 +2,7 @@ import "server-only";
 import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { and, eq, inArray, ne } from "drizzle-orm";
 import { getDb, schema } from "@/db";
+import { recursosDaLoja } from "./planos-app";
 
 // Etapa 6 — pagamento online pelo Mercado Pago.
 //
@@ -139,6 +140,7 @@ export async function contaDaLoja(lojaId: string) {
 /** A loja aceita pagamento pelo app? (conta conectada e pagamento ligado na plataforma) */
 export async function aceitaOnline(lojaId: string): Promise<boolean> {
   if (modoPagamento() === "desligado") return false;
+  if (!(await recursosDaLoja(lojaId)).pagamentoOnline) return false;
   const c = await contaDaLoja(lojaId);
   if (!c) return false;
   // Conta simulada não vale com credenciais reais (e vice-versa).

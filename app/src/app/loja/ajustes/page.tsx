@@ -3,11 +3,14 @@ import { exigirLoja } from "@/lib/loja";
 import { Topo } from "@/components/ui";
 import { sair } from "@/app/entrar/actions";
 import FormAjustes from "./FormAjustes";
+import Link from "next/link";
+import { situacaoDaLoja } from "@/lib/planos-app";
 
 export const metadata: Metadata = { title: "Ajustes da loja" };
 
 export default async function Ajustes() {
   const { loja } = await exigirLoja();
+  const plano = await situacaoDaLoja(loja.id);
   return (
     <>
       <Topo
@@ -20,6 +23,13 @@ export default async function Ajustes() {
         }
       />
       <main className="conteudo">
+        <Link href="/loja/plano" className="cartao flex items-center justify-between gap-2">
+          <span>
+            <b className="block">Meu plano ÁguaPrajá</b>
+            <span className="text-sm text-tinta-suave">{plano.vigente?.nome ?? "Fase de testes"}{plano.vencido ? " · aguardando pagamento" : ""}</span>
+          </span>
+          <span aria-hidden="true">›</span>
+        </Link>
         <FormAjustes
           fazEntrega={loja.fazEntrega}
           fazRetirada={loja.fazRetirada}

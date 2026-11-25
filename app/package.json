@@ -11,7 +11,8 @@
     "db:gerar": "drizzle-kit generate",
     "test:assinatura": "tsx --conditions=react-server --tsconfig tsconfig.json scripts/testar-assinatura.ts",
     "test:pagamento": "tsx --conditions=react-server --tsconfig tsconfig.json scripts/testar-pagamento.ts",
-    "test:senha": "tsx --conditions=react-server --tsconfig tsconfig.json scripts/testar-senha.ts"
+    "test:senha": "tsx --conditions=react-server --tsconfig tsconfig.json scripts/testar-senha.ts",
+    "test:planos-app": "tsx --conditions=react-server --tsconfig tsconfig.json scripts/testar-planos-app.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.16",

@@ -1,0 +1,46 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+const ITENS = [
+  { href: "/admin", rotulo: "Início", d: "M3 11l9-8 9 8M5 10v10h14V10" },
+  { href: "/admin/lojas", rotulo: "Lojas", d: "M3 9l1-5h16l1 5M3 9h18v11H3zM9 20v-6h6v6" },
+  { href: "/admin/planos", rotulo: "Planos", d: "M4 4h16v16H4zM4 9h16M9 9v11" },
+  { href: "/admin/usuarios", rotulo: "Usuários", d: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8" },
+  { href: "/admin/pedidos", rotulo: "Pedidos", d: "M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" },
+];
+
+export default function NavAdmin({ emAnalise = 0 }: { emAnalise?: number }) {
+  const atual = usePathname();
+  return (
+    <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-borda bg-white" aria-label="Menu do admin">
+      <ul className="mx-auto grid h-[70px] max-w-xl grid-cols-5">
+        {ITENS.map((i) => {
+          const ativo = i.href === "/admin" ? atual === "/admin" : atual.startsWith(i.href);
+          return (
+            <li key={i.href}>
+              <Link
+                href={i.href}
+                aria-current={ativo ? "page" : undefined}
+                className={`flex h-full flex-col items-center justify-center gap-1 text-xs font-semibold ${ativo ? "text-verde" : "text-tinta-suave"}`}
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d={i.d} />
+                </svg>
+                <span className="relative">
+                  {i.rotulo}
+                  {i.href === "/admin/lojas" && emAnalise > 0 && (
+                    <span className="absolute -right-4 -top-7 flex h-5 min-w-5 items-center justify-center rounded-full bg-terra px-1 text-[11px] font-bold text-white" aria-label={`${emAnalise} lojas em análise`}>
+                      {emAnalise}
+                    </span>
+                  )}
+                </span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  );
+}

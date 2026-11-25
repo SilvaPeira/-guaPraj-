@@ -8,6 +8,7 @@ import { exigirOperador, mudarStatus, reagendar, registrarCasco } from "@/lib/op
 import { normalizarTelefone } from "@/lib/telefone";
 import { avisarCliente, avisarVarios, type Evento } from "@/lib/avisos";
 import type { StatusPedido } from "@/lib/status";
+import { entregadoresDaLoja, recursosDaLoja } from "@/lib/planos-app";
 
 export type EstadoOperacao = { erro?: string; ok?: string };
 
@@ -76,6 +77,10 @@ export async function adicionarEntregador(_: EstadoOperacao, form: FormData): Pr
   const nome = String(form.get("nome") ?? "").trim().slice(0, 60);
   if (!telefone) return { erro: "Celular inválido." };
   if (nome.length < 2) return { erro: "Informe o nome do entregador." };
+  const { limiteEntregadores } = await recursosDaLoja(loja.id);
+  if (limiteEntregadores !== null && (await entregadoresDaLoja(loja.id)) >= limiteEntregadores) {
+    return { erro: `Seu plano do ÁguaPrajá permite ${limiteEntregadores} entregador(es). Mude de plano em Ajustes → Meu plano para cadastrar mais.` };
+  }
   let [u] = await db.select().from(schema.usuarios).where(eq(schema.usuarios.telefone, telefone)).limit(1);
   if (u && u.papel !== "entregador") {
     return { erro: "Esse celular já tem cadastro como cliente ou loja. Use outro número para o entregador." };

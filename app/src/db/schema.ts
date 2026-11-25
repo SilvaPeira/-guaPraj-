@@ -172,6 +172,10 @@ export const lojas = pgTable("lojas", {
   capa: text("capa"),
   /** Demais escolhas visuais da loja (cores extras, fonte, cantos, textos, contatos). */
   personalizacao: jsonb("personalizacao").$type<Personalizacao>().notNull().default({}),
+  /** Plano do ÁguaPrajá que a loja contratou (vazio = plano grátis). */
+  planoAppId: uuid("plano_app_id"),
+  /** Plano pago vale até esta data (inclusive). Vencido = volta às regras do grátis. */
+  planoAppPagoAte: date("plano_app_pago_ate"),
   criadoEm: criadoEm(),
 });
 
@@ -341,4 +345,23 @@ export const contasMercadoPago = pgTable("contas_mercado_pago", {
   publicKey: text("public_key"),
   expiraEm: timestamp("expira_em", { withTimezone: true }),
   conectadoEm: criadoEm(),
+});
+
+/**
+ * Planos do ÁguaPrajá para as distribuidoras (seção 7 do documento),
+ * criados pelo admin. Limite vazio = ilimitado.
+ */
+export const planosApp = pgTable("planos_app", {
+  id: id(),
+  nome: text("nome").notNull(),
+  precoCentavos: integer("preco_centavos").notNull().default(0),
+  descricao: text("descricao"),
+  limiteAssinantes: integer("limite_assinantes"),
+  limiteEntregadores: integer("limite_entregadores"),
+  pagamentoOnline: boolean("pagamento_online").notNull().default(false),
+  /** Bebidas, gelo, polpas etc. (além da água). */
+  produtosExtras: boolean("produtos_extras").notNull().default(false),
+  ativo: boolean("ativo").notNull().default(true),
+  ordem: integer("ordem").notNull().default(0),
+  criadoEm: criadoEm(),
 });

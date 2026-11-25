@@ -57,6 +57,13 @@
       "when": 1795540227394,
       "tag": "0007_senha",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1795605586176,
+      "tag": "0008_planos_app",
+      "breakpoints": true
     }
   ]
 }
