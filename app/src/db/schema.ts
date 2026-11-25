@@ -209,6 +209,10 @@ export const produtos = pgTable("produtos", {
   precoLiquidoCentavos: integer("preco_liquido_centavos"),
   disponivel: boolean("disponivel").notNull().default(true),
   ordem: integer("ordem").notNull().default(0),
+  /** Foto do produto (data URL JPEG, já reduzida no celular). Servida em /f/produto/<id>. */
+  foto: text("foto"),
+  /** Excluído pela loja. Fica guardado só porque pedidos antigos apontam para ele. */
+  excluidoEm: timestamp("excluido_em", { withTimezone: true }),
   criadoEm: criadoEm(),
 });
 

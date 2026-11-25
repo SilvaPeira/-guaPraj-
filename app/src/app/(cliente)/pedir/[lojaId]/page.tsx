@@ -10,6 +10,7 @@ import { Topo, Vazio } from "@/components/ui";
 import { aceitaOnline } from "@/lib/mercadopago";
 import { ehExtra, recursosDaLoja } from "@/lib/planos-app";
 import FormPedido from "./FormPedido";
+import { urlFoto } from "@/components/FotoProduto";
 
 export const metadata: Metadata = { title: "Fazer pedido" };
 
@@ -54,7 +55,10 @@ export default async function Pedir({ params, searchParams }: PageProps<"/pedir/
       precoLiquidoCentavos: p.precoLiquidoCentavos,
       alcoolico: p.alcoolico,
       estoque: p.estoque,
+      categoria: p.categoria,
+      fotoUrl: urlFoto(p),
     }));
+  const itemInicial = typeof sp.item === "string" && extras.some((x) => x.id === sp.item) ? sp.item : null;
 
   const km = distanciaKm(endereco, loja);
   const podeEntregar = loja.fazEntrega && km <= loja.raioKm;
@@ -84,7 +88,9 @@ export default async function Pedir({ params, searchParams }: PageProps<"/pedir/
             taxaEntregaCentavos={loja.taxaEntregaCentavos}
             regras={regrasParaCliente(loja.regrasHorario)}
             datas={datas}
-            galoesInicial={galao ? (assinaturaId ? 1 : 2) : 0}
+            galoesInicial={galao && !itemInicial ? (assinaturaId ? 1 : 2) : 0}
+            galaoFotoUrl={galao ? urlFoto(galao) : null}
+            itemInicial={itemInicial}
             saldoGaloes={saldo}
             pagaOnline={pagaOnline}
           />

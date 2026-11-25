@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { and, count, eq } from "drizzle-orm";
+import { and, count, eq, isNull } from "drizzle-orm";
 import { schema } from "@/db";
 import { exigirLoja } from "@/lib/loja";
 import { reaisParaCentavos } from "@/lib/validacao";
@@ -16,7 +16,7 @@ async function galaoDaLoja(lojaId: string) {
   const [galao] = await db
     .select()
     .from(schema.produtos)
-    .where(and(eq(schema.produtos.lojaId, lojaId), eq(schema.produtos.categoria, "agua_galao")))
+    .where(and(eq(schema.produtos.lojaId, lojaId), eq(schema.produtos.categoria, "agua_galao"), isNull(schema.produtos.excluidoEm)))
     .limit(1);
   return galao ?? null;
 }

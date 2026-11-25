@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { and, eq } from "drizzle-orm";
+import { and, count, eq, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { schema } from "@/db";
 import { exigirLoja } from "@/lib/loja";
@@ -17,6 +17,18 @@ function lerLiquido(form: FormData, categoria: string, preco: number | null): { 
   if (!liquido) return { ok: false, erro: "Informe o preço só do líquido (com o casco vazio)." };
   if (preco && liquido >= preco) return { ok: false, erro: "O preço do líquido deve ser menor que o preço normal (com casco)." };
   return { ok: true, valor: liquido };
+}
+
+const FOTO_MAX = 300_000; // caracteres do data URL (~220 KB); a foto chega já reduzida
+
+/** Foto: undefined = não mexe; null = remover; string = nova. */
+function lerFoto(form: FormData): { ok: true; valor: string | null | undefined } | { ok: false; erro: string } {
+  if (form.get("remover_foto") === "1") return { ok: true, valor: null };
+  const v = String(form.get("foto") ?? "");
+  if (!v) return { ok: true, valor: undefined };
+  if (!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(v)) return { ok: false, erro: "Formato de foto inválido. Escolha a foto de novo." };
+  if (v.length > FOTO_MAX) return { ok: false, erro: "A foto ficou grande demais. Tente outra." };
+  return { ok: true, valor: v };
 }
 
 /** Estoque digitado: vazio = não controla; senão inteiro de 0 a 99999. */
@@ -43,6 +55,8 @@ export async function criarProduto(_: EstadoForm, form: FormData): Promise<Estad
   if (!estoque.ok) return { erro: "Quantidade em estoque inválida (use um número inteiro, ou deixe vazio)." };
   const liquido = lerLiquido(form, r.data.categoria, preco);
   if (!liquido.ok) return { erro: liquido.erro };
+  const foto = lerFoto(form);
+  if (!foto.ok) return { erro: foto.erro };
   const alcoolico = r.data.categoria === "alcoolica";
   if (alcoolico && !loja.vendeAlcool) {
     return { erro: "Sua loja não está habilitada para bebida alcoólica. Ative em Ajustes (precisa de alvará)." };
@@ -56,6 +70,7 @@ export async function criarProduto(_: EstadoForm, form: FormData): Promise<Estad
     alcoolico,
     precoCentavos: preco,
     precoLiquidoCentavos: liquido.valor,
+    foto: foto.valor ?? null,
     estoque: estoque.valor,
     ordem: r.data.categoria === "casco" ? 99 : 10,
   });
@@ -67,13 +82,31 @@ export async function atualizarProduto(form: FormData): Promise<EstadoForm> {
   const { loja, db } = await exigirLoja();
   const id = String(form.get("id") ?? "");
   const acao = String(form.get("acao") ?? "");
-  const onde = and(eq(schema.produtos.id, id), eq(schema.produtos.lojaId, loja.id));
+  const onde = and(eq(schema.produtos.id, id), eq(schema.produtos.lojaId, loja.id), isNull(schema.produtos.excluidoEm));
   const [p] = await db.select().from(schema.produtos).where(onde).limit(1);
   if (!p) return { erro: "Produto não encontrado." };
 
   if (acao === "alternar") {
     await db.update(schema.produtos).set({ disponivel: !p.disponivel }).where(onde);
+  } else if (acao === "excluir") {
+    // Galão usado em plano ativo não pode sumir: os assinantes dependem dele.
+    const [usoPlano] = await db
+      .select({ n: count() })
+      .from(schema.planos)
+      .where(and(eq(schema.planos.produtoId, p.id), eq(schema.planos.ativo, true)));
+    if (usoPlano.n > 0) return { erro: "Este galão está nos seus planos mensais. Desative os planos (ou troque o galão deles) antes de excluir." };
+    const [usoPedido] = await db.select({ n: count() }).from(schema.itensPedido).where(eq(schema.itensPedido.produtoId, p.id));
+    const [usoPlanoAntigo] = await db.select({ n: count() }).from(schema.planos).where(eq(schema.planos.produtoId, p.id));
+    if (usoPedido.n === 0 && usoPlanoAntigo.n === 0) await db.delete(schema.produtos).where(onde);
+    // Já foi vendido: some do catálogo, mas fica guardado para os pedidos antigos.
+    else await db.update(schema.produtos).set({ excluidoEm: new Date(), disponivel: false, foto: null }).where(onde);
+    revalidatePath("/loja/produtos");
+    return { ok: `${p.nome} excluído.` };
   } else if (acao === "salvar") {
+    const nome = String(form.get("nome") ?? "").trim().slice(0, 80);
+    if (nome.length < 2) return { erro: "Informe o nome do produto." };
+    const foto = lerFoto(form);
+    if (!foto.ok) return { erro: foto.erro };
     const preco = reaisParaCentavos(form.get("preco"));
     const estoque = lerEstoque(form.get("estoque"));
     const marca = String(form.get("marca") ?? "").trim().slice(0, 60) || null;
@@ -82,8 +115,10 @@ export async function atualizarProduto(form: FormData): Promise<EstadoForm> {
     await db
       .update(schema.produtos)
       .set({
+        nome,
         marca,
         precoLiquidoCentavos: liquido.valor,
+        ...(foto.valor !== undefined ? { foto: foto.valor } : {}),
         ...(preco ? { precoCentavos: preco } : {}),
         ...(estoque.ok ? { estoque: estoque.valor } : {}),
       })

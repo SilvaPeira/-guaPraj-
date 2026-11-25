@@ -78,6 +78,13 @@
       "when": 1795610065716,
       "tag": "0010_bebida_retornavel",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1795619435885,
+      "tag": "0011_produto_foto_excluir",
+      "breakpoints": true
     }
   ]
 }

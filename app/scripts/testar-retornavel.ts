@@ -63,6 +63,14 @@ async function main() {
   const semOpcao = await ler((await pedir(true)).id);
   confere("loja desligou o retornável: cobra o normal", [semOpcao.p.totalCentavos, semOpcao.itens[0].trocaCasco], [3600, false]);
 
+  // Produto excluído pela loja: some do catálogo e não pode mais ser pedido.
+  await db.update(schema.produtos).set({ excluidoEm: new Date() }).where(eq(schema.produtos.id, refri.id));
+  const erro = await pedir(false).then(
+    () => null,
+    (e: Error) => e.message,
+  );
+  confere("produto excluído: pedido recusado", erro, "Um dos produtos não está mais disponível.");
+
   console.log(falhas ? `\n${falhas} falha(s).` : "\nTudo certo.");
   process.exit(falhas ? 1 : 0);
 }

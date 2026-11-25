@@ -72,7 +72,7 @@ export default async function Inicio() {
           </form>
         </div>
         <p className="mt-5 text-sm text-hero-texto">
-          {end.cidade}, PA · {end.bairro}
+          {end.cidade} · {end.bairro}
         </p>
         <h1 className="text-[26px] font-bold">Olá, {u.nome!.split(" ")[0]}!</h1>
       </Hero>
@@ -136,9 +136,13 @@ export default async function Inicio() {
           {ativa ? (
             <Atalho href={`/pedir/${ativa.loja.id}?assinatura=${ativa.a.id}`} titulo="Compra adicional" texto="Galão extra ou bebidas" />
           ) : (
-            <Atalho href={u.perfilFamilia ? "/lojas" : "/simulador"} titulo="Pedido avulso" texto="Galão e bebidas agora" />
+            <Atalho href="/catalogo" titulo="Pedido avulso" texto="Galão e bebidas agora" />
           )}
-          <Atalho href="/simulador" titulo="Recalcular consumo" texto="Mudou quem mora na casa?" />
+          {ativa ? (
+            <Atalho href="/catalogo" titulo="Outras distribuidoras" texto="Pedir avulso em qualquer loja" />
+          ) : (
+            <Atalho href="/simulador" titulo="Recalcular consumo" texto="Mudou quem mora na casa?" />
+          )}
         </div>
 
         {proximos.length > 1 && (

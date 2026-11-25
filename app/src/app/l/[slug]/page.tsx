@@ -14,6 +14,7 @@ import { DIAS_CURTOS } from "@/lib/tempo";
 import { formatarReais } from "@/lib/validacao";
 import { LogoLoja, SeloAguaPraja } from "@/components/marca";
 import BotaoInstalar from "@/components/BotaoInstalar";
+import FotoProduto, { urlFoto } from "@/components/FotoProduto";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -168,8 +169,9 @@ export default async function SiteDaLoja({ params }: Props) {
             <h2 className="mb-1 font-bold">{grupo}</h2>
             <ul className="divide-y divide-borda">
               {itens.map((p) => (
-                <li key={p.id} className="flex items-center justify-between gap-2 py-2.5">
-                  <span className="min-w-0">
+                <li key={p.id} className="flex items-center justify-between gap-3 py-2.5">
+                  <FotoProduto url={urlFoto(p)} categoria={p.categoria} nome={p.nome} />
+                  <span className="min-w-0 flex-1">
                     <span className="block text-[15px] font-semibold">{p.nome}</span>
                     <span className="text-sm text-tinta-suave">
                       {p.marca ?? ""}

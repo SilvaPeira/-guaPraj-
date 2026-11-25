@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import EscolhaHorario, { type ValorHorario } from "@/components/EscolhaHorario";
 import type { OpcaoData, RegrasCliente } from "@/lib/opcoes-pedido";
 import { fazerPedido, type EstadoPedido } from "./actions";
+import FotoProduto from "@/components/FotoProduto";
 
 export type ProdutoVenda = {
   id: string;
@@ -15,6 +16,8 @@ export type ProdutoVenda = {
   precoLiquidoCentavos: number | null;
   alcoolico: boolean;
   estoque: number | null;
+  categoria: string;
+  fotoUrl: string | null;
 };
 
 type Props = {
@@ -29,6 +32,9 @@ type Props = {
   regras: RegrasCliente;
   datas: OpcaoData[];
   galoesInicial: number;
+  galaoFotoUrl?: string | null;
+  /** Produto tocado no catálogo: já entra com 1 no carrinho. */
+  itemInicial?: string | null;
   /** Galões de saldo do plano (sem custo) — só na compra adicional. */
   saldoGaloes?: number;
   /** A loja recebe Pix/cartão pelo app (Mercado Pago conectado). */
@@ -40,7 +46,7 @@ const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency"
 export default function FormPedido(p: Props) {
   const [estado, enviar, enviando] = useActionState<EstadoPedido, FormData>(fazerPedido, {});
   const [galoes, setGaloes] = useState(p.galoesInicial);
-  const [qtd, setQtd] = useState<Record<string, number>>({});
+  const [qtd, setQtd] = useState<Record<string, number>>(() => (p.itemInicial ? { [p.itemInicial]: 1 } : {}));
   /** Produtos que o cliente escolheu como retornável (vai entregar o casco vazio). */
   const [ret, setRet] = useState<Record<string, boolean>>({});
   const precoDe = (x: ProdutoVenda) => (ret[x.id] && x.precoLiquidoCentavos !== null ? x.precoLiquidoCentavos : x.precoCentavos);
@@ -69,7 +75,8 @@ export default function FormPedido(p: Props) {
 
       <section className="cartao pilha">
         <div className="flex items-center justify-between gap-3">
-          <div>
+          <FotoProduto url={p.galaoFotoUrl ?? null} categoria="agua_galao" nome="Galão de água 20 L" />
+          <div className="min-w-0 flex-1">
             <b className="text-base">Galão de água 20 L</b>
             <p className="text-sm text-tinta-suave">
               {brl(p.precoGalaoCentavos)} cada{p.assinaturaId ? " · preço do seu plano" : ""}
@@ -115,8 +122,9 @@ export default function FormPedido(p: Props) {
               .filter((x) => x.grupo === g)
               .map((x) => (
                 <li key={x.id} className="flex flex-col gap-2 py-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="min-w-0">
+                  <div className="flex items-center justify-between gap-3">
+                    <FotoProduto url={x.fotoUrl} categoria={x.categoria} nome={x.nome} />
+                    <div className="min-w-0 flex-1">
                       <p className="text-[15px] font-semibold">{x.nome}</p>
                       <p className="text-sm text-tinta-suave">
                         {brl(precoDe(x))}

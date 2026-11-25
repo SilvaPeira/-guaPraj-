@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { and, asc, count, eq } from "drizzle-orm";
+import { and, asc, count, eq, isNull } from "drizzle-orm";
 import { schema } from "@/db";
 import { exigirLoja } from "@/lib/loja";
 import { Topo } from "@/components/ui";
@@ -16,7 +16,7 @@ export default async function Planos() {
   const [galao] = await db
     .select()
     .from(schema.produtos)
-    .where(and(eq(schema.produtos.lojaId, loja.id), eq(schema.produtos.categoria, "agua_galao")))
+    .where(and(eq(schema.produtos.lojaId, loja.id), eq(schema.produtos.categoria, "agua_galao"), isNull(schema.produtos.excluidoEm)))
     .limit(1);
   const planos = await db.select().from(schema.planos).where(eq(schema.planos.lojaId, loja.id)).orderBy(asc(schema.planos.galoesMes));
   const assinantes = await db

@@ -4,6 +4,7 @@ import { useActionState, useRef, useState } from "react";
 import type { Personalizacao } from "@/db/schema";
 import { CANTOS, FONTES, FUNDOS, PALETAS, temaDaLoja, type Cantos, type Fonte } from "@/lib/cores";
 import { salvarMarca, type EstadoMarca } from "./actions";
+import { prepararImagem } from "@/lib/imagem";
 import { BotoesEdicao, useEdicao } from "@/components/Edicao";
 
 type Props = {
@@ -18,33 +19,6 @@ type Props = {
   baseUrl: string;
 };
 
-/** Redimensiona a imagem no próprio celular antes de enviar. */
-async function prepararImagem(arquivo: File, maxLado: number, tipo: "image/png" | "image/jpeg"): Promise<string> {
-  const url = URL.createObjectURL(arquivo);
-  try {
-    const img = await new Promise<HTMLImageElement>((ok, erro) => {
-      const i = new Image();
-      i.onload = () => ok(i);
-      i.onerror = () => erro(new Error("imagem"));
-      i.src = url;
-    });
-    const escala = Math.min(1, maxLado / Math.max(img.width, img.height));
-    const w = Math.max(1, Math.round(img.width * escala));
-    const h = Math.max(1, Math.round(img.height * escala));
-    const canvas = document.createElement("canvas");
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext("2d")!;
-    if (tipo === "image/jpeg") {
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, w, h);
-    }
-    ctx.drawImage(img, 0, 0, w, h);
-    return canvas.toDataURL(tipo, 0.82);
-  } finally {
-    URL.revokeObjectURL(url);
-  }
-}
 
 function SeletorCor({ nome, rotulo, valor, onChange, dica }: { nome: string; rotulo: string; valor: string; onChange: (v: string) => void; dica?: string }) {
   return (

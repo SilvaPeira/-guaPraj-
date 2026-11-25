@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { CATEGORIAS, podeSerRetornavel } from "@/lib/catalogo";
 import { criarProduto, type EstadoForm } from "./actions";
 import CampoRetornavel from "./CampoRetornavel";
+import CampoFoto from "./CampoFoto";
 
 export default function FormNovoProduto({ vendeAlcool }: { vendeAlcool: boolean }) {
   const [estado, enviar, enviando] = useActionState<EstadoForm, FormData>(criarProduto, {});
@@ -26,6 +27,7 @@ export default function FormNovoProduto({ vendeAlcool }: { vendeAlcool: boolean 
   return (
     <form ref={ref} action={enviar} className="cartao pilha">
       <h2 className="titulo-secao">Adicionar produto</h2>
+      <CampoFoto key={`foto-${versao}`} />
       <label className="campo">
         Nome
         <input className="entrada" name="nome" required maxLength={80} placeholder="Ex.: Refrigerante 2 L, Cerveja 600 ml, Gelo 5 kg" />

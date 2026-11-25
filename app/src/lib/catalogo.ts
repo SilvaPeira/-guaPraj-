@@ -13,8 +13,8 @@ export const CATEGORIAS = {
 export type Categoria = keyof typeof CATEGORIAS;
 
 /** Pode ser vendido agora? (ligado e, se controla estoque, com quantidade) */
-export function podeVender(p: { disponivel: boolean; estoque: number | null }): boolean {
-  return p.disponivel && (p.estoque === null || p.estoque > 0);
+export function podeVender(p: { disponivel: boolean; estoque: number | null; excluidoEm?: Date | null }): boolean {
+  return !p.excluidoEm && p.disponivel && (p.estoque === null || p.estoque > 0);
 }
 
 /** Abaixo disso a loja recebe o alerta de estoque baixo. */

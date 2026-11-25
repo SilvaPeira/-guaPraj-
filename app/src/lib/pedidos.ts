@@ -78,7 +78,7 @@ export async function criarPedido(n: NovoPedido): Promise<{ id: string; numero: 
 
     // Produtos
     const produtos = await tx.select().from(schema.produtos).where(eq(schema.produtos.lojaId, loja.id));
-    const galao = produtos.find((p) => p.categoria === "agua_galao");
+    const galao = produtos.find((p) => p.categoria === "agua_galao" && !p.excluidoEm);
     const casco = produtos.find((p) => p.categoria === "casco");
     const linhas: { produto: (typeof produtos)[number]; qtd: number; preco: number; nome?: string; trocaCasco?: boolean }[] = [];
 

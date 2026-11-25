@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, isNull } from "drizzle-orm";
 import { schema } from "@/db";
 import { exigirLoja } from "@/lib/loja";
 import { Topo } from "@/components/ui";
@@ -9,6 +9,7 @@ import Link from "next/link";
 import { recursosDaLoja } from "@/lib/planos-app";
 import { acaoRapidaProduto } from "./actions";
 import ProdutoEditavel from "./ProdutoEditavel";
+import FotoProduto, { urlFoto } from "@/components/FotoProduto";
 
 export const metadata: Metadata = { title: "Catálogo" };
 
@@ -20,7 +21,7 @@ export default async function Produtos() {
   const lista = await db
     .select()
     .from(schema.produtos)
-    .where(eq(schema.produtos.lojaId, loja.id))
+    .where(and(eq(schema.produtos.lojaId, loja.id), isNull(schema.produtos.excluidoEm)))
     .orderBy(asc(schema.produtos.ordem), asc(schema.produtos.nome));
 
   const grupos = ORDEM_GRUPOS.map((g) => ({ grupo: g, itens: lista.filter((p) => CATEGORIAS[p.categoria].grupo === g) })).filter((g) => g.itens.length);
@@ -38,7 +39,9 @@ export default async function Produtos() {
             </Link>
           </p>
         )}
-        <p className="text-sm text-tinta-suave">O cliente pode pedir estes itens junto com a água. Itens esgotados ou em falta não aparecem para ele.</p>
+        <p className="text-sm text-tinta-suave">
+          O cliente pode pedir estes itens junto com a água. Itens esgotados ou em falta não aparecem para ele. Para pôr foto, mudar o nome ou excluir, toque em <b>Editar</b>.
+        </p>
         {baixos.length > 0 && (
           <p role="status" className="aviso-erro text-sm">
             Estoque baixo: {baixos.map((p) => `${p.nome} (${p.estoque})`).join(", ")}
@@ -65,7 +68,8 @@ function ItemProduto({ p }: { p: Produto }) {
   return (
     <li className={`flex flex-col gap-2 py-3 ${vende ? "" : "opacity-70"}`}>
       <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
+        <FotoProduto url={urlFoto(p)} categoria={p.categoria} nome={p.nome} tamanho="sm" />
+        <div className="min-w-0 flex-1">
           <b className="text-[15px]">{p.nome}</b>
           {p.marca && <p className="text-sm text-tinta-suave">{p.marca}</p>}
           <div className="mt-1 flex flex-wrap gap-1">
@@ -105,6 +109,8 @@ function ItemProduto({ p }: { p: Produto }) {
 
       <ProdutoEditavel
         id={p.id}
+        nome={p.nome}
+        fotoUrl={urlFoto(p)}
         marca={p.marca}
         precoCentavos={p.precoCentavos}
         estoque={p.estoque}
