@@ -8,6 +8,7 @@ import { calcularSituacao, listarPlanosApp } from "@/lib/planos-app";
 import { formatarReais } from "@/lib/validacao";
 import { mudarStatusLoja } from "./actions";
 import { sair } from "../entrar/actions";
+import { errosRecentes } from "@/lib/erros";
 
 export const metadata: Metadata = { title: "Admin" };
 
@@ -18,6 +19,7 @@ export default async function Admin() {
   const [a, m] = hoje.split("-").map(Number);
   const proximoMes = new Date(Date.UTC(a, m, 1)).toISOString().slice(0, 10);
 
+  const nErros = await errosRecentes(24);
   const [lojas, planosApp, [{ clientes }], [{ assinaturas }], [mes]] = await Promise.all([
     db.select().from(schema.lojas),
     listarPlanosApp(),
@@ -64,6 +66,17 @@ export default async function Admin() {
             {pagantes.length} loja(s) pagante(s) de {aprovadas.length} ativa(s)
           </span>
         </section>
+        {nErros > 0 && (
+          <Link href="/admin/erros" className="cartao flex items-center justify-between gap-2 border-2 border-terra">
+            <span>
+              <b className="block">
+                {nErros} {nErros === 1 ? "erro" : "erros"} no servidor nas últimas 24 h
+              </b>
+              <span className="text-sm text-tinta-suave">Toque para ver o que aconteceu e onde.</span>
+            </span>
+            <span aria-hidden="true">›</span>
+          </Link>
+        )}
         <div className="grid grid-cols-3 gap-2">
           <Kpi valor={String(pendentes.length)} rotulo="lojas em análise" destaque={pendentes.length > 0} />
           <Kpi valor={String(clientes)} rotulo="clientes" />

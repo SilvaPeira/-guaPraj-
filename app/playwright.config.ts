@@ -1,4 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
+import webpush from "web-push";
+
+// Chaves de notificação (VAPID) descartáveis, novas a cada execução.
+const vapid = webpush.generateVAPIDKeys();
 
 /**
  * Testes ponta a ponta (navegador de verdade) do ÁguaPrajá.
@@ -53,6 +57,8 @@ export default defineConfig({
       MP_CLIENT_ID: "",
       MP_CLIENT_SECRET: "",
       WHATSAPP_PROVEDOR: "",
+      VAPID_PUBLIC_KEY: vapid.publicKey,
+      VAPID_PRIVATE_KEY: vapid.privateKey,
     },
   },
 });

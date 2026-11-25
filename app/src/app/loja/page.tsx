@@ -8,6 +8,9 @@ import { formatarReais } from "@/lib/validacao";
 import { Hero, Logo } from "@/components/ui";
 import AgendaLoja from "@/components/AgendaLoja";
 import { sair } from "../entrar/actions";
+import Sininho from "@/components/Sininho";
+import AtivarAvisos from "@/components/AtivarAvisos";
+import { chavePublicaPush, naoLidos } from "@/lib/notificar";
 
 export const metadata: Metadata = { title: "Agenda" };
 
@@ -35,9 +38,12 @@ export default async function PainelLoja({ searchParams }: PageProps<"/loja">) {
       <Hero>
         <div className="flex items-center justify-between">
           <Logo />
-          <form action={sair}>
-            <button className="min-h-11 text-sm font-semibold text-hero-texto underline">Sair</button>
-          </form>
+          <div className="flex items-center gap-1">
+            <Sininho novos={await naoLidos(loja.donoId)} />
+            <form action={sair}>
+              <button className="min-h-11 text-sm font-semibold text-hero-texto underline">Sair</button>
+            </form>
+          </div>
         </div>
         <p className="mt-5 text-sm text-hero-texto">
           {loja.cidade} · {loja.bairro}
@@ -64,6 +70,7 @@ export default async function PainelLoja({ searchParams }: PageProps<"/loja">) {
 
         {loja.status === "aprovada" && (
           <>
+            <AtivarAvisos chavePublica={chavePublicaPush()} para="loja" soConvite />
             <nav className="cartao-elevado -mx-0 flex gap-2 overflow-x-auto p-2" aria-label="Dia da agenda">
               {dias.map((d) => (
                 <Link

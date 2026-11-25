@@ -8,12 +8,15 @@ import { marcaAtual } from "@/lib/marca";
 import FormCadastro from "./FormCadastro";
 import { cidadesParaEndereco } from "@/lib/cidades";
 import { sair } from "../entrar/actions";
+import Link from "next/link";
+import ExcluirConta from "./ExcluirConta";
 
 export const metadata: Metadata = { title: "Seus dados" };
 
 export default async function Cadastro() {
   const u = await exigirUsuario();
   const db = await getDb();
+  const marca = await marcaAtual();
   const [end] = await db
     .select()
     .from(schema.enderecos)
@@ -31,8 +34,24 @@ export default async function Cadastro() {
       />
       <main className="conteudo">
         <FormCadastro nome={u.nome ?? ""} endereco={end ?? null} jaAceitou={!!u.aceitouTermosEm} cidades={await cidadesParaEndereco()} />
+        {end && (
+          <nav className="cartao divide-y divide-borda py-1" aria-label="Mais opções da conta">
+            <Link href="/avisos" className="flex min-h-12 items-center justify-between text-[15px] font-semibold">
+              Avisos e notificações <span aria-hidden="true">›</span>
+            </Link>
+            {u.papel === "cliente" && !marca && (
+              <Link href="/loja/cadastro" className="flex min-h-12 items-center justify-between text-[15px] font-semibold">
+                Tenho uma distribuidora: cadastrar minha loja <span aria-hidden="true">›</span>
+              </Link>
+            )}
+            <Link href="/termos" className="flex min-h-12 items-center justify-between text-[15px] font-semibold">
+              Termos de uso e privacidade <span aria-hidden="true">›</span>
+            </Link>
+          </nav>
+        )}
+        {end && u.papel === "cliente" && <ExcluirConta />}
       </main>
-      {(await marcaAtual()) && <SeloAguaPraja />}
+      {marca && <SeloAguaPraja />}
     </>
   );
 }

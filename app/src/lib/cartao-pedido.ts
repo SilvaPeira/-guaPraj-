@@ -25,8 +25,9 @@ export function paraCartao(p: PedidoAgenda): CartaoPedido {
     motivo: p.motivo,
     codigoRetirada: p.codigoRetirada,
     galoes: p.galoes,
-    clienteNome: p.cliente.nome ?? "Cliente",
-    clienteTelefone: p.cliente.telefone,
+    // Conta excluída pelo cliente (LGPD): o pedido fica, sem nome nem celular.
+    clienteNome: p.cliente.telefone.startsWith("excluido:") ? "Conta excluída" : (p.cliente.nome ?? "Cliente"),
+    clienteTelefone: p.cliente.telefone.startsWith("excluido:") ? "" : p.cliente.telefone,
     endereco: p.endereco
       ? {
           linha: [p.endereco.logradouro, p.endereco.numero, p.endereco.complemento].filter(Boolean).join(", "),

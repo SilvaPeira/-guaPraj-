@@ -76,6 +76,8 @@ export const usuarios = pgTable(
     senhaHash: text("senha_hash"),
     falhasSenha: smallint("falhas_senha").notNull().default(0),
     bloqueadoAte: timestamp("bloqueado_ate", { withTimezone: true }),
+    /** Conta excluída pelo próprio cliente (LGPD): dados pessoais apagados; pedidos antigos ficam sem identificação. */
+    excluidoEm: timestamp("excluido_em", { withTimezone: true }),
     criadoEm: criadoEm(),
   },
   (t) => [uniqueIndex("usuarios_telefone_idx").on(t.telefone)],
@@ -395,3 +397,49 @@ export const cidades = pgTable("cidades", {
   ordem: integer("ordem").notNull().default(0),
   criadoEm: criadoEm(),
 });
+
+/** Avisos dentro do app (histórico do sininho). Cada mudança de pedido gera um para o cliente ou para a loja. */
+export const avisos = pgTable(
+  "avisos",
+  {
+    id: id(),
+    usuarioId: uuid("usuario_id")
+      .notNull()
+      .references(() => usuarios.id, { onDelete: "cascade" }),
+    titulo: text("titulo").notNull(),
+    texto: text("texto").notNull(),
+    /** Caminho dentro do app para abrir ao tocar (ex.: /pedidos/<id>). */
+    link: text("link"),
+    lidoEm: timestamp("lido_em", { withTimezone: true }),
+    criadoEm: criadoEm(),
+  },
+  (t) => [index("avisos_usuario_idx").on(t.usuarioId, t.criadoEm)],
+);
+
+/** Aparelhos que aceitaram notificação (Web Push). Um usuário pode ter vários (celular e computador). */
+export const inscricoesPush = pgTable("inscricoes_push", {
+  id: id(),
+  usuarioId: uuid("usuario_id")
+    .notNull()
+    .references(() => usuarios.id, { onDelete: "cascade" }),
+  endpoint: text("endpoint").notNull().unique(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  criadoEm: criadoEm(),
+});
+
+/** Erros do servidor (instrumentation.ts → onRequestError), para o admin ver no painel. Guardados por 30 dias. */
+export const errosServidor = pgTable(
+  "erros_servidor",
+  {
+    id: id(),
+    mensagem: text("mensagem").notNull(),
+    /** Caminho sem a parte depois do "?" (pode ter token de senha). */
+    rota: text("rota").notNull(),
+    metodo: text("metodo"),
+    tipo: text("tipo"),
+    digest: text("digest"),
+    criadoEm: criadoEm(),
+  },
+  (t) => [index("erros_criado_idx").on(t.criadoEm)],
+);

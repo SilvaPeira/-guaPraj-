@@ -58,7 +58,8 @@ export async function usuarioAtual(): Promise<Usuario | null> {
   if (!uid) return null;
   const db = await getDb();
   const [u] = await db.select().from(schema.usuarios).where(eq(schema.usuarios.id, uid)).limit(1);
-  return u ?? null;
+  // Conta excluída: a sessão antiga não vale mais.
+  return u && !u.excluidoEm ? u : null;
 }
 
 /** Exige login; opcionalmente exige um papel. */

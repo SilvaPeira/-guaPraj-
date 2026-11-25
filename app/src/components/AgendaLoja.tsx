@@ -174,9 +174,11 @@ function Cartao({ p, ehDono, marcado, onMarcar, amanha }: { p: CartaoPedido; ehD
             </a>
           </>
         )}
-        <a className="botao-peq-sec" href={whats} target="_blank" rel="noopener noreferrer">
-          WhatsApp
-        </a>
+        {p.clienteTelefone && (
+          <a className="botao-peq-sec" href={whats} target="_blank" rel="noopener noreferrer">
+            WhatsApp
+          </a>
+        )}
       </div>
 
       {/* Ações de status */}

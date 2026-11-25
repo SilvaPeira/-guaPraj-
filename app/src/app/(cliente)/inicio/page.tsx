@@ -12,6 +12,9 @@ import { Hero, Logo } from "@/components/ui";
 import { LogoLoja } from "@/components/marca";
 import { marcaAtual } from "@/lib/marca";
 import { sair } from "@/app/entrar/actions";
+import Sininho from "@/components/Sininho";
+import AtivarAvisos from "@/components/AtivarAvisos";
+import { chavePublicaPush, naoLidos } from "@/lib/notificar";
 
 export const metadata: Metadata = { title: "Início" };
 
@@ -67,9 +70,12 @@ export default async function Inicio() {
       <Hero>
         <div className="flex items-center justify-between">
           {marca ? <LogoLoja marca={marca} /> : <Logo />}
-          <form action={sair}>
-            <button className="min-h-11 text-sm font-semibold text-hero-texto underline">Sair</button>
-          </form>
+          <div className="flex items-center gap-1">
+            <Sininho novos={await naoLidos(u.id)} />
+            <form action={sair}>
+              <button className="min-h-11 text-sm font-semibold text-hero-texto underline">Sair</button>
+            </form>
+          </div>
         </div>
         <p className="mt-5 text-sm text-hero-texto">
           {end.cidade} · {end.bairro}
@@ -131,6 +137,8 @@ export default async function Inicio() {
             <span className="mt-2 inline-block text-sm font-semibold underline">Gerenciar: mudar horário, pular, extra, cancelar</span>
           </Link>
         )}
+
+        <AtivarAvisos chavePublica={chavePublicaPush()} soConvite />
 
         <div className="grid grid-cols-2 gap-2.5">
           {ativa ? (

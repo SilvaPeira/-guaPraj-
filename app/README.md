@@ -76,3 +76,17 @@ Relatório com fotos e rastreio das falhas: `npx playwright show-report e2e-rela
 | `e2e/03-cliente-pedido.spec.ts` | cadastro do cliente; Catálogo (fotos, busca sem acento, categorias); pedido com retornável, galão, 18+ e totais; horários de hoje sem nada vencido; loja confirma/sai/entrega com casco faltando; cliente vê a cobrança e avalia; Pix simulado; pagamento recusado; cancelamento |
 | `e2e/04-assinatura-e-app.spec.ts` | assinar plano mensal (com aceite), um plano por vez, cancelar; site próprio e instalação (só no Completo) |
 | `e2e/05-login-seguranca.spec.ts` | senha fraca/diferente, celular inválido, bloqueio após 5 erros, "esqueci a senha", link do admin (uso único), cada perfil na sua área, sair |
+
+## Avisos e notificações (sem WhatsApp)
+
+Cada mudança de pedido (confirmado, saiu, entregue, pago, lembrete da véspera, pedido novo para a loja)
+vira um **aviso no app** (`/avisos`, sininho no Início e na Agenda) e vai como **notificação** para os
+aparelhos que tocaram em "Ligar avisos" — grátis, sem provedor. No iPhone, só com o app instalado.
+Precisa de `VAPID_PUBLIC_KEY` e `VAPID_PRIVATE_KEY` (`npx web-push generate-vapid-keys`). Sem elas, fica só o aviso no app.
+Com `WHATSAPP_PROVEDOR` configurado, o mesmo aviso também sai por WhatsApp.
+
+## Conta e erros
+
+- O cliente exclui a própria conta em **Conta → Excluir minha conta** (LGPD): apaga nome, celular, senha,
+  endereço e avisos; pedidos antigos ficam com a loja, sem identificação. Precisa da senha, sem plano ativo e sem pedido em andamento.
+- Erros do servidor ficam em **Admin → Erros** (30 dias, agrupados, sem o que vem depois do `?` no endereço).
