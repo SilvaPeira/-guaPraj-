@@ -177,3 +177,22 @@ export async function definirBeneficio(_: EstadoBeneficio, form: FormData): Prom
   const partes = [pct > 0 ? `desconto de ${pct}%${descontoAte ? ` até ${descontoAte.split("-").reverse().join("/")}` : ""}` : null, gratisAte ? `grátis até ${gratisAte.split("-").reverse().join("/")}` : null].filter(Boolean);
   return { ok: partes.length ? `Salvo: ${partes.join(" e ")}.` : "Benefícios removidos." };
 }
+
+/** Um toque: coloca a loja no plano e libera por 30 dias (ou mantém a data, se já vai além). */
+export async function ativarPlanoLoja(form: FormData) {
+  await exigirUsuario(["admin"]);
+  const lojaId = String(form.get("lojaId") ?? "");
+  const planoId = String(form.get("planoId") ?? "");
+  if (!/^[0-9a-f-]{36}$/.test(lojaId) || !/^[0-9a-f-]{36}$/.test(planoId)) return;
+  const db = await getDb();
+  const [l] = await db.select({ pagoAte: schema.lojas.planoAppPagoAte }).from(schema.lojas).where(eq(schema.lojas.id, lojaId)).limit(1);
+  if (!l) return;
+  const [a, m, d] = agoraLocal().data.split("-").map(Number);
+  const em30 = new Date(Date.UTC(a, m - 1, d + 30)).toISOString().slice(0, 10);
+  const pagoAte = l.pagoAte && l.pagoAte > em30 ? l.pagoAte : em30;
+  await db.update(schema.lojas).set({ planoAppId: planoId, planoAppPagoAte: pagoAte }).where(eq(schema.lojas.id, lojaId));
+  revalidatePath("/admin/lojas");
+  revalidatePath("/admin");
+  revalidatePath("/loja/plano");
+  revalidatePath("/loja/marca");
+}

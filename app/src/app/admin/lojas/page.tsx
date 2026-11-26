@@ -7,7 +7,7 @@ import { calcularSituacao, listarPlanosApp } from "@/lib/planos-app";
 import { agoraLocal } from "@/lib/tempo";
 import { formatarReais } from "@/lib/validacao";
 import { formatarTelefone, linkWhatsApp } from "@/lib/telefone";
-import { mudarStatusLoja, registrarMensalidade } from "../actions";
+import { ativarPlanoLoja, mudarStatusLoja, registrarMensalidade } from "../actions";
 import BeneficioLoja from "./BeneficioLoja";
 import PlanoDaLoja from "./PlanoDaLoja";
 
@@ -141,6 +141,37 @@ export default async function Lojas({ searchParams }: PageProps<"/admin/lojas">)
                       </span>
                     )}
                   </p>
+                )}
+                {/* App próprio (site e app instalável da loja): mostra se está no ar e o endereço. */}
+                <p className="text-sm">
+                  App próprio:{" "}
+                  {s.recursos.appProprio ? (
+                    <>
+                      <span className="selo selo-verde">ligado</span>{" "}
+                      {loja.slug && (
+                        <a className="font-semibold text-verde underline" href={`/l/${loja.slug}`} target="_blank" rel="noopener noreferrer">
+                          /l/{loja.slug}
+                        </a>
+                      )}
+                    </>
+                  ) : (
+                    <span className="selo selo-cinza">desligado</span>
+                  )}
+                </p>
+                {planosApp.some((x) => x.ativo && x.precoCentavos > 0 && s.vigente?.id !== x.id) && (
+                  <div className="flex flex-wrap gap-2">
+                    {planosApp
+                      .filter((x) => x.ativo && x.precoCentavos > 0 && s.vigente?.id !== x.id)
+                      .map((x) => (
+                        <form key={x.id} action={ativarPlanoLoja}>
+                          <input type="hidden" name="lojaId" value={loja.id} />
+                          <input type="hidden" name="planoId" value={x.id} />
+                          <button className="botao-peq">
+                            Ativar {x.nome} por 30 dias{x.appProprio ? " (com app próprio)" : ""}
+                          </button>
+                        </form>
+                      ))}
+                  </div>
                 )}
                 {s.vencido && (
                   <p className="aviso-info text-sm">

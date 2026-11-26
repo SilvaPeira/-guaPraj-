@@ -35,7 +35,7 @@ export default async function Loja({ params }: PageProps<"/lojas/[id]">) {
     db.select().from(schema.planos).where(and(eq(schema.planos.lojaId, loja.id), eq(schema.planos.ativo, true))).orderBy(asc(schema.planos.galoesMes)),
     db.select().from(schema.produtos).where(eq(schema.produtos.lojaId, loja.id)).orderBy(asc(schema.produtos.ordem), asc(schema.produtos.nome)),
   ]);
-  const { produtosExtras } = await recursosDaLoja(loja.id);
+  const { produtosExtras, appProprio } = await recursosDaLoja(loja.id);
   const aVenda = produtos.filter((p) => podeVender(p) && (produtosExtras || !ehExtra(p.categoria)));
   const galao = aVenda.find((p) => p.categoria === "agua_galao");
   const r = usuario.perfilFamilia ? simular(usuario.perfilFamilia, usuario.perfilFamilia) : null;
@@ -96,6 +96,16 @@ export default async function Loja({ params }: PageProps<"/lojas/[id]">) {
             {assinaAqui ? "Compra adicional" : "Fazer pedido"}
           </Link>
         </section>
+
+        {appProprio && loja.slug && !marca && (
+          <a href={`/l/${loja.slug}`} className="cartao flex items-center justify-between gap-2 border-2 border-verde">
+            <span>
+              <b className="block">{loja.nome} tem app próprio</b>
+              <span className="text-sm text-tinta-suave">Instale no celular para pedir direto, com a cara da loja.</span>
+            </span>
+            <span className="botao-peq flex-none">Ver o app</span>
+          </a>
+        )}
 
         {plano && (
           <p className="aviso-info text-sm">

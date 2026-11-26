@@ -85,16 +85,34 @@ test.describe.serial("Plano mensal e app próprio", () => {
     await cartao.getByRole("button", { name: "Salvar" }).click();
     await expect(cartao.getByText(/Salvo|salvo/)).toBeVisible();
 
+    // O cartão mostra que o app próprio desligou.
+    await expect(cartao.getByText("App próprio:")).toBeVisible();
+    await expect(cartao.locator(".selo", { hasText: "desligado" })).toBeVisible();
+
     const anonimo = await browser.newPage();
     await anonimo.goto(`/l/${ler("slug")}`);
     await expect(anonimo).not.toHaveURL(new RegExp(`/l/${ler("slug")}`));
     await anonimo.close();
 
-    // Volta para o Completo (os próximos testes dependem).
-    await cartao.getByRole("button", { name: "Editar plano" }).click();
-    await escolherOpcao(cartao.locator("select[name=planoId]"), /^Completo/);
-    await cartao.getByRole("button", { name: "Salvar" }).click();
-    await expect(cartao.getByText(/Salvo|salvo/)).toBeVisible();
+    // Um toque: volta para o Completo por 30 dias (os próximos testes dependem).
+    await cartao.getByRole("button", { name: "Ativar Completo por 30 dias (com app próprio)" }).click();
+    await expect(cartao.locator(".selo", { hasText: "ligado" })).toBeVisible();
+    await expect(cartao.getByRole("link", { name: `/l/${ler("slug")}` })).toBeVisible();
+    // O botão do plano atual some (para estender, é o "Recebi a mensalidade").
+    await expect(cartao.getByRole("button", { name: /Ativar Completo/ })).toHaveCount(0);
+  });
+
+  test("com app próprio: a loja vê 'Seu app está no ar' e o cliente vê o convite para instalar", async ({ page, context }) => {
+    await entrar(page, TEL.loja);
+    await page.goto("/loja/marca");
+    await expect(page.getByText("✓ Seu app está no ar (plano Completo)")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Abrir meu app" })).toHaveAttribute("href", `/l/${ler("slug")}`);
+
+    await context.clearCookies();
+    await entrar(page, TEL.cliente);
+    await page.goto(`/lojas/${ler("lojaId")}`);
+    await expect(page.getByText(`${LOJA.nome} tem app próprio`)).toBeVisible();
+    await expect(page.getByRole("link", { name: /tem app próprio/ })).toHaveAttribute("href", `/l/${ler("slug")}`);
   });
 
   test("admin dá desconto e período grátis na mensalidade; a loja vê em Meu plano", async ({ page, browser }) => {

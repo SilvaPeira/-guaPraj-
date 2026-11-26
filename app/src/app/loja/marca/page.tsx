@@ -32,6 +32,15 @@ export default async function MeuApp() {
     <>
       <Topo titulo="Meu app" subtitulo="Seu site com a cara da sua loja" />
       <main className="conteudo">
+        {appProprio && (
+          <div className="cartao-elevado pilha border-2 border-verde">
+            <b className="text-verde">✓ Seu app está no ar (plano Completo)</b>
+            <p className="text-sm text-tinta-suave">Seus clientes abrem o link abaixo e tocam em “Instalar o app”. Funciona no Android, no iPhone e no computador, sem loja de aplicativos.</p>
+            <a className="botao-peq self-start" href={`/l/${slug}`} target="_blank" rel="noopener noreferrer">
+              Abrir meu app
+            </a>
+          </div>
+        )}
         {!appProprio && (
           <div className="aviso-info pilha text-sm">
             <p>
