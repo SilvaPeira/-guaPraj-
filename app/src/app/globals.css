@@ -46,8 +46,36 @@ h3 {
 }
 
 @layer components {
+  /* Largura das telas: coluna de celular; no computador, mais larga (sem esticar formulários demais). */
+  .largura {
+    @apply mx-auto w-full max-w-xl md:max-w-2xl lg:max-w-3xl;
+  }
   .conteudo {
-    @apply mx-auto flex w-full max-w-xl flex-col gap-3 px-4 pt-4 pb-24;
+    @apply mx-auto flex w-full max-w-xl flex-col gap-3 px-4 pt-4 pb-24 md:max-w-2xl lg:max-w-3xl lg:px-6 lg:pb-12;
+  }
+  /* Área ao lado do menu lateral (computador). */
+  .com-menu {
+    @apply lg:pl-60;
+  }
+  /* Menu do app: embaixo no celular; lateral fixo à esquerda no computador. */
+  .menu-app {
+    @apply fixed inset-x-0 bottom-0 z-10 border-t border-borda bg-white lg:inset-y-0 lg:right-auto lg:w-60 lg:border-t-0 lg:border-r lg:pt-6;
+  }
+  .menu-app-lista {
+    @apply mx-auto grid h-[70px] max-w-xl lg:flex lg:h-auto lg:max-w-none lg:flex-col lg:gap-1 lg:px-3;
+  }
+  .menu-app-item {
+    @apply flex h-full flex-col items-center justify-center gap-1 text-xs font-semibold lg:h-12 lg:flex-row lg:justify-start lg:gap-3 lg:rounded-xl lg:px-3 lg:text-[15px] lg:hover:bg-fundo;
+  }
+  .menu-app-item[aria-current="page"] {
+    @apply lg:bg-verde-claro;
+  }
+  .menu-app-marca {
+    @apply hidden lg:mb-4 lg:flex lg:items-center lg:gap-2 lg:px-3 lg:font-titulo lg:text-xl lg:font-extrabold lg:text-floresta;
+  }
+  /* Contador (pedidos a confirmar, lojas em análise): em cima do ícone no celular; ao lado do nome no computador. */
+  .menu-app-contador {
+    @apply absolute -right-4 -top-7 flex h-5 min-w-5 items-center justify-center rounded-full bg-terra px-1 text-[11px] font-bold text-white lg:static lg:ml-2 lg:inline-flex;
   }
   .pilha {
     @apply flex flex-col gap-3;

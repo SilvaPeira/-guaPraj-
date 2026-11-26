@@ -16,7 +16,7 @@ export function LogoLoja({ marca, tamanho = 40 }: { marca: Pick<Marca, "slug" | 
 /** Assinatura discreta do ÁguaPrajá no rodapé dos sites das lojas. */
 export function SeloAguaPraja({ comFolgaDoMenu = false }: { comFolgaDoMenu?: boolean }) {
   return (
-    <footer className={`flex items-center justify-center gap-1 pt-2 text-[11px] text-tinta-suave/70 ${comFolgaDoMenu ? "pb-[86px]" : "pb-5"}`}>
+    <footer className={`flex items-center justify-center gap-1 pt-2 text-[11px] text-tinta-suave/70 ${comFolgaDoMenu ? "pb-[86px] lg:pb-5" : "pb-5"}`}>
       <span>feito com</span>
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1d6a8a" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M12 2.5C8.5 7 6 10.2 6 13.5a6 6 0 0 0 12 0C18 10.2 15.5 7 12 2.5z" />

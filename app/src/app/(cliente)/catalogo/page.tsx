@@ -175,7 +175,7 @@ export default async function Catalogo({ searchParams }: PageProps<"/catalogo">)
                 </>
               )}
             </p>
-            <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+            <ul className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
               {achados.map((i) => (
                 <li key={i.id}>
                   <CartaoProduto item={i} href={hrefItem(i)} loja={nomeLoja(i.lojaId)} />

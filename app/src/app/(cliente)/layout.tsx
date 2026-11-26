@@ -6,9 +6,11 @@ export default async function LayoutCliente({ children }: { children: React.Reac
   const m = await marcaAtual();
   return (
     <>
-      {children}
-      {/* No app da loja, a marca ÁguaPrajá aparece só aqui, bem discreta. */}
-      {m && <SeloAguaPraja comFolgaDoMenu />}
+      <div className="com-menu">
+        {children}
+        {/* No app da loja, a marca ÁguaPrajá aparece só aqui, bem discreta. */}
+        {m && <SeloAguaPraja comFolgaDoMenu />}
+      </div>
       <NavCliente />
     </>
   );

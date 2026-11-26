@@ -21,7 +21,7 @@ export function Logo() {
 /** Barra superior das telas internas (botão voltar + título). */
 export function Topo({ titulo, subtitulo, voltar, acao }: { titulo: string; subtitulo?: string; voltar?: string; acao?: ReactNode }) {
   return (
-    <header className="mx-auto flex w-full max-w-xl items-center gap-3 px-4 pt-4">
+    <header className="largura flex items-center gap-3 px-4 pt-4 lg:px-6 lg:pt-6">
       {voltar && (
         <Link href={voltar} aria-label="Voltar" className="flex h-11 w-11 flex-none items-center justify-center rounded-full border border-borda bg-white">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -42,7 +42,7 @@ export function Topo({ titulo, subtitulo, voltar, acao }: { titulo: string; subt
 export function Hero({ children }: { children: ReactNode }) {
   return (
     <header className="bg-floresta pb-16 pt-5 text-white">
-      <div className="mx-auto max-w-xl px-4">{children}</div>
+      <div className="largura px-4 lg:px-6">{children}</div>
     </header>
   );
 }

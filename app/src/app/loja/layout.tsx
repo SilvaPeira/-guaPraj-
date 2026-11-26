@@ -21,7 +21,7 @@ export default async function LayoutLoja({ children }: LayoutProps<"/loja">) {
   }
   return (
     <>
-      {children}
+      <div className={u?.papel === "loja" ? "com-menu" : undefined}>{children}</div>
       {u?.papel === "loja" && <NavLoja aConfirmar={aConfirmar} />}
     </>
   );

@@ -9,7 +9,7 @@ export default async function LayoutAdmin({ children }: LayoutProps<"/admin">) {
   const [r] = await db.select({ n: count() }).from(schema.lojas).where(eq(schema.lojas.status, "pendente"));
   return (
     <>
-      {children}
+      <div className="com-menu">{children}</div>
       <NavAdmin emAnalise={r?.n ?? 0} />
     </>
   );

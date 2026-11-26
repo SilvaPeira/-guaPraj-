@@ -10,6 +10,7 @@ import { cidadesParaEndereco } from "@/lib/cidades";
 import { sair } from "../entrar/actions";
 import Link from "next/link";
 import ExcluirConta from "./ExcluirConta";
+import NavCliente from "@/components/NavCliente";
 
 export const metadata: Metadata = { title: "Seus dados" };
 
@@ -23,8 +24,10 @@ export default async function Cadastro() {
     .where(and(eq(schema.enderecos.usuarioId, u.id), eq(schema.enderecos.padrao, true)))
     .limit(1);
 
+  // Cliente já cadastrado: a Conta é uma aba do menu (no primeiro cadastro, não, porque é um passo obrigatório).
+  const comMenu = !!end && u.papel === "cliente";
   return (
-    <>
+    <div className={comMenu ? "com-menu" : undefined}>
       <Topo titulo="Seus dados" subtitulo="Para a distribuidora saber onde entregar" voltar={end ? "/inicio" : undefined}
         acao={
           <form action={sair}>
@@ -51,7 +54,8 @@ export default async function Cadastro() {
         )}
         {end && u.papel === "cliente" && <ExcluirConta />}
       </main>
-      {marca && <SeloAguaPraja />}
-    </>
+      {marca && <SeloAguaPraja comFolgaDoMenu={comMenu} />}
+      {comMenu && <NavCliente />}
+    </div>
   );
 }

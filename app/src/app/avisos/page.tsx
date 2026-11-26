@@ -20,7 +20,7 @@ export default async function Avisos() {
   const voltar = u.papel === "loja" ? "/loja" : u.papel === "admin" ? "/admin" : u.papel === "entregador" ? "/entregas" : "/inicio";
 
   return (
-    <>
+    <div className={u.papel === "cliente" ? "com-menu" : undefined}>
       <Topo titulo="Avisos" subtitulo="Pedidos, pagamentos e lembretes" voltar={voltar} />
       <main className="conteudo">
         <AtivarAvisos chavePublica={chavePublicaPush()} para={u.papel === "loja" ? "loja" : "cliente"} />
@@ -56,6 +56,6 @@ export default async function Avisos() {
         )}
       </main>
       {u.papel === "cliente" && <NavCliente />}
-    </>
+    </div>
   );
 }

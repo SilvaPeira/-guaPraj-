@@ -13,8 +13,14 @@ const ITENS = [
 export default function NavCliente() {
   const atual = usePathname();
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-borda bg-white" aria-label="Menu">
-      <ul className="mx-auto grid h-[70px] max-w-xl grid-cols-4">
+    <nav className="menu-app" aria-label="Menu">
+      <ul className="menu-app-lista grid-cols-4">
+        <li className="menu-app-marca" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1d6a8a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2.5C8.5 7 6 10.2 6 13.5a6 6 0 0 0 12 0C18 10.2 15.5 7 12 2.5z" />
+          </svg>
+          ÁguaPrajá
+        </li>
         {ITENS.map((i) => {
           const ativo = i.ativoEm.some((p) => atual.startsWith(p));
           return (
@@ -22,7 +28,7 @@ export default function NavCliente() {
               <Link
                 href={i.href}
                 aria-current={ativo ? "page" : undefined}
-                className={`flex h-full flex-col items-center justify-center gap-1 text-xs font-semibold ${ativo ? "text-verde" : "text-tinta-suave"}`}
+                className={`menu-app-item ${ativo ? "text-verde" : "text-tinta-suave"}`}
               >
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d={i.d} />

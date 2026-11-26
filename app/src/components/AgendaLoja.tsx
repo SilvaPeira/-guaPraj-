@@ -155,7 +155,7 @@ function Cartao({ p, ehDono, marcado, onMarcar, amanha }: { p: CartaoPedido; ehD
         )}
         {p.cascosComprados > 0 && <span className="selo selo-cinza">{p.cascosComprados} casco(s) vendido(s)</span>}
         {p.temAlcool && <span className="selo selo-acai">18+: conferir documento</span>}
-        {p.totalCentavos > 0 && (
+        {p.totalCentavos > 0 && p.status !== "cancelado" && (
           <span className={`selo ${p.statusPagamento === "pago" ? "selo-verde" : "selo-terra"}`}>
             {p.statusPagamento === "pago"
               ? `Pago ${brl(p.totalCentavos)}${p.meio ? ` · ${p.meio}` : ""}`

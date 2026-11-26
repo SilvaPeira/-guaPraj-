@@ -14,8 +14,14 @@ const ITENS = [
 export default function NavLoja({ aConfirmar = 0 }: { aConfirmar?: number }) {
   const atual = usePathname();
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-borda bg-white print:hidden" aria-label="Menu da loja">
-      <ul className="mx-auto grid h-[70px] max-w-xl grid-cols-5">
+    <nav className="menu-app print:hidden" aria-label="Menu da loja">
+      <ul className="menu-app-lista grid-cols-5">
+        <li className="menu-app-marca" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1d6a8a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2.5C8.5 7 6 10.2 6 13.5a6 6 0 0 0 12 0C18 10.2 15.5 7 12 2.5z" />
+          </svg>
+          ÁguaPrajá
+        </li>
         {ITENS.map((i) => {
           const ativo = i.href === "/loja" ? atual === "/loja" : atual.startsWith(i.href);
           return (
@@ -23,7 +29,7 @@ export default function NavLoja({ aConfirmar = 0 }: { aConfirmar?: number }) {
               <Link
                 href={i.href}
                 aria-current={ativo ? "page" : undefined}
-                className={`flex h-full flex-col items-center justify-center gap-1 text-xs font-semibold ${ativo ? "text-verde" : "text-tinta-suave"}`}
+                className={`menu-app-item ${ativo ? "text-verde" : "text-tinta-suave"}`}
               >
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d={i.d} />
@@ -31,7 +37,7 @@ export default function NavLoja({ aConfirmar = 0 }: { aConfirmar?: number }) {
                 <span className="relative">
                   {i.rotulo}
                   {i.href === "/loja" && aConfirmar > 0 && (
-                    <span className="absolute -right-4 -top-7 flex h-5 min-w-5 items-center justify-center rounded-full bg-terra px-1 text-[11px] font-bold text-white" aria-label={`${aConfirmar} pedidos a confirmar`}>
+                    <span className="menu-app-contador" aria-label={`${aConfirmar} pedidos a confirmar`}>
                       {aConfirmar > 99 ? "99+" : aConfirmar}
                     </span>
                   )}
