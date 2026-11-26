@@ -120,6 +120,13 @@
       "when": 1795648166055,
       "tag": "0016_categorias",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1795681618009,
+      "tag": "0017_beneficio_mensalidade",
+      "breakpoints": true
     }
   ]
 }

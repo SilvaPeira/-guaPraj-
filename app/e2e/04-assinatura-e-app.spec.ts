@@ -81,7 +81,7 @@ test.describe.serial("Plano mensal e app próprio", () => {
     await page.goto("/admin/lojas");
     const cartao = page.locator("article", { hasText: LOJA.nome });
     await cartao.getByRole("button", { name: "Editar plano" }).click();
-    await escolherOpcao(cartao.getByLabel("Plano"), /^Essencial/);
+    await escolherOpcao(cartao.locator("select[name=planoId]"), /^Essencial/);
     await cartao.getByRole("button", { name: "Salvar" }).click();
     await expect(cartao.getByText(/Salvo|salvo/)).toBeVisible();
 
@@ -92,8 +92,48 @@ test.describe.serial("Plano mensal e app próprio", () => {
 
     // Volta para o Completo (os próximos testes dependem).
     await cartao.getByRole("button", { name: "Editar plano" }).click();
-    await escolherOpcao(cartao.getByLabel("Plano"), /^Completo/);
+    await escolherOpcao(cartao.locator("select[name=planoId]"), /^Completo/);
     await cartao.getByRole("button", { name: "Salvar" }).click();
     await expect(cartao.getByText(/Salvo|salvo/)).toBeVisible();
+  });
+
+  test("admin dá desconto e período grátis na mensalidade; a loja vê em Meu plano", async ({ page, browser }) => {
+    await entrar(page, TEL.admin);
+    await page.goto("/admin/lojas");
+    const cartao = page.locator("article", { hasText: LOJA.nome });
+    await cartao.getByText(/Desconto ou período grátis/).click();
+    await cartao.getByLabel("Desconto (%)").fill("50");
+    await expect(cartao.getByText(/Mensalidade: .*R\$\s49,95/)).toBeVisible();
+    await cartao.getByRole("button", { name: "Salvar benefício" }).click();
+    await expect(cartao.getByRole("status").filter({ hasText: "desconto de 50%" })).toBeVisible();
+    await expect(cartao.getByText(/−50% · R\$\s49,95\/mês/)).toBeVisible();
+
+    const loja = await browser.newPage();
+    await entrar(loja, TEL.loja);
+    await loja.goto("/loja/plano");
+    await expect(loja.getByText("−50%")).toBeVisible();
+    await expect(loja.getByText(/Sua mensalidade: R\$\s99,90 R\$\s49,95/)).toBeVisible();
+
+    // Período grátis.
+    const daqui10 = new Date(Date.now() + 10 * 86400_000).toISOString().slice(0, 10);
+    await cartao.getByLabel("Não cobrar até (grátis)").fill(daqui10);
+    await cartao.getByRole("button", { name: "Salvar benefício" }).click();
+    await expect(cartao.getByText(/Grátis até/).first()).toBeVisible();
+    await loja.reload();
+    await expect(loja.getByText("Cortesia do ÁguaPrajá")).toBeVisible();
+
+    // Data no passado é recusada.
+    await cartao.getByLabel("Não cobrar até (grátis)").fill("2020-01-01");
+    await cartao.getByRole("button", { name: "Salvar benefício" }).click();
+    await expect(cartao.locator(ALERTA)).toContainText("já passou");
+
+    // Tira tudo: volta ao normal.
+    await cartao.getByLabel("Desconto (%)").fill("");
+    await cartao.getByLabel("Não cobrar até (grátis)").fill("");
+    await cartao.getByRole("button", { name: "Salvar benefício" }).click();
+    await expect(cartao.getByRole("status").filter({ hasText: "Benefícios removidos" })).toBeVisible();
+    await loja.reload();
+    await expect(loja.getByText("Cortesia do ÁguaPrajá")).toHaveCount(0);
+    await loja.close();
   });
 });

@@ -8,6 +8,7 @@ import { agoraLocal } from "@/lib/tempo";
 import { formatarReais } from "@/lib/validacao";
 import { formatarTelefone, linkWhatsApp } from "@/lib/telefone";
 import { mudarStatusLoja, registrarMensalidade } from "../actions";
+import BeneficioLoja from "./BeneficioLoja";
 import PlanoDaLoja from "./PlanoDaLoja";
 
 export const metadata: Metadata = { title: "Distribuidoras" };
@@ -127,19 +128,30 @@ export default async function Lojas({ searchParams }: PageProps<"/admin/lojas">)
                   <b>Plano ÁguaPrajá</b>
                   <span className="text-sm">
                     {s.vigente ? s.vigente.nome : planosApp.length ? "Básico" : "Sem planos cadastrados"}
-                    {s.vigente && s.vigente.precoCentavos > 0 && s.pagoAte ? ` · pago até ${dataBr(s.pagoAte)}` : ""}
+                    {s.vigente && s.vigente.precoCentavos > 0 && s.pagoAte && !s.gratisAte ? ` · pago até ${dataBr(s.pagoAte)}` : ""}
                   </span>
                 </div>
+                {s.escolhido && s.escolhido.precoCentavos > 0 && (s.gratisAte || s.desconto) && (
+                  <p className="text-sm">
+                    {s.gratisAte ? (
+                      <span className="selo selo-verde">Grátis até {dataBr(s.gratisAte)}</span>
+                    ) : (
+                      <span className="selo selo-acai">
+                        −{s.desconto!.percentual}% · {formatarReais(s.valorCentavos)}/mês{s.desconto!.ate ? ` até ${dataBr(s.desconto!.ate)}` : ""}
+                      </span>
+                    )}
+                  </p>
+                )}
                 {s.vencido && (
                   <p className="aviso-info text-sm">
-                    Escolheu <b>{s.escolhido!.nome}</b> ({formatarReais(s.escolhido!.precoCentavos)}/mês), aguardando pagamento
+                    Escolheu <b>{s.escolhido!.nome}</b> ({formatarReais(s.valorCentavos)}/mês), aguardando pagamento
                     {s.pagoAte ? ` (venceu em ${dataBr(s.pagoAte)})` : ""}.
                   </p>
                 )}
-                {s.escolhido && s.escolhido.precoCentavos > 0 && (
+                {s.escolhido && s.valorCentavos > 0 && (
                   <form action={registrarMensalidade}>
                     <input type="hidden" name="lojaId" value={loja.id} />
-                    <button className="botao-peq w-full">Recebi a mensalidade (+1 mês)</button>
+                    <button className="botao-peq w-full">Recebi a mensalidade de {formatarReais(s.valorCentavos)} (+1 mês)</button>
                   </form>
                 )}
                 <PlanoDaLoja
@@ -148,6 +160,15 @@ export default async function Lojas({ searchParams }: PageProps<"/admin/lojas">)
                   pagoAte={loja.planoAppPagoAte}
                   planos={planosApp.map((p) => ({ id: p.id, nome: p.nome, precoCentavos: p.precoCentavos, ativo: p.ativo }))}
                 />
+                {planosApp.some((p) => p.precoCentavos > 0) && (
+                  <BeneficioLoja
+                    lojaId={loja.id}
+                    precoCentavos={s.escolhido?.precoCentavos ?? null}
+                    desconto={loja.descontoMensalidade}
+                    descontoAte={loja.descontoAte}
+                    gratisAte={loja.gratisAte}
+                  />
+                )}
               </div>
             </article>
           );

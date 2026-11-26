@@ -178,6 +178,12 @@ export const lojas = pgTable("lojas", {
   planoAppId: uuid("plano_app_id"),
   /** Plano pago vale até esta data (inclusive). Vencido = volta às regras do grátis. */
   planoAppPagoAte: date("plano_app_pago_ate"),
+  /** Desconto dado pelo admin na mensalidade do ÁguaPrajá (1 a 100%). */
+  descontoMensalidade: smallint("desconto_mensalidade"),
+  /** Último dia do desconto. Vazio = sem prazo. */
+  descontoAte: date("desconto_ate"),
+  /** Plano escolhido sem cobrar até este dia (cortesia/teste). */
+  gratisAte: date("gratis_ate"),
   criadoEm: criadoEm(),
 });
 

@@ -165,7 +165,7 @@ test.describe.serial("Admin e distribuidora", () => {
     await expect(cartao.getByRole("button", { name: "Aprovar" })).toHaveCount(0);
 
     await cartao.getByRole("button", { name: "Editar plano" }).click();
-    await escolherOpcao(cartao.getByLabel("Plano"), /^Completo/);
+    await escolherOpcao(cartao.locator("select[name=planoId]"), /^Completo/);
     const daqui30 = new Date(Date.now() + 30 * 86400_000).toISOString().slice(0, 10);
     await cartao.getByLabel("Pago até").fill(daqui30);
     await cartao.getByRole("button", { name: "Salvar" }).click();
@@ -185,8 +185,48 @@ test.describe.serial("Admin e distribuidora", () => {
     await page.goto("/loja/planos");
     await page.getByRole("button", { name: "Usar planos sugeridos" }).click();
     // 8, 12, 16, 20, 24 e 32 galões, com 10% de desconto sobre o avulso (R$ 12,00).
-    await expect(page.getByText(/galões\/mês · R\$/)).toHaveCount(6);
+    // Só a lista de planos (a prévia do gerador também mostra "galões/mês").
+    await expect(page.locator("li.cartao").filter({ hasText: /galões\/mês · R\$/ })).toHaveCount(6);
     await expect(page.getByText(/^8 galões\/mês · R\$\s86,00$/)).toBeVisible();
+  });
+
+  test("distribuidora → Planos: gera plano pelo valor do galão (um e múltiplos, com acréscimo)", async ({ page }) => {
+    await entrar(page, TEL.loja);
+    await page.goto("/loja/planos");
+    const gerador = page.locator("form", { hasText: "Gerar planos pelo valor do galão" });
+    // Valor do galão já vem do catálogo (R$ 12,00); a loja troca para R$ 7,99.
+    await expect(gerador.getByLabel("Valor do galão (R$)")).toHaveValue("12,00");
+    await gerador.getByLabel("Valor do galão (R$)").fill("7,99");
+
+    // Um plano de 10 galões com +10%: 10 × 7,99 × 1,10 = R$ 87,89.
+    await gerador.locator("label", { hasText: "Um plano" }).click();
+    await gerador.getByLabel("Galões por mês").fill("10");
+    await gerador.locator("label", { hasText: "+ Acréscimo" }).click();
+    await gerador.getByLabel("Percentual do ajuste").fill("10");
+    await expect(gerador.locator("li", { hasText: "10 galões/mês" })).toContainText("R$ 87,89");
+    await gerador.getByRole("button", { name: "Gerar 1 plano" }).click();
+    await expect(gerador.getByRole("status")).toContainText("1 plano criado");
+    await expect(page.getByText(/^10 galões\/mês · R\$\s87,89$/)).toBeVisible();
+
+    // Múltiplos de 4 (8 a 32) a preço cheio: só o 28 é novo, o resto já existe.
+    await gerador.locator("label", { hasText: "Vários (múltiplos)" }).click();
+    await gerador.getByLabel("De quantos em quantos").fill("4");
+    await gerador.getByLabel("Primeiro plano").fill("8");
+    await gerador.getByLabel("Último plano").fill("32");
+    await gerador.getByLabel("Percentual do ajuste").fill("0");
+    await expect(gerador.locator("li")).toHaveCount(7);
+    await expect(gerador.locator("li", { hasText: "12 galões/mês" })).toContainText("já existe");
+    await expect(gerador.locator("li", { hasText: "28 galões/mês" })).toContainText("R$ 223,72");
+    await gerador.getByRole("button", { name: "Gerar 1 plano" }).click();
+    await expect(gerador.getByRole("status")).toContainText("1 plano criado (6 já existiam)");
+    await expect(page.getByText(/^28 galões\/mês · R\$\s223,72$/)).toBeVisible();
+
+    // Desconto: o mesmo cálculo para menos.
+    await gerador.locator("label", { hasText: "Um plano" }).click();
+    await gerador.getByLabel("Galões por mês").fill("40");
+    await gerador.locator("label", { hasText: "− Desconto" }).click();
+    await gerador.getByLabel("Percentual do ajuste").fill("10");
+    await expect(gerador.locator("li", { hasText: "40 galões/mês" })).toContainText("R$ 287,64");
   });
 
   test("distribuidora → Catálogo: bebida retornável com foto", async ({ page }) => {

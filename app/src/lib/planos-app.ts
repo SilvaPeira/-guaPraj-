@@ -40,7 +40,21 @@ export type SituacaoPlano = {
   vencido: boolean;
   pagoAte: string | null;
   recursos: Recursos;
+  /** Quanto a loja paga por mês agora (com desconto; 0 no período grátis). */
+  valorCentavos: number;
+  /** Cortesia do admin: grátis até este dia (inclusive). */
+  gratisAte: string | null;
+  /** Desconto do admin valendo agora. */
+  desconto: { percentual: number; ate: string | null } | null;
 };
+
+/** Benefícios que o admin pode dar na mensalidade (desconto e/ou período grátis). */
+export type Beneficio = { descontoMensalidade?: number | null; descontoAte?: string | null; gratisAte?: string | null };
+
+/** Valor da mensalidade com o desconto (arredondado ao centavo). */
+export function aplicarDesconto(precoCentavos: number, percentual: number): number {
+  return Math.max(0, Math.round((precoCentavos * (100 - Math.min(100, Math.max(0, percentual)))) / 100));
+}
 
 export async function listarPlanosApp(somenteAtivos = false): Promise<PlanoApp[]> {
   const db = await getDb();
@@ -60,12 +74,18 @@ const recursosDe = (p: PlanoApp): Recursos => ({
 });
 
 export function calcularSituacao(
-  loja: { planoAppId: string | null; planoAppPagoAte: string | null },
+  loja: { planoAppId: string | null; planoAppPagoAte: string | null } & Beneficio,
   planos: PlanoApp[],
   hoje = agoraLocal().data,
 ): SituacaoPlano {
   const escolhido = planos.find((p) => p.id === loja.planoAppId) ?? null;
-  const pago = !!escolhido && (escolhido.precoCentavos === 0 || (!!loja.planoAppPagoAte && loja.planoAppPagoAte >= hoje));
+  const gratisAte = loja.gratisAte && loja.gratisAte >= hoje ? loja.gratisAte : null;
+  const pct = loja.descontoMensalidade ?? 0;
+  const desconto = pct > 0 && (!loja.descontoAte || loja.descontoAte >= hoje) ? { percentual: Math.min(100, pct), ate: loja.descontoAte ?? null } : null;
+  const valorCentavos = !escolhido || gratisAte ? 0 : desconto ? aplicarDesconto(escolhido.precoCentavos, desconto.percentual) : escolhido.precoCentavos;
+  // Grátis (cortesia) ou 100% de desconto: o plano vale sem precisar registrar pagamento.
+  const pago =
+    !!escolhido && (escolhido.precoCentavos === 0 || !!gratisAte || valorCentavos === 0 || (!!loja.planoAppPagoAte && loja.planoAppPagoAte >= hoje));
   const gratis = planos.filter((p) => p.ativo && p.precoCentavos === 0).sort((a, b) => a.ordem - b.ordem)[0] ?? null;
   const vigente = pago ? escolhido : gratis;
   return {
@@ -74,13 +94,22 @@ export function calcularSituacao(
     vencido: !!escolhido && !pago,
     pagoAte: loja.planoAppPagoAte,
     recursos: vigente ? recursosDe(vigente) : planos.length ? BASICO : SEM_LIMITES,
+    valorCentavos,
+    gratisAte,
+    desconto,
   };
 }
 
 export async function situacaoDaLoja(lojaId: string): Promise<SituacaoPlano> {
   const db = await getDb();
   const [loja] = await db
-    .select({ planoAppId: schema.lojas.planoAppId, planoAppPagoAte: schema.lojas.planoAppPagoAte })
+    .select({
+      planoAppId: schema.lojas.planoAppId,
+      planoAppPagoAte: schema.lojas.planoAppPagoAte,
+      descontoMensalidade: schema.lojas.descontoMensalidade,
+      descontoAte: schema.lojas.descontoAte,
+      gratisAte: schema.lojas.gratisAte,
+    })
     .from(schema.lojas)
     .where(eq(schema.lojas.id, lojaId))
     .limit(1);

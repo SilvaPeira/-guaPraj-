@@ -43,7 +43,20 @@ export default async function MeuPlano() {
         <section className="cartao-elevado pilha">
           <span className="text-sm text-tinta-suave">Valendo agora</span>
           <b className="font-titulo text-2xl">{s.vigente?.nome ?? (todos.length ? "Básico" : "Sem limites (fase de testes)")}</b>
-          {s.vigente && s.vigente.precoCentavos > 0 && s.pagoAte && <p className="text-sm">Pago até {dataBr(s.pagoAte)}.</p>}
+          {s.gratisAte ? (
+            <p className="text-sm">
+              <span className="selo selo-verde">Cortesia do ÁguaPrajá</span> Grátis até <b>{dataBr(s.gratisAte)}</b>.
+            </p>
+          ) : (
+            s.vigente && s.vigente.precoCentavos > 0 && s.pagoAte && <p className="text-sm">Pago até {dataBr(s.pagoAte)}.</p>
+          )}
+          {s.desconto && s.escolhido && s.escolhido.precoCentavos > 0 && (
+            <p className="text-sm">
+              <span className="selo selo-acai">−{s.desconto.percentual}%</span> Sua mensalidade: <s className="text-tinta-suave">{formatarReais(s.escolhido.precoCentavos)}</s>{" "}
+              <b>{formatarReais(s.valorCentavos === 0 && s.gratisAte ? Math.round((s.escolhido.precoCentavos * (100 - s.desconto.percentual)) / 100) : s.valorCentavos)}</b>
+              {s.desconto.ate ? ` até ${dataBr(s.desconto.ate)}` : ""}.
+            </p>
+          )}
           <ul className="text-sm text-tinta-suave">
             <li>
               Assinantes: {assinantes} {s.recursos.limiteAssinantes !== null ? `de ${s.recursos.limiteAssinantes}` : "(ilimitado)"}
@@ -60,13 +73,13 @@ export default async function MeuPlano() {
         {aguardando && (
           <div className="aviso-info pilha text-sm">
             <p>
-              Você escolheu o plano <b>{s.escolhido!.nome}</b> ({formatarReais(s.escolhido!.precoCentavos)}/mês)
+              Você escolheu o plano <b>{s.escolhido!.nome}</b> ({formatarReais(s.valorCentavos)}/mês)
               {s.pagoAte ? `, que venceu em ${dataBr(s.pagoAte)}` : ""}. Ele passa a valer assim que o pagamento for confirmado.
             </p>
             {suporte && (
               <a
                 className="botao"
-                href={linkWhatsApp(suporte, `Olá! Sou da ${loja.nome} e quero pagar o plano ${s.escolhido!.nome} do ÁguaPrajá (${formatarReais(s.escolhido!.precoCentavos)}/mês).`)}
+                href={linkWhatsApp(suporte, `Olá! Sou da ${loja.nome} e quero pagar o plano ${s.escolhido!.nome} do ÁguaPrajá (${formatarReais(s.valorCentavos)}/mês).`)}
                 target="_blank"
                 rel="noopener noreferrer"
               >

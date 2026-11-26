@@ -5,6 +5,7 @@ import { and, count, eq, isNull } from "drizzle-orm";
 import { schema } from "@/db";
 import { exigirLoja } from "@/lib/loja";
 import { reaisParaCentavos } from "@/lib/validacao";
+import { gerar, lerPedido, validar } from "@/lib/gerador-planos";
 
 export type EstadoForm = { erro?: string; ok?: string };
 
@@ -79,4 +80,29 @@ export async function criarSugeridos() {
   }));
   if (novos.length) await db.insert(schema.planos).values(novos);
   revalidatePath("/loja/planos");
+}
+
+export type EstadoGerador = { erro?: string; ok?: string };
+
+/**
+ * Gera planos a partir do valor do galão: um só (quantidade) ou vários (múltiplos: 8, 12, 16…),
+ * com acréscimo ou desconto em % sobre o valor do galão. Quantidade que já tem plano é pulada.
+ */
+export async function gerarPlanos(_: EstadoGerador, form: FormData): Promise<EstadoGerador> {
+  const { loja, db } = await exigirLoja();
+  const pedido = lerPedido((c) => String(form.get(c) ?? ""), (s) => reaisParaCentavos(s));
+  const erro = validar(pedido);
+  if (erro) return { erro };
+  const galao = await galaoDaLoja(loja.id);
+  if (!galao) return { erro: "Cadastre um galão de 20 L no catálogo primeiro." };
+  const existentes = new Set((await db.select({ g: schema.planos.galoesMes }).from(schema.planos).where(eq(schema.planos.lojaId, loja.id))).map((e) => e.g));
+  const todos = gerar(pedido);
+  const novos = todos.filter((p) => !existentes.has(p.galoes));
+  if (!novos.length) return { erro: todos.length === 1 ? `Já existe um plano de ${todos[0].galoes} galões.` : "Todos esses planos já existem." };
+  await db.insert(schema.planos).values(novos.map((p) => ({ lojaId: loja.id, produtoId: galao.id, galoesMes: p.galoes, precoCentavos: p.precoCentavos })));
+  revalidatePath("/loja/planos");
+  const pulados = todos.length - novos.length;
+  return {
+    ok: `${novos.length === 1 ? "1 plano criado" : `${novos.length} planos criados`}${pulados ? ` (${pulados} já existia${pulados > 1 ? "m" : ""})` : ""}.`,
+  };
 }

@@ -38,8 +38,10 @@ export default async function Admin() {
   const aprovadas = lojas.filter((l) => l.status === "aprovada");
   // Receita mensal recorrente: lojas aprovadas com plano pago em dia.
   const situacoes = aprovadas.map((l) => ({ l, s: calcularSituacao(l, planosApp, hoje) }));
-  const pagantes = situacoes.filter(({ s }) => s.vigente && s.vigente.precoCentavos > 0);
-  const mrr = pagantes.reduce((t, { s }) => t + s.vigente!.precoCentavos, 0);
+  // Com desconto do admin conta o valor com desconto; no período grátis não entra.
+  const pagantes = situacoes.filter(({ s }) => s.vigente && s.vigente === s.escolhido && s.valorCentavos > 0);
+  const mrr = pagantes.reduce((t, { s }) => t + s.valorCentavos, 0);
+  const cortesias = situacoes.filter(({ s }) => s.escolhido && s.escolhido.precoCentavos > 0 && (s.gratisAte || s.desconto)).length;
   const aguardando = situacoes.filter(({ s }) => s.vencido);
 
   return (
@@ -64,6 +66,7 @@ export default async function Admin() {
           <b className="block font-titulo text-[30px] leading-tight">{formatarReais(mrr)}</b>
           <span className="text-sm text-tinta-suave">
             {pagantes.length} loja(s) pagante(s) de {aprovadas.length} ativa(s)
+            {cortesias > 0 ? ` · ${cortesias} com desconto ou grátis` : ""}
           </span>
         </section>
         {nErros > 0 && (
@@ -119,7 +122,8 @@ export default async function Admin() {
                 <span>
                   <b className="block">{l.nome}</b>
                   <span className="text-sm text-tinta-suave">
-                    {s.escolhido!.nome} · {formatarReais(s.escolhido!.precoCentavos)}/mês
+                    {s.escolhido!.nome} · {formatarReais(s.valorCentavos)}/mês
+                    {s.desconto ? ` (−${s.desconto.percentual}%)` : ""}
                   </span>
                 </span>
                 <span className="selo selo-terra">A receber</span>

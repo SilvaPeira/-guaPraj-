@@ -8,6 +8,7 @@ import { frequenciaTexto } from "@/lib/simulador";
 import { criarSugeridos } from "./actions";
 import PlanoEditavel from "./PlanoEditavel";
 import FormNovoPlano from "./FormNovoPlano";
+import GeradorPlanos from "./GeradorPlanos";
 
 export const metadata: Metadata = { title: "Planos" };
 
@@ -74,6 +75,7 @@ export default async function Planos() {
             );
           })}
         </ul>
+        <GeradorPlanos valorGalaoCentavos={avulso} existentes={planos.map((p) => p.galoesMes)} />
         <FormNovoPlano precoAvulsoCentavos={avulso} />
       </main>
     </>

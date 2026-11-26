@@ -145,3 +145,35 @@ function somarMes(data: string): string {
   const alvo = new Date(Date.UTC(a, m, Math.min(d, ultimoDia)));
   return alvo.toISOString().slice(0, 10);
 }
+
+export type EstadoBeneficio = { erro?: string; ok?: string };
+
+/** Desconto na mensalidade (%, com prazo opcional) e/ou período grátis para uma loja. */
+export async function definirBeneficio(_: EstadoBeneficio, form: FormData): Promise<EstadoBeneficio> {
+  await exigirUsuario(["admin"]);
+  const lojaId = String(form.get("lojaId") ?? "");
+  if (!/^[0-9a-f-]{36}$/.test(lojaId)) return { erro: "Loja inválida." };
+  const data = (campo: string) => {
+    const v = String(form.get(campo) ?? "").trim();
+    return v === "" ? null : /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : undefined;
+  };
+  const textoPct = String(form.get("desconto") ?? "").trim().replace(",", ".");
+  const pct = textoPct === "" ? 0 : Number(textoPct);
+  if (!Number.isFinite(pct) || pct < 0 || pct > 100 || !Number.isInteger(pct)) return { erro: "Desconto de 0 a 100% (número inteiro)." };
+  const descontoAte = data("descontoAte");
+  const gratisAte = data("gratisAte");
+  if (descontoAte === undefined || gratisAte === undefined) return { erro: "Data inválida." };
+  const hoje = agoraLocal().data;
+  if (pct > 0 && descontoAte && descontoAte < hoje) return { erro: "O fim do desconto já passou." };
+  if (gratisAte && gratisAte < hoje) return { erro: "A data do grátis já passou." };
+  const db = await getDb();
+  await db
+    .update(schema.lojas)
+    .set({ descontoMensalidade: pct > 0 ? pct : null, descontoAte: pct > 0 ? descontoAte : null, gratisAte })
+    .where(eq(schema.lojas.id, lojaId));
+  revalidatePath("/admin/lojas");
+  revalidatePath("/admin");
+  revalidatePath("/loja/plano");
+  const partes = [pct > 0 ? `desconto de ${pct}%${descontoAte ? ` até ${descontoAte.split("-").reverse().join("/")}` : ""}` : null, gratisAte ? `grátis até ${gratisAte.split("-").reverse().join("/")}` : null].filter(Boolean);
+  return { ok: partes.length ? `Salvo: ${partes.join(" e ")}.` : "Benefícios removidos." };
+}
