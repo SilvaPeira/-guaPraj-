@@ -202,3 +202,23 @@ export async function reativarAssinatura(clienteId: string, id: string) {
     await gerarEntregas(tx, a.id);
   });
 }
+
+/** Plano mensal ativo ou pausado do cliente (um por vez), com a loja. Null = não assina. */
+export async function planoAtivoDoCliente(clienteId: string) {
+  const db = await getDb();
+  const [r] = await db
+    .select({
+      id: schema.assinaturas.id,
+      status: schema.assinaturas.status,
+      lojaId: schema.assinaturas.lojaId,
+      lojaNome: schema.lojas.nome,
+      galoesMes: schema.planos.galoesMes,
+      precoCentavos: schema.planos.precoCentavos,
+    })
+    .from(schema.assinaturas)
+    .innerJoin(schema.planos, eq(schema.planos.id, schema.assinaturas.planoId))
+    .innerJoin(schema.lojas, eq(schema.lojas.id, schema.assinaturas.lojaId))
+    .where(and(eq(schema.assinaturas.clienteId, clienteId), inArray(schema.assinaturas.status, ["ativa", "pausada"])))
+    .limit(1);
+  return r ?? null;
+}

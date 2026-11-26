@@ -35,6 +35,8 @@ test.describe.serial("Cliente: pedido avulso e entrega", () => {
     await expect(page.getByRole("heading", { name: "Olá, Maria!" })).toBeVisible();
     await expect(page.getByText("Canaã dos Carajás · Centro")).toBeVisible();
     await expect(page.getByText("Você ainda não tem um plano")).toBeVisible();
+    // Convite para instalar o app ÁguaPrajá (some quando já está instalado).
+    await expect(page.getByRole("button", { name: "Instalar o app ÁguaPrajá no celular" })).toBeVisible();
     // Menu de baixo com as 4 abas.
     const menu = page.getByRole("navigation", { name: "Menu" });
     for (const aba of ["Início", "Catálogo", "Pedidos", "Conta"]) await expect(menu.getByRole("link", { name: aba })).toBeVisible();

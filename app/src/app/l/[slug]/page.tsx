@@ -8,6 +8,7 @@ import { mediasDasLojas, textoNota } from "@/lib/avaliacoes";
 import { garantirContrasteComBranco } from "@/lib/cores";
 import { linkWhatsApp } from "@/lib/telefone";
 import { usuarioAtual } from "@/lib/sessao";
+import { planoAtivoDoCliente } from "@/lib/assinaturas";
 import { podeVender } from "@/lib/catalogo";
 import { agruparPorCategoria, mapaCategorias } from "@/lib/categorias";
 import { frequenciaTexto } from "@/lib/simulador";
@@ -47,6 +48,9 @@ export default async function SiteDaLoja({ params }: Props) {
   const db = await getDb();
   const [loja] = await db.select().from(schema.lojas).where(eq(schema.lojas.id, m.lojaId)).limit(1);
   const ehDono = u?.id === loja.donoId;
+  // Cliente que já assina: mostra o plano dele (aqui) ou só pedidos avulsos (plano em outra loja), sem sugerir planos.
+  const meuPlano = u?.papel === "cliente" ? await planoAtivoDoCliente(u.id) : null;
+  const assinaAqui = meuPlano?.lojaId === loja.id;
   if (m.status !== "aprovada" && !ehDono && u?.papel !== "admin") notFound();
   // Site/app próprio é do plano Completo: sem ele, o cliente vai para o ÁguaPrajá.
   if (!m.appProprio && !ehDono && u?.papel !== "admin") redirect("/");
@@ -116,13 +120,34 @@ export default async function SiteDaLoja({ params }: Props) {
               {galao.marca ? ` · ${galao.marca}` : ""}
             </p>
           )}
-          <Link href={abrir(planos.length ? "planos" : "pedir")} className="botao">
-            {planos.length ? "Assinar um plano" : "Fazer meu pedido"}
-          </Link>
-          {planos.length > 0 && (
-            <Link href={abrir("pedir")} className="botao-sec">
-              Pedir agora, sem plano
+          {assinaAqui && meuPlano ? (
+            <>
+              <Link href={abrir("assinatura")} className="block rounded-[var(--raio-cartao,18px)] bg-acai p-3.5 text-white">
+                <span className="text-xs font-bold uppercase tracking-[.6px] text-[#e6d3ea]">Seu plano{meuPlano.status === "pausada" ? " · pausado" : ""}</span>
+                <b className="block">
+                  {meuPlano.galoesMes} galões/mês · {formatarReais(meuPlano.precoCentavos)}
+                </b>
+                <span className="text-sm underline">Gerenciar meu plano</span>
+              </Link>
+              <Link href={abrir("extra")} className="botao-sec">
+                Compra adicional (galão extra ou bebidas)
+              </Link>
+            </>
+          ) : meuPlano ? (
+            <Link href={abrir("pedir")} className="botao">
+              Fazer meu pedido
             </Link>
+          ) : (
+            <>
+              <Link href={abrir(planos.length ? "planos" : "pedir")} className="botao">
+                {planos.length ? "Assinar um plano" : "Fazer meu pedido"}
+              </Link>
+              {planos.length > 0 && (
+                <Link href={abrir("pedir")} className="botao-sec">
+                  Pedir agora, sem plano
+                </Link>
+              )}
+            </>
           )}
           {!u && (
             <Link href={abrir("entrar")} className="link-texto self-center">
@@ -148,7 +173,7 @@ export default async function SiteDaLoja({ params }: Props) {
           </div>
         )}
 
-        {planos.length > 0 && (
+        {planos.length > 0 && !meuPlano && (
           <section className="pilha">
             <h2 className="titulo-secao mt-1">Planos mensais</h2>
             {planos.map((p) => (

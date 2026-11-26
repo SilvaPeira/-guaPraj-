@@ -14,6 +14,7 @@ import { marcaAtual } from "@/lib/marca";
 import { sair } from "@/app/entrar/actions";
 import Sininho from "@/components/Sininho";
 import AtivarAvisos from "@/components/AtivarAvisos";
+import BotaoInstalar from "@/components/BotaoInstalar";
 import { chavePublicaPush, naoLidos } from "@/lib/notificar";
 
 export const metadata: Metadata = { title: "Início" };
@@ -139,6 +140,8 @@ export default async function Inicio() {
         )}
 
         <AtivarAvisos chavePublica={chavePublicaPush()} soConvite />
+        {/* Instalar o app (ÁguaPrajá ou o app próprio da loja). Some quando já está instalado. */}
+        <BotaoInstalar nome={marca ? marca.personalizacao.nomeCurto || marca.nome : "ÁguaPrajá"} />
 
         <div className="grid grid-cols-2 gap-2.5">
           {ativa ? (

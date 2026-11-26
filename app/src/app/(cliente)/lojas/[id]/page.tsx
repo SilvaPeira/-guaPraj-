@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { schema } from "@/db";
 import { exigirCliente } from "@/lib/cliente";
 import { mediasDasLojas, textoNota } from "@/lib/avaliacoes";
@@ -14,6 +14,7 @@ import { agruparPorCategoria, mapaCategorias } from "@/lib/categorias";
 import { ehExtra, recursosDaLoja } from "@/lib/planos-app";
 import { formatarReais } from "@/lib/validacao";
 import { Topo } from "@/components/ui";
+import { planoAtivoDoCliente } from "@/lib/assinaturas";
 import FotoProduto, { urlFoto } from "@/components/FotoProduto";
 
 export const metadata: Metadata = { title: "Distribuidora" };
@@ -50,12 +51,7 @@ export default async function Loja({ params }: PageProps<"/lojas/[id]">) {
   const regras = loja.regrasHorario;
   const marca = await marcaAtual();
   // Plano mensal: o cliente assina com UMA distribuidora; avulso pode pedir em qualquer uma.
-  const [plano] = await db
-    .select({ id: schema.assinaturas.id, lojaId: schema.assinaturas.lojaId, lojaNome: schema.lojas.nome })
-    .from(schema.assinaturas)
-    .innerJoin(schema.lojas, eq(schema.lojas.id, schema.assinaturas.lojaId))
-    .where(and(eq(schema.assinaturas.clienteId, usuario.id), inArray(schema.assinaturas.status, ["ativa", "pausada"])))
-    .limit(1);
+  const plano = await planoAtivoDoCliente(usuario.id);
   const assinaAqui = plano?.lojaId === loja.id;
   const linkPedir = (itemId?: string) => {
     const u = new URLSearchParams();
@@ -107,28 +103,31 @@ export default async function Loja({ params }: PageProps<"/lojas/[id]">) {
           </a>
         )}
 
-        {plano && (
+        {/* Quem já assina vê o próprio plano, não sugestões. Trocar de quantidade é em "Meu plano". */}
+        {plano && assinaAqui && (
+          <Link href="/assinatura" className="block rounded-[var(--raio-cartao,20px)] bg-acai p-4 text-white">
+            <span className="text-xs font-bold uppercase tracking-[.6px] text-[#e6d3ea]">Seu plano{plano.status === "pausada" ? " · pausado" : ""}</span>
+            <b className="block font-titulo text-lg">
+              {plano.galoesMes} galões/mês · {formatarReais(plano.precoCentavos)}
+            </b>
+            <span className="mt-1 inline-block text-sm font-semibold underline">Gerenciar: horário, pular, trocar de plano, cancelar</span>
+          </Link>
+        )}
+        {plano && !assinaAqui && (
           <p className="aviso-info text-sm">
-            {assinaAqui ? (
-              <>Seu plano mensal é com esta distribuidora.</>
-            ) : (
-              <>
-                Seu plano mensal é com a <b>{plano.lojaNome}</b>. Aqui você pode fazer pedidos avulsos normalmente. Para assinar com esta loja, cancele antes o
-                plano atual.
-              </>
-            )}{" "}
+            Seu plano mensal é com a <b>{plano.lojaNome}</b>. Aqui você pode fazer pedidos avulsos normalmente. Para assinar com esta loja, cancele antes o plano atual.{" "}
             <Link href="/assinatura" className="link-texto">
               Ver meu plano
             </Link>
           </p>
         )}
 
-        <h2 className="titulo-secao mt-1">Planos mensais</h2>
-        {planos.map((p) => {
+        {!plano && <h2 className="titulo-secao mt-1">Planos mensais</h2>}
+        {!plano && planos.map((p) => {
           const desc = descontoPercentual(p, galao?.precoCentavos ?? null);
           const ehSugerido = sugerido?.id === p.id;
           return (
-            <Link key={p.id} href={plano ? "/assinatura" : `/assinar/${p.id}`} className={`flex items-center justify-between gap-2 rounded-[var(--raio-cartao,18px)] bg-white p-3.5 transition hover:border-verde ${ehSugerido ? "border-2 border-acai bg-acai-claro" : "border border-borda2"}`}>
+            <Link key={p.id} href={`/assinar/${p.id}`} className={`flex items-center justify-between gap-2 rounded-[var(--raio-cartao,18px)] bg-white p-3.5 transition hover:border-verde ${ehSugerido ? "border-2 border-acai bg-acai-claro" : "border border-borda2"}`}>
               <div>
                 <b className="text-base">{p.galoesMes} galões/mês</b>
                 <p className="text-sm text-tinta-suave">
@@ -143,7 +142,7 @@ export default async function Loja({ params }: PageProps<"/lojas/[id]">) {
           );
         })}
         {planos.length > 0 && !plano && <p className="text-sm text-tinta-suave">Toque num plano para escolher o dia e o horário das entregas.</p>}
-        {planos.length === 0 && <p className="text-sm text-tinta-suave">Esta distribuidora ainda não tem planos mensais.</p>}
+        {planos.length === 0 && !plano && <p className="text-sm text-tinta-suave">Esta distribuidora ainda não tem planos mensais.</p>}
 
         {grupos.length > 0 && <h2 className="titulo-secao mt-2">Produtos</h2>}
         {grupos.map(({ grupo, itens }) => (

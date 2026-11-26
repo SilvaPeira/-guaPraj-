@@ -24,6 +24,10 @@ export async function generateMetadata(): Promise<Metadata> {
       title: { default: "ÁguaPrajá", template: "%s · ÁguaPrajá" },
       description: "Água em galão por assinatura, com entrega no dia e horário que você escolher.",
       applicationName: "ÁguaPrajá",
+      // App ÁguaPrajá instalável (o de cada loja usa o manifesto da loja, abaixo).
+      manifest: "/app.webmanifest",
+      appleWebApp: { capable: true, title: "ÁguaPrajá", statusBarStyle: "default" },
+      icons: { icon: "/app-icone/192", apple: "/app-icone/180" },
     };
   }
   return {

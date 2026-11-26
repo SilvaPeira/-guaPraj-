@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { COOKIE_MARCA, marcaPorSlug } from "@/lib/marca";
 import { usuarioAtual } from "@/lib/sessao";
+import { planoAtivoDoCliente } from "@/lib/assinaturas";
 
 // Entrada do site/app da loja: liga o tema da loja (cookie) e leva o cliente
 // para o lugar certo. É o start_url do app instalado.
@@ -20,6 +21,12 @@ export async function GET(req: Request, ctx: RouteContext<"/l/[slug]/abrir">) {
   if (para === "entrar") destino = u ? "/inicio" : "/entrar";
   else if (para === "pedir") destino = u ? `/pedir/${m.lojaId}` : "/entrar";
   else if (para === "planos") destino = u ? `/lojas/${m.lojaId}` : "/entrar";
+  else if (para === "assinatura") destino = u ? "/assinatura" : "/entrar";
+  else if (para === "extra") {
+    // Compra adicional do assinante: galão pelo preço do plano.
+    const plano = u ? await planoAtivoDoCliente(u.id) : null;
+    destino = !u ? "/entrar" : plano?.lojaId === m.lojaId ? `/pedir/${m.lojaId}?assinatura=${plano.id}` : `/pedir/${m.lojaId}`;
+  }
   else destino = u?.papel === "cliente" ? "/inicio" : `/l/${m.slug}`;
   return NextResponse.redirect(new URL(destino, url));
 }

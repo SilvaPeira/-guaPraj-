@@ -9,6 +9,7 @@ import { simular } from "@/lib/simulador";
 import { formatarKm } from "@/lib/geo";
 import { formatarReais } from "@/lib/validacao";
 import { Topo, Vazio } from "@/components/ui";
+import { planoAtivoDoCliente } from "@/lib/assinaturas";
 
 export const metadata: Metadata = { title: "Distribuidoras" };
 
@@ -22,6 +23,8 @@ export default async function Lojas({ searchParams }: PageProps<"/lojas">) {
 
   const r = simular(usuario.perfilFamilia, usuario.perfilFamilia);
   const galoesMes = r?.galoesMes ?? 0;
+  // Quem já assina não recebe sugestão de plano: vê o próprio e, se precisar, troca em "Meu plano".
+  const meuPlano = await planoAtivoDoCliente(usuario.id);
   let lojas = await lojasQueAtendem(endereco);
   const notas = await mediasDasLojas(lojas.map((l) => l.loja.id));
   if (filtro === "entrega") lojas = lojas.filter((l) => l.entregaAqui);
@@ -29,8 +32,27 @@ export default async function Lojas({ searchParams }: PageProps<"/lojas">) {
 
   return (
     <>
-      <Topo titulo={`Distribuidoras perto de você`} subtitulo={`Passo 2 de 3 · sua família: ${galoesMes} galões/mês`} voltar="/simulador" />
+      <Topo
+        titulo={`Distribuidoras perto de você`}
+        subtitulo={meuPlano ? `Sua família: ${galoesMes} galões/mês` : `Passo 2 de 3 · sua família: ${galoesMes} galões/mês`}
+        voltar={meuPlano ? "/inicio" : "/simulador"}
+      />
       <main className="conteudo">
+        {meuPlano && (
+          <Link href="/assinatura" className="block rounded-[var(--raio-cartao,20px)] bg-acai p-4 text-white">
+            <span className="text-xs font-bold uppercase tracking-[.6px] text-[#e6d3ea]">Seu plano · {meuPlano.lojaNome}</span>
+            <b className="block font-titulo text-lg">
+              {meuPlano.galoesMes} galões/mês · {formatarReais(meuPlano.precoCentavos)}
+            </b>
+            <span className="text-sm">
+              {galoesMes > meuPlano.galoesMes
+                ? `Pelo consumo calculado, vocês precisam de ${galoesMes} por mês: dá para trocar de plano em Meu plano.`
+                : galoesMes < meuPlano.galoesMes
+                  ? `Pelo consumo calculado, ${galoesMes} por mês já bastam: dá para trocar para um plano menor em Meu plano.`
+                  : "Seu plano cobre o consumo calculado da família."}
+            </span>
+          </Link>
+        )}
         <nav className="flex flex-wrap gap-2" aria-label="Filtrar">
           {(
             [
@@ -58,7 +80,7 @@ export default async function Lojas({ searchParams }: PageProps<"/lojas">) {
         )}
 
         {lojas.map(({ loja, distanciaKm, entregaAqui, precoGalaoCentavos, planos }) => {
-          const plano = planoSugerido(planos, galoesMes);
+          const plano = meuPlano ? null : planoSugerido(planos, galoesMes);
           const desconto = plano ? descontoPercentual(plano, precoGalaoCentavos) : 0;
           return (
             <article key={loja.id} className="cartao pilha">
@@ -94,7 +116,7 @@ export default async function Lojas({ searchParams }: PageProps<"/lojas">) {
                 </div>
               )}
               <Link href={`/lojas/${loja.id}`} className="botao-peq w-full">
-                Ver planos e produtos
+                {meuPlano ? "Ver produtos" : "Ver planos e produtos"}
               </Link>
             </article>
           );

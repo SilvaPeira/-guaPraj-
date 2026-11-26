@@ -65,4 +65,19 @@ test.describe("Site público", () => {
     expect(r?.status()).toBe(404);
     await expect(page.locator("body")).toContainText(/não encontr/i);
   });
+
+  test("ÁguaPrajá é instalável: manifesto e ícones", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator("link[rel=manifest]")).toHaveAttribute("href", "/app.webmanifest");
+    const m = await page.request.get("/app.webmanifest");
+    expect(m.status()).toBe(200);
+    const j = await m.json();
+    expect(j.name).toBe("ÁguaPrajá");
+    expect(j.display).toBe("standalone");
+    for (const i of j.icons as { src: string }[]) {
+      const r = await page.request.get(i.src);
+      expect(r.status(), i.src).toBe(200);
+      expect(r.headers()["content-type"]).toBe("image/png");
+    }
+  });
 });

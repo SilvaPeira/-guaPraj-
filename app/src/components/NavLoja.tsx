@@ -14,7 +14,7 @@ const ITENS = [
 export default function NavLoja({ aConfirmar = 0 }: { aConfirmar?: number }) {
   const atual = usePathname();
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-borda bg-white" aria-label="Menu da loja">
+    <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-borda bg-white print:hidden" aria-label="Menu da loja">
       <ul className="mx-auto grid h-[70px] max-w-xl grid-cols-5">
         {ITENS.map((i) => {
           const ativo = i.href === "/loja" ? atual === "/loja" : atual.startsWith(i.href);

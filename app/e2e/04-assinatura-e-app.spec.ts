@@ -34,15 +34,39 @@ test.describe.serial("Plano mensal e app próprio", () => {
     // Na loja do plano, o pedido vira compra adicional (galão pelo preço do plano).
     await expect(loja.getByRole("link", { name: "Compra adicional" })).toHaveAttribute("href", /assinatura=/);
 
+    // Página da loja: mostra o plano dele, não a lista de planos para assinar.
     await page.goto(`/lojas/${ler("lojaId")}`);
-    await expect(page.getByText("Seu plano mensal é com esta distribuidora.")).toBeVisible();
+    await expect(page.getByRole("link", { name: /Seu plano.*galões\/mês/ })).toHaveAttribute("href", "/assinatura");
+    await expect(page.getByRole("heading", { name: "Planos mensais" })).toHaveCount(0);
+    await expect(page.getByText("Sugerido")).toHaveCount(0);
   });
 
-  test("não dá para ter dois planos ao mesmo tempo", async ({ page }) => {
+  test("assinante não recebe sugestão de planos: nem na loja, nem no site dela, nem no simulador", async ({ page }) => {
     await entrar(page, TEL.cliente);
+    // Não dá para assinar de novo (o link direto também não oferece).
     await page.goto(`/lojas/${ler("lojaId")}`);
-    // Os planos levam para "Meu plano" em vez de assinar de novo.
-    await expect(page.getByRole("link", { name: /galões\/mês/ }).first()).toHaveAttribute("href", "/assinatura");
+    await expect(page.locator(`a[href^="/assinar/"]`)).toHaveCount(0);
+
+    // Simulador → distribuidoras: mostra o plano dele, sem "Plano para sua família" nas lojas.
+    // (Antes do site da loja: abrir o site liga o modo "app próprio", que vai direto para a loja.)
+    await page.goto("/lojas");
+    if (page.url().includes("/simulador")) {
+      await page.getByRole("button", { name: /Ver distribuidoras/ }).click();
+    }
+    await expect(page).toHaveURL(/\/lojas$/);
+    await expect(page.getByRole("link", { name: /Seu plano · .*galões\/mês/ })).toBeVisible();
+    await expect(page.getByText("Plano para sua família")).toHaveCount(0);
+
+    // Site próprio da loja (logado): "Seu plano" e compra adicional, sem "Assinar um plano".
+    await page.goto(`/l/${ler("slug")}`);
+    await expect(page.getByRole("link", { name: /Seu plano.*Gerenciar meu plano/ })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Compra adicional (galão extra ou bebidas)" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Assinar um plano" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Planos mensais" })).toHaveCount(0);
+    // A compra adicional sai pelo preço do plano.
+    await page.getByRole("link", { name: "Compra adicional (galão extra ou bebidas)" }).click();
+    await expect(page).toHaveURL(/\/pedir\/[0-9a-f-]{36}\?assinatura=/);
+    await expect(page.getByText("preço do seu plano")).toBeVisible();
   });
 
   test("cliente cancela o plano (com confirmação)", async ({ page }) => {
@@ -107,6 +131,18 @@ test.describe.serial("Plano mensal e app próprio", () => {
     await page.goto("/loja/marca");
     await expect(page.getByText("✓ Seu app está no ar (plano Completo)")).toBeVisible();
     await expect(page.getByRole("link", { name: "Abrir meu app" })).toHaveAttribute("href", `/l/${ler("slug")}`);
+
+    // QR code do app: na tela, para baixar (PNG) e no cartaz para imprimir.
+    await expect(page.getByRole("img", { name: /QR code do app/ })).toBeVisible();
+    const png = await page.request.get("/loja/marca/qr");
+    expect(png.status()).toBe(200);
+    expect(png.headers()["content-type"]).toBe("image/png");
+    await page.goto("/loja/marca/cartaz");
+    await expect(page.getByRole("heading", { name: LOJA.nome })).toBeVisible();
+    await expect(page.getByText("Peça água e bebidas pelo nosso app")).toBeVisible();
+    await expect(page.getByRole("img", { name: /QR code do app/ }).locator("svg")).toBeVisible();
+    await expect(page.getByText(new RegExp(`/l/${ler("slug")}$`))).toBeVisible();
+    await expect(page.getByRole("button", { name: "Imprimir" })).toBeVisible();
 
     await context.clearCookies();
     await entrar(page, TEL.cliente);

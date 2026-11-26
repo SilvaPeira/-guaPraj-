@@ -9,6 +9,7 @@ import { recursosDaLoja } from "@/lib/planos-app";
 import { Topo } from "@/components/ui";
 import FormMarca from "./FormMarca";
 import BotaoCopiar from "./BotaoCopiar";
+import { linkBonito, linkDoApp, qrSvg } from "@/lib/qr";
 
 export const metadata: Metadata = { title: "Meu app" };
 
@@ -27,6 +28,9 @@ export default async function MeuApp() {
   const { appProprio } = await recursosDaLoja(loja.id);
   const link = `${base}/l/${slug}`;
   const msg = `Agora você pode pedir água e bebidas da ${loja.nome} pelo nosso app: ${link}`;
+  // QR code do app (para imprimir e colar na parede/balcão): só com o app próprio no ar.
+  const linkPublico = linkDoApp(slug, base);
+  const qr = appProprio ? await qrSvg(linkPublico, loja.corEscura) : null;
 
   return (
     <>
@@ -67,6 +71,32 @@ export default async function MeuApp() {
                 </Link>
               </div>
               {loja.status !== "aprovada" && <p className="text-sm text-terra-esc">Os clientes só conseguem abrir depois que a loja for aprovada. Você já pode ver a prévia.</p>}
+              {qr && (
+                <div className="mt-1 flex flex-wrap items-center gap-4 rounded-xl bg-fundo p-3">
+                  <div
+                    className="size-32 flex-none rounded-lg bg-white p-1"
+                    role="img"
+                    aria-label={`QR code do app da ${loja.nome}`}
+                    // SVG gerado no servidor pela biblioteca qrcode (só o link da própria loja).
+                    dangerouslySetInnerHTML={{ __html: qr }}
+                  />
+                  <div className="flex min-w-0 flex-1 flex-col gap-2">
+                    <b>QR code do seu app</b>
+                    <span className="text-sm text-tinta-suave">
+                      O cliente aponta a câmera do celular e já abre {linkBonito(linkPublico)}. Imprima e cole no balcão, na parede ou no caminhão.
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      <a className="botao-peq" href="/loja/marca/cartaz" target="_blank" rel="noopener">
+                        Imprimir cartaz
+                      </a>
+                      <a className="botao-peq-sec" href="/loja/marca/qr" download={`qrcode-${slug}.png`}>
+                        Baixar QR code
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {!appProprio && <p className="text-sm text-tinta-suave">O QR code para imprimir e colar na parede vem junto com o app próprio (plano Completo).</p>}
             </>
           ) : (
             <p className="text-sm text-tinta-suave">Salve abaixo para criar o seu link.</p>
