@@ -3,6 +3,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { getDb, schema } from "@/db";
 import { descreverHorario } from "./agenda";
 import { notificar } from "./notificar";
+import { textoMeio } from "./pedidos";
 import { dataBonita } from "./tempo";
 import type { StatusPedido } from "./status";
 
@@ -117,7 +118,11 @@ export async function avisarLojaNovoPedido(pedidoId: string): Promise<void> {
     const quando = `${dataBonita(d.p.data).toLowerCase()}, ${descreverHorario(d.p.tipoHorario, d.p.horaInicio, d.p.horaFim)}`;
     await notificar(
       d.loja.donoId,
-      { titulo: `Novo pedido #${d.p.numero}`, texto: `🔔 ${d.cliente.nome ?? "Cliente"} pediu para ${quando}. Confirme na agenda.`, link: `/loja?data=${d.p.data}` },
+      {
+        titulo: `Novo pedido #${d.p.numero}`,
+        texto: `🔔 ${d.cliente.nome ?? "Cliente"} pediu para ${quando}.${d.p.formaPagamento !== "online" && textoMeio(d.p) ? ` Pagamento: ${textoMeio(d.p)}.` : ""} Confirme na agenda.`,
+        link: `/loja?data=${d.p.data}`,
+      },
       d.loja.telefone,
     );
   } catch (e) {

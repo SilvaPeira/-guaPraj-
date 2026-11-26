@@ -95,6 +95,20 @@ test.describe.serial("Cliente: pedido avulso e entrega", () => {
     guardar("lojaId", page.url().match(/pedir\/([0-9a-f-]{36})/)![1]);
 
     await horarioAmanha(page);
+    // Pagamento: precisa escolher QUANDO e COMO antes de confirmar.
+    const botao = page.getByRole("button", { name: /Escolha quando pagar|Escolha como pagar|Confirmar pedido|Ir para o pagamento/ });
+    await expect(botao).toHaveText("Escolha quando pagar");
+    await expect(botao).toBeDisabled();
+    await page.locator("label", { hasText: "Na entrega" }).click();
+    await expect(botao).toHaveText("Escolha como pagar");
+    // Na entrega: dinheiro, Pix ou cartão (maquininha).
+    const meios = page.getByRole("group", { name: "Como vai pagar?" });
+    await expect(meios.locator("label")).toHaveText(["Dinheiro", "Pix", "Cartão"]);
+    await meios.locator("label", { hasText: "Cartão" }).click();
+    await expect(page.getByText(/Na maquininha da loja/)).toBeVisible();
+    await meios.locator("label", { hasText: "Dinheiro" }).click();
+    await expect(page.getByLabel(/Troco para quanto/)).toBeVisible();
+
     // Veio com 1 refrigerante e 0 galão.
     const refri = page.locator("li", { hasText: "Refrigerante 2 L vidro" });
     await expect(refri.locator("[aria-live=polite]")).toHaveText("1");
@@ -127,9 +141,14 @@ test.describe.serial("Cliente: pedido avulso e entrega", () => {
     // Entrega, pagando na entrega.
     await page.locator("label", { hasText: "Entregar em casa" }).click();
     await horarioAmanha(page);
-    await page.locator("label", { hasText: "Na entrega" }).click();
     const data = await page.locator("input[name=data]:checked").getAttribute("value");
     guardar("dataPedido", data!);
+    // Troco menor que o total é recusado (e nada do que foi escolhido se perde).
+    await page.getByLabel(/Troco para quanto/).fill("20");
+    await page.getByRole("button", { name: "Confirmar pedido · R$ 33,00" }).click();
+    await expect(page.locator(ALERTA)).toContainText("O troco precisa ser para um valor maior que o total");
+    await expect(refri.locator("[aria-live=polite]")).toHaveText("2");
+    await page.getByLabel(/Troco para quanto/).fill("50");
     await page.getByRole("button", { name: "Confirmar pedido · R$ 33,00" }).click();
 
     await expect(page).toHaveURL(/\/pedidos\/[0-9a-f-]{36}\?novo=1/);
@@ -171,7 +190,8 @@ test.describe.serial("Cliente: pedido avulso e entrega", () => {
     await expect(cartao).toBeVisible();
     await expect(cartao.getByText("Bebida retornável: receber 2 casco(s)")).toBeVisible();
     await expect(cartao.getByText("Recolher 1 casco(s)")).toBeVisible();
-    await expect(cartao.getByText("Receber R$ 33,00")).toBeVisible();
+    // A loja vê como o cliente vai pagar.
+    await expect(cartao.getByText(/Receber R\$\s33,00 · Dinheiro, troco para R\$\s50,00/)).toBeVisible();
 
     await cartao.getByRole("button", { name: "Confirmar", exact: true }).click();
     await expect(cartao.getByText("Confirmado")).toBeVisible();
@@ -211,7 +231,10 @@ test.describe.serial("Cliente: pedido avulso e entrega", () => {
     await page.goto(`/pedir/${ler("lojaId")}`);
     // Começa com 2 galões (R$ 24,00) + entrega R$ 3,00.
     await horarioAmanha(page);
-    await page.locator("label", { hasText: "Pagar agora" }).click();
+    await page.locator("label", { hasText: "Pelo app, agora" }).click();
+    // Pelo app: só Pix ou cartão.
+    await expect(page.getByRole("group", { name: "Como vai pagar?" }).locator("label")).toHaveText(["Pix", "Cartão"]);
+    await page.getByRole("group", { name: "Como vai pagar?" }).locator("label", { hasText: "Pix" }).click();
     await page.getByRole("button", { name: "Ir para o pagamento · R$ 27,00" }).click();
     await expect(page).toHaveURL(/\/pagamento-simulado\//);
     await page.getByRole("button", { name: /Pix/ }).click();
@@ -223,7 +246,8 @@ test.describe.serial("Cliente: pedido avulso e entrega", () => {
     await entrar(page, TEL.cliente);
     await page.goto(`/pedir/${ler("lojaId")}`);
     await horarioAmanha(page);
-    await page.locator("label", { hasText: "Pagar agora" }).click();
+    await page.locator("label", { hasText: "Pelo app, agora" }).click();
+    await page.getByRole("group", { name: "Como vai pagar?" }).locator("label", { hasText: "Cartão" }).click();
     await page.getByRole("button", { name: /Ir para o pagamento/ }).click();
     await page.getByRole("button", { name: /Recusar|recusado/i }).click();
     await expect(page.getByText(/não foi aprovado|recusad|falhou/i).first()).toBeVisible();
@@ -235,7 +259,10 @@ test.describe.serial("Cliente: pedido avulso e entrega", () => {
     await page.goto(`/pedir/${ler("lojaId")}`);
     await horarioAmanha(page);
     await page.locator("label", { hasText: "Na entrega" }).click();
+    await page.getByRole("group", { name: "Como vai pagar?" }).locator("label", { hasText: "Pix" }).click();
     await page.getByRole("button", { name: /Confirmar pedido/ }).click();
+    // O cliente vê o que escolheu.
+    await expect(page.getByText("A pagar na entrega")).toBeVisible();
     await expect(page).toHaveURL(/\/pedidos\//);
     await page.getByRole("button", { name: "Cancelar pedido" }).click();
     await expect(page.getByText(/Cancelado/).first()).toBeVisible();

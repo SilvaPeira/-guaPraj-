@@ -222,7 +222,16 @@ export async function criarCobranca(pedidoId: string, clienteId: string, base: s
       back_urls: { success: voltar, pending: voltar, failure: voltar },
       auto_return: "approved",
       // Boleto não combina com entrega no mesmo dia: só Pix e cartão.
-      payment_methods: { excluded_payment_types: [{ id: "ticket" }, { id: "atm" }], installments: 1 },
+      // Abre só no meio que o cliente escolheu (Pix = bank_transfer no Mercado Pago).
+      payment_methods: {
+        excluded_payment_types: [
+          { id: "ticket" },
+          { id: "atm" },
+          ...(linha.p.meioEscolhido === "pix" ? [{ id: "credit_card" }, { id: "debit_card" }, { id: "prepaid_card" }] : []),
+          ...(linha.p.meioEscolhido === "cartao" ? [{ id: "bank_transfer" }] : []),
+        ],
+        installments: 1,
+      },
       ...(taxa > 0 ? { marketplace_fee: taxa / 100 } : {}),
     }),
   });

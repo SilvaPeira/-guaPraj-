@@ -47,10 +47,36 @@ export type NovoPedido = {
   cascosComprados: number;
   itens: { produtoId: string; qtd: number; /** Bebida retornável: cliente entrega o casco vazio. */ trocaCasco?: boolean }[];
   formaPagamento: "online" | "na_entrega";
+  /** Como vai pagar: no app (pix/cartao) ou na entrega (dinheiro/pix/cartao). */
+  meio?: MeioPagamento | null;
+  /** Dinheiro: troco para quanto. */
+  trocoParaCentavos?: number | null;
   declarou18: boolean;
   /** Compra adicional de assinante: galão sai pelo preço do plano. */
   assinaturaId?: string | null;
 };
+
+export type MeioPagamento = "dinheiro" | "pix" | "cartao";
+export const NOME_MEIO: Record<MeioPagamento, string> = { dinheiro: "Dinheiro", pix: "Pix", cartao: "Cartão" };
+
+/** "Dinheiro, troco para R$ 50,00" / "Pix" / "Cartão (maquininha)" — o que o cliente escolheu. */
+export function textoMeio(p: { meioEscolhido: string | null; trocoParaCentavos: number | null; formaPagamento: string }): string | null {
+  const m = p.meioEscolhido as MeioPagamento | null;
+  if (!m || !(m in NOME_MEIO)) return null;
+  if (m === "dinheiro") return p.trocoParaCentavos ? `Dinheiro, troco para ${(p.trocoParaCentavos / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}` : "Dinheiro, sem troco";
+  if (m === "cartao" && p.formaPagamento !== "online") return "Cartão (maquininha)";
+  return NOME_MEIO[m];
+}
+
+/** Confere a escolha de pagamento. Devolve a mensagem de erro, ou null. */
+export function erroPagamento(forma: "online" | "na_entrega", meio: MeioPagamento | null | undefined, troco: number | null | undefined, total: number): string | null {
+  if (total <= 0) return null; // nada a pagar (ex.: só saldo do plano)
+  if (!meio) return "Escolha como vai pagar: dinheiro, Pix ou cartão.";
+  if (forma === "online" && meio === "dinheiro") return "Pelo app, o pagamento é por Pix ou cartão.";
+  if (troco != null && meio !== "dinheiro") return "Troco é só para pagamento em dinheiro.";
+  if (troco != null && troco < total) return `O troco precisa ser para um valor maior que o total (${(total / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}).`;
+  return null;
+}
 
 export async function criarPedido(n: NovoPedido): Promise<{ id: string; numero: number }> {
   const db = await getDb();
@@ -137,6 +163,10 @@ export async function criarPedido(n: NovoPedido): Promise<{ id: string; numero: 
     const subtotal = linhas.reduce((s, l) => s + l.preco * l.qtd, 0);
     const taxaEntrega = n.modo === "entrega" ? loja.taxaEntregaCentavos : 0;
     const taxaHorario = n.modo === "entrega" && (n.tipoHorario === "imediato" || n.tipoHorario === "exato") ? loja.regrasHorario.taxaExtraCentavos : 0;
+    const totalPedido = subtotal + taxaEntrega + taxaHorario;
+    // Pedido pela tela sempre manda o meio (null = não escolheu). Sem o campo = chamada interna antiga.
+    const erroPg = n.meio === undefined ? null : erroPagamento(n.formaPagamento, n.meio, n.trocoParaCentavos, totalPedido);
+    if (erroPg) throw new ErroPedido(erroPg);
 
     const [pedido] = await tx
       .insert(schema.pedidos)
@@ -154,8 +184,10 @@ export async function criarPedido(n: NovoPedido): Promise<{ id: string; numero: 
         subtotalCentavos: subtotal,
         taxaEntregaCentavos: taxaEntrega,
         taxaHorarioCentavos: taxaHorario,
-        totalCentavos: subtotal + taxaEntrega + taxaHorario,
+        totalCentavos: totalPedido,
         formaPagamento: n.formaPagamento,
+        meioEscolhido: totalPedido > 0 ? (n.meio ?? null) : null,
+        trocoParaCentavos: totalPedido > 0 && n.meio === "dinheiro" ? (n.trocoParaCentavos ?? null) : null,
         cascosTroca: n.galoes - cascosComprados,
         cascosComprados,
         temAlcool,

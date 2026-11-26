@@ -3,6 +3,7 @@
 import { gerar, lerPedido, precoDoPlano, validar } from "../src/lib/gerador-planos";
 import { calcularSituacao, type PlanoApp } from "../src/lib/planos-app";
 import { reaisParaCentavos } from "../src/lib/validacao";
+import { erroPagamento, textoMeio } from "../src/lib/pedidos";
 
 let falhas = 0;
 function confere(nome: string, obtido: unknown, esperado: unknown) {
@@ -60,6 +61,19 @@ confere("grátis que acabou: volta a cobrar", [gratisAcabou.vencido, gratisAcabo
 
 const cem = calcularSituacao({ ...base, descontoMensalidade: 100 }, planos, hoje);
 confere("100% de desconto: vale sem registrar pagamento", [cem.vencido, cem.valorCentavos], [false, 0]);
+
+// ── Forma de pagamento do pedido ──
+confere("sem escolher o meio: erro", erroPagamento("na_entrega", null, null, 3300), "Escolha como vai pagar: dinheiro, Pix ou cartão.");
+confere("dinheiro pelo app: erro", erroPagamento("online", "dinheiro", null, 3300), "Pelo app, o pagamento é por Pix ou cartão.");
+confere("troco menor que o total: erro", !!erroPagamento("na_entrega", "dinheiro", 2000, 3300), true);
+confere("troco só no dinheiro", erroPagamento("na_entrega", "pix", 5000, 3300), "Troco é só para pagamento em dinheiro.");
+confere("dinheiro com troco para 50: ok", erroPagamento("na_entrega", "dinheiro", 5000, 3300), null);
+confere("cartão pelo app: ok", erroPagamento("online", "cartao", null, 3300), null);
+confere("nada a pagar: não exige meio", erroPagamento("na_entrega", null, null, 0), null);
+confere("texto: dinheiro com troco", textoMeio({ meioEscolhido: "dinheiro", trocoParaCentavos: 5000, formaPagamento: "na_entrega" }), "Dinheiro, troco para R$ 50,00");
+confere("texto: cartão na entrega", textoMeio({ meioEscolhido: "cartao", trocoParaCentavos: null, formaPagamento: "na_entrega" }), "Cartão (maquininha)");
+confere("texto: pix pelo app", textoMeio({ meioEscolhido: "pix", trocoParaCentavos: null, formaPagamento: "online" }), "Pix");
+confere("texto: pedido antigo sem meio", textoMeio({ meioEscolhido: null, trocoParaCentavos: null, formaPagamento: "na_entrega" }), null);
 
 console.log(falhas ? `\n${falhas} falha(s).` : "\nTudo certo.");
 process.exit(falhas ? 1 : 0);

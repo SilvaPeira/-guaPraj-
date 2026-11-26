@@ -3,6 +3,7 @@ import type { CartaoPedido } from "@/components/AgendaLoja";
 import type { PedidoAgenda } from "./operacao";
 import { agoraLocal, paraMinutos } from "./tempo";
 import { STATUS_FINAIS } from "./status";
+import { textoMeio } from "./pedidos";
 
 /** Converte o pedido do banco no formato que a tela da agenda usa. */
 export function paraCartao(p: PedidoAgenda): CartaoPedido {
@@ -19,6 +20,9 @@ export function paraCartao(p: PedidoAgenda): CartaoPedido {
     horaFim: p.horaFim,
     totalCentavos: p.totalCentavos,
     statusPagamento: p.statusPagamento,
+    /** Como o cliente vai pagar (ex.: "Dinheiro, troco para R$ 50,00"). */
+    meio: textoMeio(p),
+    pagoPeloApp: p.formaPagamento === "online",
     cascosTroca: p.cascosTroca,
     cascosComprados: p.cascosComprados,
     temAlcool: p.temAlcool,

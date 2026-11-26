@@ -60,7 +60,10 @@ export default function FormPedido(p: Props) {
   const [escolha, setEscolha] = useState<{ modo: "entrega" | "retirada"; v: ValorHorario } | null>(null);
   const horario = escolha?.modo === modo ? escolha.v : valorInicialPedido(p.regras, p.datas, modo === "entrega");
   const [maior18, setMaior18] = useState(false);
-  const [pagamento, setPagamento] = useState<"online" | "na_entrega">(p.pagaOnline ? "online" : "na_entrega");
+  // Pagamento: QUANDO (pelo app ou na entrega/retirada) e COMO (dinheiro, Pix ou cartão). O cliente escolhe os dois.
+  const [pagamento, setPagamento] = useState<"online" | "na_entrega" | null>(p.pagaOnline ? null : "na_entrega");
+  const [meio, setMeio] = useState<"dinheiro" | "pix" | "cartao" | null>(null);
+  const [troco, setTroco] = useState("");
 
   const grupos = [...new Set([...p.produtos].sort((a, b) => a.ordemGrupo - b.ordemGrupo).map((x) => x.grupo))];
   const temAlcool = p.produtos.some((x) => x.alcoolico && (qtd[x.id] ?? 0) > 0);
@@ -72,6 +75,8 @@ export default function FormPedido(p: Props) {
   const taxaHorario = modo === "entrega" && (horario?.tipo === "imediato" || horario?.tipo === "exato") ? p.regras.taxaExtraCentavos : 0;
   const total = subtotal + taxaEntrega + taxaHorario;
   const vazio = galoes === 0 && !Object.values(qtd).some((n) => n > 0);
+  // Com algo a pagar, precisa escolher quando e como.
+  const falta = total > 0 && (!pagamento || !meio);
 
   return (
     <form onSubmit={enviarSemLimpar(enviar)} className="pilha">
@@ -197,25 +202,77 @@ export default function FormPedido(p: Props) {
 
       <section className="cartao pilha">
         <h2 className="titulo-secao">Pagamento</h2>
-        {p.pagaOnline && total > 0 ? (
-          <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Como pagar">
-            {(
-              [
-                ["online", "Pagar agora", "Pix ou cartão"],
-                ["na_entrega", modo === "entrega" ? "Na entrega" : "Na retirada", "Pix ou dinheiro"],
-              ] as const
-            ).map(([v, titulo, sub]) => (
-              <label key={v} className="escolha flex-col items-start p-2.5 text-sm">
-                <input type="radio" name="pagamento" value={v} checked={pagamento === v} onChange={() => setPagamento(v)} className="sr-only" />
-                <b className="block">{titulo}</b>
-                <span className="text-xs text-tinta-suave">{sub}</span>
-              </label>
-            ))}
-          </div>
-        ) : (
+        {total > 0 && (
           <>
-            <input type="hidden" name="pagamento" value="na_entrega" />
-            {total > 0 && <p className="aviso-info text-sm">Pagamento {modo === "entrega" ? "na entrega" : "na retirada"} (Pix para a loja ou dinheiro).</p>}
+            {p.pagaOnline ? (
+              <fieldset>
+                <legend className="mb-2 text-sm font-semibold">Quando pagar?</legend>
+                <div className="grid grid-cols-2 gap-2">
+                  {(
+                    [
+                      ["online", "Pelo app, agora", "Pix ou cartão"],
+                      ["na_entrega", modo === "entrega" ? "Na entrega" : "Na retirada", "dinheiro, Pix ou cartão"],
+                    ] as const
+                  ).map(([v, titulo, sub]) => (
+                    <label key={v} className="escolha flex-col items-start p-2.5 text-sm">
+                      <input
+                        type="radio"
+                        name="pagamento"
+                        value={v}
+                        checked={pagamento === v}
+                        onChange={() => {
+                          setPagamento(v);
+                          if (v === "online" && meio === "dinheiro") setMeio(null);
+                        }}
+                        className="sr-only"
+                      />
+                      <b className="block">{titulo}</b>
+                      <span className="text-xs text-tinta-suave">{sub}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            ) : (
+              <>
+                <input type="hidden" name="pagamento" value="na_entrega" />
+                <p className="text-sm text-tinta-suave">Pagamento {modo === "entrega" ? "na entrega" : "na retirada"}, direto para a loja.</p>
+              </>
+            )}
+            {pagamento && (
+              <fieldset>
+                <legend className="mb-2 text-sm font-semibold">Como vai pagar?</legend>
+                <div className={`grid gap-2 ${pagamento === "online" ? "grid-cols-2" : "grid-cols-3"}`}>
+                  {(pagamento === "online"
+                    ? ([
+                        ["pix", "Pix"],
+                        ["cartao", "Cartão"],
+                      ] as const)
+                    : ([
+                        ["dinheiro", "Dinheiro"],
+                        ["pix", "Pix"],
+                        ["cartao", "Cartão"],
+                      ] as const)
+                  ).map(([v, t]) => (
+                    <label key={v} className="escolha items-center justify-center p-2.5 text-sm font-semibold">
+                      <input type="radio" name="meio" value={v} checked={meio === v} onChange={() => setMeio(v)} className="sr-only" />
+                      {t}
+                    </label>
+                  ))}
+                </div>
+                {pagamento === "na_entrega" && meio === "cartao" && (
+                  <p className="mt-2 text-xs text-tinta-suave">Na maquininha da loja (débito ou crédito), {modo === "entrega" ? "na entrega" : "na retirada"}.</p>
+                )}
+                {pagamento === "na_entrega" && meio === "pix" && (
+                  <p className="mt-2 text-xs text-tinta-suave">Pix direto para a loja, {modo === "entrega" ? "na entrega" : "na retirada"}.</p>
+                )}
+                {meio === "dinheiro" && (
+                  <label className="campo mt-2">
+                    Precisa de troco? Troco para quanto (R$)
+                    <input className="entrada" name="troco" inputMode="decimal" placeholder={`Ex.: ${brl(Math.ceil(total / 5000) * 5000).replace("R$", "").trim()} — deixe vazio se não precisar`} value={troco} onChange={(e) => setTroco(e.target.value)} />
+                  </label>
+                )}
+              </fieldset>
+            )}
           </>
         )}
         <div className="flex justify-between text-sm">
@@ -241,8 +298,16 @@ export default function FormPedido(p: Props) {
       </section>
 
       {estado.erro && <p role="alert" className="aviso-erro">{estado.erro}</p>}
-      <button className="botao" disabled={enviando || vazio || (temAlcool && !maior18)}>
-        {enviando ? "Enviando…" : pagamento === "online" && total > 0 ? `Ir para o pagamento · ${brl(total)}` : `Confirmar pedido · ${brl(total)}`}
+      <button className="botao" disabled={enviando || vazio || (temAlcool && !maior18) || falta}>
+        {enviando
+          ? "Enviando…"
+          : falta
+            ? !pagamento
+              ? "Escolha quando pagar"
+              : "Escolha como pagar"
+            : pagamento === "online"
+              ? `Ir para o pagamento · ${brl(total)}`
+              : `Confirmar pedido · ${brl(total)}`}
       </button>
     </form>
   );

@@ -327,6 +327,10 @@ export const pedidos = pgTable(
     pagamentoId: text("pagamento_id"),
     pagamentoMeio: text("pagamento_meio"),
     pagoEm: timestamp("pago_em", { withTimezone: true }),
+    /** Como o cliente disse que vai pagar: dinheiro, pix ou cartao (no app: pix ou cartao). */
+    meioEscolhido: text("meio_escolhido"),
+    /** Dinheiro: troco para quanto (vazio = não precisa de troco). */
+    trocoParaCentavos: integer("troco_para_centavos"),
     criadoEm: criadoEm(),
   },
   (t) => [

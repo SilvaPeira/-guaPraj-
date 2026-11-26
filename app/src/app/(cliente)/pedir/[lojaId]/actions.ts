@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { exigirCliente } from "@/lib/cliente";
 import { criarPedido, ErroPedido } from "@/lib/pedidos";
+import { reaisParaCentavos } from "@/lib/validacao";
 import { avisarLojaNovoPedido } from "@/lib/avisos";
 import { criarCobranca, ErroPagamento } from "@/lib/mercadopago";
 import { urlBase } from "@/lib/url";
@@ -45,6 +46,8 @@ export async function fazerPedido(_: EstadoPedido, form: FormData): Promise<Esta
       cascosComprados,
       itens,
       formaPagamento: form.get("pagamento") === "online" ? "online" : "na_entrega",
+      meio: (["dinheiro", "pix", "cartao"] as const).find((m) => m === form.get("meio")) ?? null,
+      trocoParaCentavos: form.get("meio") === "dinheiro" ? reaisParaCentavos(form.get("troco")) : null,
       declarou18: form.get("maior18") === "on",
       assinaturaId: String(form.get("assinaturaId") ?? "") || null,
     });

@@ -7,6 +7,7 @@ import { descreverHorario } from "@/lib/agenda";
 import { agoraLocal, dataBonita } from "@/lib/tempo";
 import { COR_STATUS, ORIGEM, ROTULO_STATUS } from "@/lib/status";
 import { formatarReais } from "@/lib/validacao";
+import { textoMeio } from "@/lib/pedidos";
 import { formatarTelefone, linkWhatsApp } from "@/lib/telefone";
 import { Topo } from "@/components/ui";
 import AvaliarPedido from "@/components/AvaliarPedido";
@@ -52,6 +53,7 @@ export default async function Pedido({ params, searchParams }: PageProps<"/pedid
             : p.modo === "entrega"
             ? "A pagar na entrega"
             : "A pagar na retirada";
+  const meio = textoMeio(p);
   const passos = p.modo === "entrega" ? PASSOS_ENTREGA : PASSOS_RETIRADA;
   const atual = (passos as readonly string[]).indexOf(p.status);
   const horaEvento = (s: string) => {
@@ -152,7 +154,10 @@ export default async function Pedido({ params, searchParams }: PageProps<"/pedid
             </div>
           )}
           <div className="flex items-baseline justify-between border-t border-borda pt-2">
-            <b>{p.totalCentavos === 0 ? "Total" : rotuloPagamento}</b>
+            <b>
+              {p.totalCentavos === 0 ? "Total" : rotuloPagamento}
+              {p.totalCentavos > 0 && meio && p.statusPagamento !== "pago" ? <span className="block text-sm font-normal text-tinta-suave">{meio}</span> : null}
+            </b>
             <b className="font-titulo text-xl">{p.totalCentavos > 0 ? formatarReais(p.totalCentavos) : "incluído no plano"}</b>
           </div>
         </section>

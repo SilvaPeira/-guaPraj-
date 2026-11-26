@@ -16,6 +16,8 @@ export type CartaoPedido = {
   horaFim: string;
   totalCentavos: number;
   statusPagamento: string;
+  meio: string | null;
+  pagoPeloApp: boolean;
   cascosTroca: number;
   cascosComprados: number;
   temAlcool: boolean;
@@ -155,7 +157,11 @@ function Cartao({ p, ehDono, marcado, onMarcar, amanha }: { p: CartaoPedido; ehD
         {p.temAlcool && <span className="selo selo-acai">18+: conferir documento</span>}
         {p.totalCentavos > 0 && (
           <span className={`selo ${p.statusPagamento === "pago" ? "selo-verde" : "selo-terra"}`}>
-            {p.statusPagamento === "pago" ? `Pago ${brl(p.totalCentavos)}` : `Receber ${brl(p.totalCentavos)}`}
+            {p.statusPagamento === "pago"
+              ? `Pago ${brl(p.totalCentavos)}${p.meio ? ` · ${p.meio}` : ""}`
+              : p.pagoPeloApp
+                ? `Aguardando pagamento no app ${brl(p.totalCentavos)}`
+                : `Receber ${brl(p.totalCentavos)}${p.meio ? ` · ${p.meio}` : ""}`}
           </span>
         )}
         {p.codigoRetirada && !final && <span className="selo selo-cinza">Código {p.codigoRetirada}</span>}
