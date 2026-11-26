@@ -96,6 +96,7 @@ export default async function Pedir({ params, searchParams }: PageProps<"/pedir/
             itemInicial={itemInicial}
             saldoGaloes={saldo}
             pagaOnline={pagaOnline}
+            temPix={!!loja.pixChave}
           />
         )}
       </main>

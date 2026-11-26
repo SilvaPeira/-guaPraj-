@@ -184,6 +184,10 @@ export const lojas = pgTable("lojas", {
   descontoAte: date("desconto_ate"),
   /** Plano escolhido sem cobrar até este dia (cortesia/teste). */
   gratisAte: date("gratis_ate"),
+  /** Pix da loja (pagamento na entrega por Pix): chave, tipo e nome de quem recebe. */
+  pixChave: text("pix_chave"),
+  pixTipo: text("pix_tipo"),
+  pixNome: text("pix_nome"),
   criadoEm: criadoEm(),
 });
 

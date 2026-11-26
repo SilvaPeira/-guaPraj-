@@ -8,6 +8,7 @@ import { agoraLocal, dataBonita } from "@/lib/tempo";
 import { COR_STATUS, ORIGEM, ROTULO_STATUS } from "@/lib/status";
 import { formatarReais } from "@/lib/validacao";
 import { textoMeio } from "@/lib/pedidos";
+import PagarComPix from "@/components/PagarComPix";
 import { formatarTelefone, linkWhatsApp } from "@/lib/telefone";
 import { Topo } from "@/components/ui";
 import AvaliarPedido from "@/components/AvaliarPedido";
@@ -72,6 +73,25 @@ export default async function Pedido({ params, searchParams }: PageProps<"/pedid
           <p className="aviso-info">Estamos confirmando o seu pagamento com o Mercado Pago. Pix costuma cair em segundos — atualize a página daqui a pouco.</p>
         )}
         {sp.pagamento === "falhou" && <p className="aviso-erro">Não conseguimos abrir o pagamento agora. Tente de novo abaixo ou pague na entrega.</p>}
+
+        {/* Escolheu Pix para pagar na entrega/retirada: chave da loja e Pix copia e cola com o valor. */}
+        {p.meioEscolhido === "pix" &&
+          p.formaPagamento !== "online" &&
+          p.totalCentavos > 0 &&
+          p.statusPagamento !== "pago" &&
+          !["cancelado", "nao_entregue"].includes(p.status) &&
+          loja.pixChave &&
+          loja.pixTipo && (
+            <PagarComPix
+              chave={loja.pixChave}
+              tipo={loja.pixTipo}
+              nome={loja.pixNome ?? loja.nome}
+              cidade={loja.cidade}
+              valorCentavos={p.totalCentavos}
+              numeroPedido={p.numero}
+              modo={p.modo}
+            />
+          )}
 
         <section className="cartao-elevado pilha">
           <div className="flex items-start justify-between gap-2">

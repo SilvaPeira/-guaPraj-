@@ -7,6 +7,7 @@ import { exigirUsuario } from "@/lib/sessao";
 import { normalizarTelefone } from "@/lib/telefone";
 import { criarTokenSenha } from "@/lib/otp";
 import { urlBase } from "@/lib/url";
+import { urlLegivel } from "@/lib/dominio";
 import { PLANOS_APP_SUGERIDOS } from "@/lib/planos-app";
 import { agoraLocal } from "@/lib/tempo";
 
@@ -36,7 +37,7 @@ export async function gerarLinkSenha(_: EstadoLinkSenha, form: FormData): Promis
   const [u] = await db.select({ id: schema.usuarios.id }).from(schema.usuarios).where(eq(schema.usuarios.telefone, telefone)).limit(1);
   if (!u) return { erro: "Não há conta com este celular." };
   const token = await criarTokenSenha(telefone);
-  return { telefone, link: `${await urlBase()}/entrar/nova-senha?tel=${telefone}&t=${token}` };
+  return { telefone, link: urlLegivel(`${await urlBase()}/entrar/nova-senha?tel=${telefone}&t=${token}`) };
 }
 
 // ───────────── Planos do app ─────────────

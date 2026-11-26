@@ -10,6 +10,7 @@ import { Topo } from "@/components/ui";
 import FormMarca from "./FormMarca";
 import BotaoCopiar from "./BotaoCopiar";
 import { linkBonito, linkDoApp, qrSvg } from "@/lib/qr";
+import { urlLegivel } from "@/lib/dominio";
 
 export const metadata: Metadata = { title: "Meu app" };
 
@@ -26,7 +27,8 @@ export default async function MeuApp() {
   }
   const slug = loja.slug;
   const { appProprio } = await recursosDaLoja(loja.id);
-  const link = `${base}/l/${slug}`;
+  // Link para pessoas: com acento (águaprajá.tech); funciona igual ao formato técnico.
+  const link = urlLegivel(`${base}/l/${slug}`);
   const msg = `Agora você pode pedir água e bebidas da ${loja.nome} pelo nosso app: ${link}`;
   // QR code do app (para imprimir e colar na parede/balcão): só com o app próprio no ar.
   const linkPublico = linkDoApp(slug, base);

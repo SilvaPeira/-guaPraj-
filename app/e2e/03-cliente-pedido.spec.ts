@@ -262,9 +262,21 @@ test.describe.serial("Cliente: pedido avulso e entrega", () => {
     await horarioAmanha(page);
     await page.locator("label", { hasText: "Na entrega" }).click();
     await page.getByRole("group", { name: "Como vai pagar?" }).locator("label", { hasText: "Pix" }).click();
+    await expect(page.getByText(/Ao confirmar, mostramos a chave Pix da loja/)).toBeVisible();
     await page.getByRole("button", { name: /Confirmar pedido/ }).click();
     // O cliente vê o que escolheu.
     await expect(page.getByText("A pagar na entrega")).toBeVisible();
+    // Pix na entrega: chave da loja e "Pix copia e cola" com o valor do pedido.
+    const pix = page.locator("section", { hasText: "Pague com Pix" });
+    await expect(pix).toBeVisible();
+    await expect(pix.getByText("11.222.333/0001-81")).toBeVisible();
+    await expect(pix.getByText("Distribuidora E2E Ltda", { exact: true })).toBeVisible();
+    const total = (await pix.locator("h2 + b").innerText()).replace(/[^\d,]/g, "").replace(",", ".");
+    const copiaECola = await pix.locator("p.font-mono").innerText();
+    expect(copiaECola).toContain("0014br.gov.bcb.pix011411222333000181");
+    expect(copiaECola).toContain(`54${String(total.length).padStart(2, "0")}${total}`);
+    await expect(pix.getByRole("button", { name: "Copiar Pix copia e cola" })).toBeVisible();
+    await expect(pix.getByRole("img", { name: /QR code do Pix/ })).toBeVisible();
     await expect(page).toHaveURL(/\/pedidos\//);
     await page.getByRole("button", { name: "Cancelar pedido" }).click();
     await expect(page.getByText(/Cancelado/).first()).toBeVisible();

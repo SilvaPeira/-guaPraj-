@@ -3,6 +3,7 @@ import webpush from "web-push";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { getDb, schema } from "@/db";
 import { enviarWhatsApp } from "./mensagens";
+import { urlLegivel } from "./dominio";
 
 /**
  * Avisos para cliente e loja, por três caminhos (nenhum derruba a operação se falhar):
@@ -68,7 +69,7 @@ export async function notificar(usuarioId: string | null, a: Aviso, telefone?: s
     console.error("[avisos] falha no aviso do app", e);
   }
   if (telefone) {
-    const link = a.link ? ` ${(process.env.APP_URL ?? "").replace(/\/$/, "")}${a.link}` : "";
+    const link = a.link ? ` ${urlLegivel((process.env.APP_URL ?? "").replace(/\/$/, ""))}${a.link}` : "";
     await enviarWhatsApp(telefone, `${a.texto}${link}`).catch((e) => console.error("[avisos] whatsapp", e));
   }
 }

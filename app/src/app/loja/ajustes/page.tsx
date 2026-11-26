@@ -23,6 +23,13 @@ export default async function Ajustes() {
         }
       />
       <main className="conteudo">
+        <Link href="/loja/pagamentos" className="cartao flex items-center justify-between gap-2">
+          <span>
+            <b className="block">Pagamentos: Pix e Mercado Pago</b>
+            <span className="text-sm text-tinta-suave">Sua chave Pix para receber na entrega e o pagamento pelo app</span>
+          </span>
+          <span aria-hidden="true">›</span>
+        </Link>
         <Link href="/loja/plano" className="cartao flex items-center justify-between gap-2">
           <span>
             <b className="block">Meu plano ÁguaPrajá</b>

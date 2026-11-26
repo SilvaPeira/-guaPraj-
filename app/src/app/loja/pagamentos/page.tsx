@@ -5,8 +5,10 @@ import { exigirLoja } from "@/lib/loja";
 import { conectarSimulado, contaDaLoja, desconectar, modoPagamento, taxaPlataforma, urlConectar } from "@/lib/mercadopago";
 import { urlBase } from "@/lib/url";
 import { Topo } from "@/components/ui";
+import { chaveLegivel } from "@/lib/pix";
+import FormPix from "./FormPix";
 
-export const metadata: Metadata = { title: "Receber pelo app" };
+export const metadata: Metadata = { title: "Pagamentos" };
 
 async function conectar() {
   "use server";
@@ -37,8 +39,25 @@ export default async function Pagamentos({ searchParams }: PageProps<"/loja/paga
 
   return (
     <>
-      <Topo titulo="Receber pelo app" subtitulo={loja.nome} voltar="/loja/financeiro" />
+      <Topo titulo="Pagamentos" subtitulo={loja.nome} voltar="/loja/ajustes" />
       <main className="conteudo">
+        <section className="cartao-elevado pilha">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="titulo-secao">Pix da loja</h2>
+            <span className={`selo ${loja.pixChave ? "selo-verde" : "selo-terra"}`}>{loja.pixChave ? "Cadastrado" : "Sem chave"}</span>
+          </div>
+          <p className="text-sm text-tinta-suave">
+            Quando o cliente escolhe <b>Pix</b> para pagar na entrega ou na retirada, ele vê esta chave e o <b>Pix copia e cola</b> já com o valor do pedido. O dinheiro
+            cai direto na sua conta, sem taxa do ÁguaPrajá.
+          </p>
+          <FormPix
+            tipo={loja.pixTipo}
+            chaveLegivel={loja.pixChave && loja.pixTipo ? chaveLegivel(loja.pixTipo, loja.pixChave) : null}
+            nome={loja.pixNome}
+            nomeLoja={loja.nome}
+          />
+        </section>
+
         {sp.ok && <p className="aviso-ok">Conta Mercado Pago conectada! Seus clientes já podem pagar pelo app.</p>}
         {sp.erro && <p className="aviso-erro">Não deu para conectar a conta. Tente de novo.</p>}
 

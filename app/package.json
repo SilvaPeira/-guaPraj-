@@ -16,9 +16,10 @@
     "test:retornavel": "tsx --conditions=react-server --tsconfig tsconfig.json scripts/testar-retornavel.ts",
     "test:e2e": "next build && playwright test",
     "test:e2e:rapido": "playwright test",
-    "test:unit": "npm run -s test:assinatura && npm run -s test:pagamento && npm run -s test:senha && npm run -s test:planos-app && npm run -s test:retornavel && npm run -s test:avisos-conta && npm run -s test:gerador-beneficio",
+    "test:unit": "npm run -s test:assinatura && npm run -s test:pagamento && npm run -s test:senha && npm run -s test:planos-app && npm run -s test:retornavel && npm run -s test:avisos-conta && npm run -s test:gerador-beneficio && npm run -s test:pix",
     "test:avisos-conta": "tsx --conditions=react-server --tsconfig tsconfig.json scripts/testar-avisos-conta.ts",
-    "test:gerador-beneficio": "tsx --conditions=react-server --tsconfig tsconfig.json scripts/testar-gerador-beneficio.ts"
+    "test:gerador-beneficio": "tsx --conditions=react-server --tsconfig tsconfig.json scripts/testar-gerador-beneficio.ts",
+    "test:pix": "tsx --tsconfig tsconfig.json scripts/testar-pix.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.16",

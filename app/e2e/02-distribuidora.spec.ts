@@ -328,6 +328,25 @@ test.describe.serial("Admin e distribuidora", () => {
     await expect(page.getByRole("button", { name: /Desconectar/ })).toBeVisible();
   });
 
+  test("distribuidora → Pagamentos: cadastra a chave Pix (com validação)", async ({ page }) => {
+    await entrar(page, TEL.loja);
+    // Pelo caminho que a loja usa: Ajustes → Pagamentos.
+    await page.goto("/loja/ajustes");
+    await page.getByRole("link", { name: /Pagamentos: Pix e Mercado Pago/ }).click();
+    await expect(page).toHaveURL(/\/loja\/pagamentos$/);
+    const pix = page.locator("section", { hasText: "Pix da loja" });
+    await expect(pix.getByText("Sem chave")).toBeVisible();
+    await pix.getByLabel("Tipo da chave").selectOption("cnpj");
+    await pix.getByLabel("Chave Pix").fill("11.222.333/0001-82");
+    await pix.getByRole("button", { name: "Salvar chave Pix" }).click();
+    await expect(pix.locator(ALERTA)).toContainText("CNPJ inválido");
+    await pix.getByLabel("Chave Pix").fill("11.222.333/0001-81");
+    await pix.getByLabel("Nome de quem recebe").fill("Distribuidora E2E Ltda");
+    await pix.getByRole("button", { name: "Salvar chave Pix" }).click();
+    await expect(pix.getByRole("status")).toContainText("Chave Pix salva");
+    await expect(pix.getByText("Cadastrado")).toBeVisible();
+  });
+
   test("distribuidora → Meu app: define o endereço do site da loja", async ({ page }) => {
     await entrar(page, TEL.loja);
     await page.goto("/loja/marca");

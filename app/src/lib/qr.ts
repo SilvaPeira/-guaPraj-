@@ -20,6 +20,4 @@ export function linkDoApp(slug: string, base: string): string {
 }
 
 /** águaprajá.tech/l/loja — como mostrar o endereço no cartaz (com acento, sem https). */
-export function linkBonito(link: string): string {
-  return link.replace(/^https?:\/\//, "").replace("xn--guapraj-gwah.tech", "águaprajá.tech");
-}
+export { linkCurto as linkBonito } from "./dominio";

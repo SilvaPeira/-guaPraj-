@@ -42,6 +42,8 @@ type Props = {
   saldoGaloes?: number;
   /** A loja recebe Pix/cartão pelo app (Mercado Pago conectado). */
   pagaOnline: boolean;
+  /** A loja cadastrou chave Pix (o cliente vê a chave e o copia e cola ao confirmar). */
+  temPix?: boolean;
 };
 
 const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -263,7 +265,11 @@ export default function FormPedido(p: Props) {
                   <p className="mt-2 text-xs text-tinta-suave">Na maquininha da loja (débito ou crédito), {modo === "entrega" ? "na entrega" : "na retirada"}.</p>
                 )}
                 {pagamento === "na_entrega" && meio === "pix" && (
-                  <p className="mt-2 text-xs text-tinta-suave">Pix direto para a loja, {modo === "entrega" ? "na entrega" : "na retirada"}.</p>
+                  <p className="mt-2 text-xs text-tinta-suave">
+                    {p.temPix
+                      ? "Ao confirmar, mostramos a chave Pix da loja e o Pix copia e cola já com o valor. Pode pagar na hora ou antes."
+                      : `Pix direto para a loja, ${modo === "entrega" ? "na entrega" : "na retirada"}.`}
+                  </p>
                 )}
                 {meio === "dinheiro" && (
                   <label className="campo mt-2">

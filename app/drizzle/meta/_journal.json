@@ -134,6 +134,13 @@
       "when": 1795683872938,
       "tag": "0018_meio_pagamento",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1795688541788,
+      "tag": "0019_pix_loja",
+      "breakpoints": true
     }
   ]
 }
